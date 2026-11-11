@@ -148,8 +148,9 @@ const createPlaybackHooks = (
 const resolveStartingExamples = (editorOptions?: StrudelEditorOptions) => {
   const exampleList = editorOptions?.initialExamples ?? STRUDEL_EXAMPLES
   const defaultExample =
+    // The shipped default is a song, so the tunes are searched too; a caller's own list is not.
     resolveDefaultStrudelExample(
-      exampleList,
+      editorOptions?.initialExamples ? exampleList : [...exampleList, ...ELECTRO_TUNES],
       editorOptions?.initialExampleId ?? DEFAULT_STRUDEL_EXAMPLE_ID
     ) ?? exampleList[0]
   return { exampleList, defaultExample }

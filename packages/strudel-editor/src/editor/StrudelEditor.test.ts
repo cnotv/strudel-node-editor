@@ -6,6 +6,8 @@ import StrudelEditor from './StrudelEditor.vue'
 import { ELECTRO_TUNES, STRUDEL_EXAMPLES, STRUDEL_SAVED_CODE_STORAGE_KEY } from './config'
 import type { StrudelCodeMirrorOptions } from './types'
 
+const defaultSongCode = ELECTRO_TUNES.find(({ id }) => id === 'uptown-strut')?.code ?? ''
+
 // Vue Flow needs a real layout engine; the browser tests mount it. This stand-in proves the
 // view switches between the editor and the canvas while the graph state stays in the view.
 vi.mock('@webgamekit/strudel-flow', async (importOriginal) => {
@@ -181,7 +183,7 @@ describe('StrudelEditor view', () => {
     const codeField = wrapper.find<HTMLTextAreaElement>('.fake-strudel-code')
 
     // Assert
-    expect(codeField.element.value).toBe('s("bd sd, hh*8")')
+    expect(codeField.element.value).toBe(defaultSongCode)
   })
 
   it('updates the code as the player types', async () => {
@@ -445,11 +447,11 @@ describe('StrudelEditor view', () => {
     const wrapper = await mountEditorView()
 
     // Assert
-    expect(readEditorCode(wrapper)).toBe(STRUDEL_EXAMPLES[0].code)
+    expect(readEditorCode(wrapper)).toBe(defaultSongCode)
   })
 
   it.each([
-    ['a tab', '/?tab=midi', 'MIDI', STRUDEL_EXAMPLES[0].code, { tab: 'midi' }],
+    ['a tab', '/?tab=midi', 'MIDI', defaultSongCode, { tab: 'midi' }],
     [
       'a tab and a pattern',
       `/?tab=export&pattern=${ELECTRO_TUNES[0].id}`,
@@ -457,7 +459,7 @@ describe('StrudelEditor view', () => {
       ELECTRO_TUNES[0].code,
       { tab: 'export', pattern: ELECTRO_TUNES[0].id }
     ],
-    ['an old tab anchor', '/#export', 'Export', STRUDEL_EXAMPLES[0].code, { tab: 'export' }],
+    ['an old tab anchor', '/#export', 'Export', defaultSongCode, { tab: 'export' }],
     [
       'an old pattern anchor',
       `/#${ELECTRO_TUNES[0].id}`,
@@ -576,6 +578,7 @@ describe('StrudelEditor view', () => {
 
   it('opens flow mode on the code as it is and writes the code once the patch changes', async () => {
     // Arrange
+    localStorage.setItem(STRUDEL_SAVED_CODE_STORAGE_KEY, STRUDEL_EXAMPLES[0].code)
     const wrapper = await mountEditorView()
     const originalCode = readEditorCode(wrapper)
 

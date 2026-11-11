@@ -15,6 +15,6 @@ import { StrudelEditor } from '@webgamekit/strudel-editor'
 
 The host app needs Vue Router and Pinia installed. Sizing, slots, the exported helpers and what
 the editor fetches and stores are in the
-[embedding guide](https://cnotv.github.io/generative-art/docs/docs/guides/embedding-the-strudel-editor).
+[embedding guide](https://cnotv.github.io/strudel-node-editor/guides/embedding-the-strudel-editor).
 
 Licensed AGPL-3.0-or-later, like the Strudel engine it wraps.

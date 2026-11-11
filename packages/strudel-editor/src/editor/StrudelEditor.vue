@@ -12,7 +12,9 @@ import {
   Boxes,
   Cable,
   CircleHelp,
+  BookOpen,
   Code,
+  Github,
   Guitar,
   Music,
   Save,
@@ -26,7 +28,13 @@ import {
 import { useRoute, useRouter } from 'vue-router'
 import IconButton from '../components/IconButton.vue'
 import { Toggle } from '../components/ui/toggle'
-import { FLOW_SYNC_DELAY_MS, STRUDEL_BEATS_PER_CYCLE, STRUDEL_LICENSE_NOTE } from './config'
+import {
+  FLOW_SYNC_DELAY_MS,
+  STRUDEL_BEATS_PER_CYCLE,
+  STRUDEL_DOCUMENTATION_URL,
+  STRUDEL_LICENSE_NOTE,
+  STRUDEL_REPOSITORY_URL
+} from './config'
 import {
   findStrudelFlowNodeCode,
   findStrudelFlowPlayingNodeIds,
@@ -573,6 +581,16 @@ onBeforeUnmount(() => {
         <SettingsTab v-else />
       </div>
       <p class="strudel-editor__license">{{ STRUDEL_LICENSE_NOTE }}</p>
+      <nav class="strudel-editor__links" aria-label="Project links">
+        <a :href="STRUDEL_REPOSITORY_URL" target="_blank" rel="noopener noreferrer">
+          <Github aria-hidden="true" />
+          GitHub
+        </a>
+        <a :href="STRUDEL_DOCUMENTATION_URL" target="_blank" rel="noopener noreferrer">
+          <BookOpen aria-hidden="true" />
+          Docs
+        </a>
+      </nav>
     </aside>
   </div>
 </template>
@@ -728,5 +746,30 @@ onBeforeUnmount(() => {
   font-size: var(--font-size-sm);
   color: var(--color-muted-foreground);
   border-top: 1px solid var(--color-border);
+}
+
+.strudel-editor__links {
+  display: flex;
+  gap: var(--spacing-4);
+  padding: var(--spacing-2) var(--spacing-3);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--font-size-sm);
+}
+
+.strudel-editor__links a {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  color: var(--color-muted-foreground);
+  text-decoration: none;
+}
+
+.strudel-editor__links a:hover {
+  color: var(--color-foreground);
+}
+
+.strudel-editor__links svg {
+  width: 1rem;
+  height: 1rem;
 }
 </style>

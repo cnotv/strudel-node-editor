@@ -43,5 +43,6 @@
     "type": "git",
     "url": "git+https://github.com/cnotv/strudel-node-editor.git",
     "directory": "packages/strudel-flow"
-  }
+  },
+  "license": "AGPL-3.0-or-later"
 }

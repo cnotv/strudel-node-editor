@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import {
   STRUDEL_AI_DEFAULT_COMPOSE_MODEL,
   STRUDEL_AI_ERRORS,
+  STRUDEL_AI_MAX_TOKENS,
   STRUDEL_AI_OPENROUTER_URL
 } from './config'
 import { askOpenRouter, readKnownOpenRouterModel, readOpenRouterJsonAnswer } from './openRouter'
@@ -27,6 +28,35 @@ describe('askOpenRouter', () => {
     expect(new Headers(init?.headers).get('Authorization')).toBe('Bearer secret-key')
     expect(String(init?.body)).not.toContain('secret-key')
     expect(answer).toEqual({ ok: true })
+  })
+
+  it('caps the answer length so OpenRouter does not reserve the model maximum', async () => {
+    // Arrange
+    const mockFetch = vi.fn<typeof fetch>(
+      async () => new Response(JSON.stringify(buildResponseBody('{}')))
+    )
+
+    // Act
+    await ask(mockFetch)
+
+    // Assert
+    const [, init] = mockFetch.mock.calls[0] ?? []
+    expect(JSON.parse(String(init?.body))).toMatchObject({ max_tokens: STRUDEL_AI_MAX_TOKENS })
+  })
+
+  it('adds the reason OpenRouter gives to a refusal', async () => {
+    // Arrange
+    const mockFetch = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ error: { message: 'Requires more credits' } }), {
+          status: 402
+        })
+    )
+
+    // Act and Assert
+    await expect(ask(mockFetch)).rejects.toThrow(
+      `${STRUDEL_AI_ERRORS.noCredit} OpenRouter says: Requires more credits`
+    )
   })
 
   it('asks for a key before calling OpenRouter', async () => {

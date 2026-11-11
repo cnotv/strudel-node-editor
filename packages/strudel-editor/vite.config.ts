@@ -30,9 +30,12 @@ export default defineConfig({
     target: 'esnext',
     sourcemap: true,
     lib: {
-      entry: resolve(import.meta.dirname, 'src/index.ts'),
+      entry: {
+        index: resolve(import.meta.dirname, 'src/index.ts'),
+        helpers: resolve(import.meta.dirname, 'src/helpers.ts')
+      },
       formats: ['es'],
-      fileName: 'index'
+      fileName: (_format, entryName) => `${entryName}.js`
     },
     rollupOptions: {
       external: isExternal

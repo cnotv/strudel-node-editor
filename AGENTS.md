@@ -89,10 +89,11 @@ owes them before the pull request is marked ready.
 
 ## Where output goes
 
-Documentation stays in generative-art's Docusaurus site
-(`cnotv/generative-art`, `documentation/docs/`); this repository has none of its own. A
-finding about the editor goes there as a journey doc, and a constraint that will bite the
-next person here goes in the matching `.claude/rules/` file. A PR body links to those homes.
+Documentation lives in this repository's Docusaurus site, `documentation/docs/`, published at
+cnotv.github.io/strudel-node-editor. Guides go in `guides/`, and a finding about the editor
+goes in `journey/` as a journey doc. A constraint that will bite the next person here goes in
+the matching `.claude/rules/` file. A PR body links to those homes. Documentation for Strudel
+is never added to generative-art.
 
 ## Project facts
 

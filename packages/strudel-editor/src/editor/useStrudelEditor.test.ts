@@ -219,7 +219,10 @@ describe('resolveDefaultStrudelExample', () => {
     const exampleId = DEFAULT_STRUDEL_EXAMPLE_ID
 
     // Act
-    const defaultExample = resolveDefaultStrudelExample(STRUDEL_EXAMPLES, exampleId)
+    const defaultExample = resolveDefaultStrudelExample(
+      [...STRUDEL_EXAMPLES, ...ELECTRO_TUNES],
+      exampleId
+    )
 
     // Assert
     expect(defaultExample?.id).toBe(exampleId)

@@ -65,10 +65,26 @@ describe('StrudelEditor config', () => {
     const defaultId = DEFAULT_STRUDEL_EXAMPLE_ID
 
     // Act
-    const matchesDefault = STRUDEL_EXAMPLES.some((example) => example.id === defaultId)
+    const matchesDefault = [...STRUDEL_EXAMPLES, ...ELECTRO_TUNES].some(
+      (example) => example.id === defaultId
+    )
 
     // Assert
     expect(matchesDefault).toBe(true)
+  })
+
+  it('opens on Uptown Strut and draws its bass as a punchcard', () => {
+    // Arrange
+    const defaultExample = ELECTRO_TUNES.find(({ id }) => id === DEFAULT_STRUDEL_EXAMPLE_ID)
+
+    // Act
+    const bassLine = defaultExample?.code.split('\n').find((line) => line.includes('note(bass)'))
+
+    // Assert
+    expect(defaultExample?.id).toBe('uptown-strut')
+    expect(defaultExample?.code).toContain('const bass = arrange(')
+    expect(defaultExample?.code).toMatch(/gm_slap_bass_1[\S\s]*?\)\._punchcard\(\)/)
+    expect(bassLine).toBeDefined()
   })
 
   it('carries the AGPL isolation note for the deployed build', () => {

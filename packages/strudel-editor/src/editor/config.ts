@@ -884,7 +884,7 @@ $: stack(
 $: stack(
   note(bass).s("gm_slap_bass_1").decay(.25).sustain(0).gain(.9),
   s("<~!31 [bd,cr]>").gain(.4)
-)
+)._punchcard()
 $: stack(
   chord(changes).voicing().struct("~ x ~ x ~ ~ x ~ ~ x ~ x ~ ~ x ~").s("gm_clavinet")
     .decay(.06).sustain(0).room(.15).gain(.18).mask(comp),
@@ -931,7 +931,7 @@ $: stack(
   s("bd bd bd bd").gain(.1),
   s("~ sd ~ sd").gain(.12).lpf(3000)
 ).swingBy(1/3, 4).mask("<0!4 1!36>")
-$: note(bass).s("gm_acoustic_bass").release(.2).room(.2).gain(.75)
+$: note(bass).s("gm_acoustic_bass").release(.2).room(.2).gain(.75)._punchcard()
 $: stack(
   chord(changes).voicing().struct("~ ~ x ~ ~ x ~ ~").s("gm_epiano1").decay(.5).sustain(.2)
     .room(.3).gain(.22).swingBy(1/3, 4).mask("<1!39 0>"),
@@ -1065,7 +1065,11 @@ $: arrange(
   }
 ]
 
-export const DEFAULT_STRUDEL_EXAMPLE_ID = 'first-beat'
+export const DEFAULT_STRUDEL_EXAMPLE_ID = 'uptown-strut'
+/** The repository link at the bottom of the drawer. */
+export const STRUDEL_REPOSITORY_URL = 'https://github.com/cnotv/strudel-node-editor'
+/** The embedding guide, linked beside the repository. */
+export const STRUDEL_DOCUMENTATION_URL = 'https://cnotv.github.io/strudel-node-editor/'
 /** Where the code on screen is kept between visits. */
 export const STRUDEL_SAVED_CODE_STORAGE_KEY = 'strudel-editor-code'
 /** Where the patterns saved under a name are kept. */

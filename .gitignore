@@ -38,3 +38,9 @@ coverage
 
 # Python bytecode from the Blender scripts
 __pycache__/
+
+# Documentation site
+documentation/build
+documentation/.docusaurus
+.pnpm-store
+.playwright-mcp

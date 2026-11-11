@@ -1,6 +1,6 @@
 {
   "extends": "@vue/tsconfig/tsconfig.dom.json",
-  "include": ["env.d.ts", "src/**/*", "src/**/*.vue"],
+  "include": ["env.d.ts", "src/**/*", "src/**/*.vue", "packages/strudel-editor/src/**/*", "packages/strudel-editor/src/**/*.vue"],
   "exclude": ["src/**/__tests__/*"],
   "compilerOptions": {
     "composite": true,
@@ -8,7 +8,8 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@webgamekit/strudel-flow": ["./packages/strudel-flow/src/index.ts"]
+      "@webgamekit/strudel-flow": ["./packages/strudel-flow/src/index.ts"],
+      "@webgamekit/strudel-editor": ["./packages/strudel-editor/src/index.ts"]
     }
   }
 }

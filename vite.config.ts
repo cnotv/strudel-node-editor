@@ -5,7 +5,7 @@ import vue from '@vitejs/plugin-vue'
 import wasm from 'vite-plugin-wasm'
 import basicSsl from '@vitejs/plugin-basic-ssl'
 
-const packages = ['strudel-flow']
+const packages = ['strudel-flow', 'strudel-editor']
 // The leading dot allows cnotv.xyz and every subdomain, since a `vite preview` container
 // rejects any Host header it does not list.
 const allowedHosts = ['.cnotv.xyz']
@@ -34,7 +34,7 @@ export default defineConfig({
       {
         find: /^\.\.\/superdough\/helpers\.mjs$/,
         replacement: fileURLToPath(
-          new URL('./src/views/Tools/StrudelEditor/strudelMidiScheduling.ts', import.meta.url)
+          new URL('./packages/strudel-editor/src/editor/strudelMidiScheduling.ts', import.meta.url)
         )
       }
     ],

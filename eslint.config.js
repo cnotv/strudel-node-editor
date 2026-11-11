@@ -445,7 +445,12 @@ export default [
 
   // Three.js files - allow necessary mutations for 3D objects
   {
-    files: ['packages/threejs/**/*.ts', 'src/views/**/*.ts', 'src/utils/**/*.ts'],
+    files: [
+      'packages/threejs/**/*.ts',
+      'packages/strudel-editor/**/*.ts',
+      'src/views/**/*.ts',
+      'src/utils/**/*.ts'
+    ],
     rules: {
       // Three.js requires mutating objects for position, rotation, etc.
       'functional/immutable-data': 'warn',
@@ -574,7 +579,7 @@ export default [
 
   // Tool views - interactive tools with complex UI and scene setup logic
   {
-    files: ['src/views/Tools/**/*.vue'],
+    files: ['src/views/Tools/**/*.vue', 'packages/strudel-editor/**/*.vue'],
     rules: {
       'max-lines-per-function': ['error', { max: 200, skipBlankLines: true, skipComments: true }],
       complexity: ['error', { max: 50 }],

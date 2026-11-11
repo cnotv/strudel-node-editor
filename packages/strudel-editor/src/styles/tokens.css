@@ -1,0 +1,96 @@
+/* Defaults for the design tokens the editor reads. :where() keeps the specificity at zero, so
+   any token the host app already defines wins; import this file before the host's own styles. */
+:where(:root) {
+  --btn-xs-height: 1.25rem;
+  --btn-sm-height: 1.75rem;
+  --btn-md-height: 2rem;
+  --btn-lg-height: 2.5rem;
+  --font-mono: 'Monaco', 'Courier New', monospace;
+  --font-size-xs: 0.6875rem;
+  --font-size-sm: 0.75rem;
+  --font-size-base: 0.875rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.25rem;
+  --opacity-muted: 0.5;
+  --radius-sm: 0.125rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-full: 9999px;
+  --spacing-px: 0.0625rem;
+  --spacing-0-5: 0.125rem;
+  --spacing-1: 0.25rem;
+  --spacing-2: 0.5rem;
+  --spacing-3: 0.75rem;
+  --spacing-4: 1rem;
+  --spacing-5: 1.25rem;
+  --spacing-8: 2rem;
+  --spacing-10: 2.5rem;
+  --color-accent: hsl(0deg 0% 96.1%);
+  --color-accent-foreground: hsl(0deg 0% 9%);
+  --color-background: hsl(0deg 0% 100%);
+  --color-border: hsl(0deg 0% 89.8%);
+  --color-destructive: hsl(0deg 84.2% 60.2%);
+  --color-destructive-foreground: hsl(0deg 0% 98%);
+  --color-foreground: hsl(0deg 0% 3.9%);
+  --color-input: hsl(0deg 0% 89.8%);
+  --color-muted: hsl(0deg 0% 96.1%);
+  --color-muted-foreground: hsl(0deg 0% 45.1%);
+  --color-playhead: hsl(350deg 55% 55%);
+  --color-primary: hsl(0deg 0% 9%);
+  --color-primary-foreground: hsl(0deg 0% 98%);
+  --color-ring: hsl(0deg 0% 3.9%);
+  --color-secondary: hsl(0deg 0% 96.1%);
+  --color-secondary-foreground: hsl(0deg 0% 9%);
+  --panel-item-bg: hsl(0deg 0% 98%);
+  --panel-item-bg-hover: hsl(0deg 0% 94%);
+  --panel-item-bg-selected: hsl(0deg 0% 90%);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+:where(.dark, [data-theme='dark']) {
+  --color-accent: hsl(0deg 0% 15%);
+  --color-accent-foreground: hsl(0deg 0% 98%);
+  --color-background: hsl(0deg 0% 9%);
+  --color-border: hsl(0deg 0% 15%);
+  --color-destructive: hsl(0deg 62% 30%);
+  --color-destructive-foreground: hsl(0deg 0% 98%);
+  --color-foreground: hsl(0deg 0% 95%);
+  --color-input: hsl(0deg 0% 15%);
+  --color-muted: hsl(0deg 0% 15%);
+  --color-muted-foreground: hsl(0deg 0% 64%);
+  --color-playhead: hsl(350deg 70% 75%);
+  --color-primary: hsl(0deg 0% 98%);
+  --color-primary-foreground: hsl(0deg 0% 9%);
+  --color-ring: hsl(0deg 0% 83%);
+  --color-secondary: hsl(0deg 0% 15%);
+  --color-secondary-foreground: hsl(0deg 0% 98%);
+  --panel-item-bg: hsl(0deg 0% 12%);
+  --panel-item-bg-hover: hsl(0deg 0% 18%);
+  --panel-item-bg-selected: hsl(0deg 0% 22%);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.2);
+}
+
+@media (prefers-color-scheme: dark) {
+  :where(:root:not([data-theme='light'])) {
+    --color-accent: hsl(0deg 0% 15%);
+    --color-accent-foreground: hsl(0deg 0% 98%);
+    --color-background: hsl(0deg 0% 9%);
+    --color-border: hsl(0deg 0% 15%);
+    --color-destructive: hsl(0deg 62% 30%);
+    --color-destructive-foreground: hsl(0deg 0% 98%);
+    --color-foreground: hsl(0deg 0% 95%);
+    --color-input: hsl(0deg 0% 15%);
+    --color-muted: hsl(0deg 0% 15%);
+    --color-muted-foreground: hsl(0deg 0% 64%);
+    --color-playhead: hsl(350deg 70% 75%);
+    --color-primary: hsl(0deg 0% 98%);
+    --color-primary-foreground: hsl(0deg 0% 9%);
+    --color-ring: hsl(0deg 0% 83%);
+    --color-secondary: hsl(0deg 0% 15%);
+    --color-secondary-foreground: hsl(0deg 0% 98%);
+    --panel-item-bg: hsl(0deg 0% 12%);
+    --panel-item-bg-hover: hsl(0deg 0% 18%);
+    --panel-item-bg-selected: hsl(0deg 0% 22%);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.2);
+  }
+}

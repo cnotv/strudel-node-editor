@@ -7,7 +7,7 @@
     "eslint.config.js",
     "netlify/functions/*.ts",
     "src/edge/*.ts",
-    "src/views/Tools/StrudelEditor/**/*.worker.ts"
+    "packages/strudel-editor/src/editor/**/*.worker.ts"
   ],
   "project": ["src/**/*.{ts,vue}", "!src/**/*.test.ts", "!src/**/*.browser.test.ts"]
 }

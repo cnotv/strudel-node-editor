@@ -21,7 +21,8 @@
     "prepare": "husky",
     "size": "size-limit",
     "lighthouse": "node scripts/lighthouse.mjs",
-    "lighthouse:prod": "node scripts/lighthouse.mjs https://strudel.cnotv.xyz/"
+    "lighthouse:prod": "node scripts/lighthouse.mjs https://strudel.cnotv.xyz/",
+    "build:packages": "pnpm --filter './packages/*' build"
   },
   "lint-staged": {
     "*.{vue,js,jsx,cjs,mjs,ts,tsx,cts,mts}": [

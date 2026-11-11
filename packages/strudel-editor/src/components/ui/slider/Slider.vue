@@ -1,0 +1,122 @@
+<script setup lang="ts">
+import { SliderRoot, SliderTrack, SliderRange, SliderThumb } from 'radix-vue'
+import { cn } from '../../../lib/utilities'
+
+const props = defineProps<{
+  modelValue?: number[]
+  defaultValue?: number[]
+  min?: number
+  max?: number
+  step?: number
+  disabled?: boolean
+  class?: string
+  /** Names the thumb for assistive technology, since the thumb is what takes focus. */
+  label?: string
+  /** `playhead` draws a thin line with a line for a thumb, for scrubbing through time. */
+  variant?: 'default' | 'playhead'
+}>()
+
+const emit = defineEmits<{
+  'update:modelValue': [value: number[]]
+}>()
+</script>
+
+<template>
+  <SliderRoot
+    :model-value="modelValue"
+    :default-value="defaultValue ?? [0]"
+    :min="min ?? 0"
+    :max="max ?? 100"
+    :step="step ?? 1"
+    :disabled="disabled"
+    :class="cn('slider', { 'slider--playhead': variant === 'playhead' }, props.class)"
+    @update:model-value="emit('update:modelValue', $event)"
+  >
+    <SliderTrack class="slider__track">
+      <SliderRange class="slider__range" />
+    </SliderTrack>
+    <SliderThumb
+      v-for="(_, index) in modelValue ?? defaultValue ?? [0]"
+      :key="index"
+      class="slider__thumb"
+      :aria-label="label"
+    />
+  </SliderRoot>
+</template>
+
+<style>
+.slider {
+  position: relative;
+  display: flex;
+  width: 100%;
+  touch-action: none;
+  user-select: none;
+  align-items: center;
+}
+
+.slider__track {
+  position: relative;
+  height: 0.5rem;
+  width: 100%;
+  flex-grow: 1;
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  background-color: var(--color-secondary);
+}
+
+.slider__range {
+  position: absolute;
+  height: 100%;
+  background-color: var(--color-primary);
+}
+
+/* Sized close to the 0.5rem track so the thumb no longer bulges past it and
+   out of the panel rows the sliders sit in. */
+.slider__thumb {
+  display: block;
+  height: 0.875rem;
+  width: 0.875rem;
+  border-radius: var(--radius-full);
+  border: 2px solid var(--color-primary);
+  background-color: var(--color-background);
+  transition: colors 150ms;
+}
+
+.slider__thumb:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-ring);
+}
+
+.slider__thumb:disabled {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+/* The whole row takes clicks, not only the thin line, and a touch may pan the row sideways
+   unless it lands on the playhead, whose wider invisible grip keeps it for dragging. */
+.slider--playhead {
+  height: var(--spacing-5);
+  touch-action: pan-x;
+}
+
+.slider--playhead .slider__track {
+  height: 2px;
+  border-radius: 0;
+}
+
+.slider--playhead .slider__thumb {
+  height: var(--spacing-5);
+  width: 2px;
+  border: none;
+  border-radius: 0;
+  background-color: var(--color-playhead);
+  position: relative;
+  touch-action: none;
+}
+
+.slider--playhead .slider__thumb::before {
+  content: '';
+  position: absolute;
+  inset: 0 calc(var(--spacing-3) * -1);
+}
+</style>

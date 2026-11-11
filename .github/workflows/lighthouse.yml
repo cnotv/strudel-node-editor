@@ -2,7 +2,7 @@ name: Lighthouse
 
 on:
   workflow_run:
-    workflows: ["Deploy to GitHub Pages"]
+    workflows: ["Deploy to cloud"]
     types: [completed]
   workflow_dispatch:
 
@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   lighthouse-production:
-    name: Lighthouse (GitHub Pages)
+    name: Lighthouse (strudel.cnotv.xyz)
     if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10

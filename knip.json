@@ -1,0 +1,13 @@
+{
+  "entry": [
+    "src/main.ts",
+    "src/test-setup.ts",
+    "scripts/*.{mjs,js}",
+    "rules/*.js",
+    "eslint.config.js",
+    "netlify/functions/*.ts",
+    "src/edge/*.ts",
+    "src/views/Tools/StrudelEditor/**/*.worker.ts"
+  ],
+  "project": ["src/**/*.{ts,vue}", "!src/**/*.test.ts", "!src/**/*.browser.test.ts"]
+}

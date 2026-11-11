@@ -29,6 +29,8 @@ const savedBadges = {}
 
 beforeEach(() => {
   mkdirSync(FIXTURES_DIR, { recursive: true })
+  // badges/ only exists on the badges branch; a fresh checkout of main has none to save.
+  mkdirSync(BADGES_DIR, { recursive: true })
   const entries = Object.fromEntries(
     readdirSync(BADGES_DIR)
       .filter((file) => file.endsWith('.json'))

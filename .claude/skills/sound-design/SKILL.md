@@ -23,14 +23,14 @@ covers what to put in the pattern and how to tell whether it worked. Follow the 
 | Teaching someone: the three phases, nine weeks and practical projects | `curriculum.md`         |
 
 What each source says, including Learning Synths' worked recipes and the full loudness numbers, is
-in `documentation/docs/journey/sound-design-sources.md`. Read it when this skill is not enough or a
+in [`journey/sound-design-sources.md`](https://github.com/cnotv/generative-art/blob/main/documentation/docs/journey/sound-design-sources.md) in generative-art. Read it when this skill is not enough or a
 claim needs tracing.
 
 ## 1. Write the brief
 
 One line each: what physically happens, how big it is, how far away, and what it must not sound
 like. The "must not" list prevents more mistakes than the rest; the Rock Runner journey
-(`documentation/docs/journey/rock-runner-sound.md`) is the model, including what its rejected
+([`journey/rock-runner-sound.md`](https://github.com/cnotv/generative-art/blob/main/documentation/docs/journey/rock-runner-sound.md) in generative-art) is the model, including what its rejected
 versions sounded like.
 
 ## 2. Split it into layers

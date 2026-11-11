@@ -8,9 +8,6 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 import * as Sentry from '@sentry/vue'
-import { useUmami } from '@/utils/umami'
-
-const { loadUmami } = useUmami()
 
 const app = createApp(App)
 
@@ -20,13 +17,6 @@ Sentry.init({
   environment: import.meta.env.MODE,
   // IP addresses and cookies are personal data under the GDPR; errors are useful without them
   sendDefaultPii: false
-})
-
-// Umami counts the portfolio only (plan limits). The same image also answers lab.cnotv.xyz
-// until the portfolio moves to its own repository, so every other host sends nothing.
-loadUmami({
-  websiteId: import.meta.env.VITE_UMAMI_WEBSITE_ID,
-  domains: 'cnotv.xyz'
 })
 
 app.use(createPinia())

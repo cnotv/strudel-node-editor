@@ -1,49 +1,20 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { generatedRoutes } from '@/config/router'
-import { VIEW_META } from '@/config/viewsMeta'
-import { updatePageMeta } from '@/utils/pageMeta'
-import { OWNER_NAME, OWNER_PROFESSION } from '@/views/Experiments/LandingPage/config'
-
-const HOME_TITLE = `${OWNER_NAME} - ${OWNER_PROFESSION}`
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
-      component: () => import('@/views/Experiments/LandingPage/LandingPage.vue')
+      name: 'Strudel Editor',
+      component: () => import('@/views/Tools/StrudelEditor/StrudelEditor.vue')
     },
     {
+      // Links from the old lab address (/tools/StrudelEditor?tab=...) keep their query.
       path: '/:pathMatch(.*)*',
       name: 'NotFound',
-      redirect: '/experiments/LandingPage'
-    },
-    ...generatedRoutes.filter((r) => r !== null)
+      redirect: (to) => ({ path: '/', query: to.query, hash: to.hash })
+    }
   ]
-})
-
-// Mirrors `ogImage` in scripts/routes.mjs: the capture written by scripts/capture.mjs
-const ogImage = (path: string): string =>
-  `${window.location.origin}${import.meta.env.BASE_URL}og${path}.jpg`
-
-const getPageTitle = (name: string | null | symbol): string => {
-  if (name && typeof name === 'string') return name
-  return HOME_TITLE
-}
-
-router.beforeEach((to, _from, next) => {
-  const name = typeof to.name === 'string' ? to.name : null
-  const title = getPageTitle(name)
-  document.title = title
-
-  const viewMeta = name ? VIEW_META[name] : undefined
-  updatePageMeta({
-    title,
-    description: viewMeta?.description,
-    image: viewMeta?.image ?? (name ? ogImage(to.path) : undefined)
-  })
-
-  next()
 })
 
 export default router

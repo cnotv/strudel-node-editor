@@ -1,20 +1,9 @@
 services:
   website:
-    image: ghcr.io/cnotv/generative-art:latest
+    image: ghcr.io/cnotv/strudel-node-editor:latest
     environment:
       NODE_ENV: production
+    # strudel.cnotv.xyz: the host's reverse proxy sends it to 3004
     ports:
-      - 3000:3000
-
-  # Built on the host from the sources deployed alongside this file — no registry involved.
-  multiplayer-server:
-    build:
-      context: .
-      dockerfile: Dockerfile.server
-    image: generative-art-multiplayer-server:latest
-    environment:
-      NODE_ENV: production
-      PORT: 3001
-    ports:
-      - 3001:3001
+      - 3004:3000
     restart: unless-stopped

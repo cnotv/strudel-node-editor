@@ -5,38 +5,10 @@ import vue from '@vitejs/plugin-vue'
 import wasm from 'vite-plugin-wasm'
 import basicSsl from '@vitejs/plugin-basic-ssl'
 
-const packages = [
-  'animation',
-  'rig',
-  'threejs',
-  'audio',
-  'game',
-  'controls',
-  'recording',
-  'logic',
-  'multiplayer-p2p',
-  'multiplayer-client',
-  'multiplayer-server',
-  'dictionary',
-  'chat',
-  'canvas-editor',
-  'history',
-  'strudel-flow'
-]
-// The leading dot allows cnotv.xyz and every subdomain: lab, games, strudel and test all reach
-// a `vite preview` container, which rejects any Host header it does not list.
-const allowedHosts = ['.cnotv.xyz', 'cnotv.github.io']
-
-// The starters are standalone Vite apps, and the playground also runs them in a frame. The dev
-// server already serves any HTML below the root; a build only emits theirs if it is an entry.
-const playableExamples = ['platformer-starter', 'runner-starter']
-
-const playableExampleInputs = Object.fromEntries(
-  playableExamples.map((example) => [
-    example,
-    fileURLToPath(new URL(`./examples/${example}/index.html`, import.meta.url))
-  ])
-)
+const packages = ['strudel-flow']
+// The leading dot allows cnotv.xyz and every subdomain, since a `vite preview` container
+// rejects any Host header it does not list.
+const allowedHosts = ['.cnotv.xyz']
 
 const packageAliases = Object.fromEntries(
   packages.map((package_) => [
@@ -87,16 +59,12 @@ export default defineConfig({
     target: 'esnext',
     sourcemap: true,
     rollupOptions: {
-      treeshake: false,
-      input: {
-        app: fileURLToPath(new URL('./index.html', import.meta.url)),
-        ...playableExampleInputs
-      }
+      treeshake: false
     }
   },
   optimizeDeps: {
     // @strudel/midi stays out of pre-bundling so the alias above can reach its relative import.
-    exclude: ['@dimforge/rapier3d-compat', 'trystero', 'trystero/nostr', '@strudel/midi']
+    exclude: ['@strudel/midi']
   },
   server: {
     allowedHosts

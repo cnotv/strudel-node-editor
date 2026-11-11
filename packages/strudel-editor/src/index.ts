@@ -1,0 +1,8 @@
+export { default as StrudelEditor } from './editor/StrudelEditor.vue'
+export { default as StrudelCodeEditor } from './editor/StrudelCodeEditor.vue'
+export { STRUDEL_SAVED_CODE_STORAGE_KEY } from './editor/config'
+export { readStrudelNoteBars } from './editor/noteBars'
+export { readStrudelAddress, writeStrudelAddress } from './editor/strudelAddress'
+export { useStrudelSounds } from './editor/useStrudelSounds'
+export { loadDefaultStrudelPlayback } from './editor/strudelPlayback'
+export type { StrudelEditorMode, StrudelPlayback } from './editor/types'

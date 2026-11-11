@@ -21,7 +21,6 @@
     "prepare": "vite build && tsc",
     "prepublishOnly": "pnpm run build"
   },
-  "private": true,
   "publishConfig": {
     "access": "public"
   },
@@ -39,5 +38,11 @@
     "typescript": "^5.0.0",
     "vite": "^5.0.0",
     "vitest": "^4.0.18"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cnotv/strudel-node-editor.git",
+    "directory": "packages/strudel-flow"
+  },
+  "license": "AGPL-3.0-or-later"
 }

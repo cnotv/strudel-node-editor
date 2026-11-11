@@ -2,7 +2,7 @@
 
 The Strudel live-coding music editor served at strudel.cnotv.xyz: a code editor, a node
 editor for instruments and effects (`packages/strudel-flow`), a timeline, transcription and
-WAV or MIDI export, in `src/views/Tools/StrudelEditor/`. A Netlify function
+WAV or MIDI export, in `packages/strudel-editor/src/editor/`. A Netlify function
 (`netlify/functions/strudel-render.ts`) renders a pattern to WAV or MIDI by driving the
 editor in a headless browser. It was cut out of
 [cnotv/generative-art](https://github.com/cnotv/generative-art).
@@ -108,7 +108,7 @@ next person here goes in the matching `.claude/rules/` file. A PR body links to 
 
 ### Done checklist
 
-- [ ] A change to a node or instrument has a test in `packages/strudel-flow` or `src/views/Tools/StrudelEditor`
+- [ ] A change to a node or instrument has a test in `packages/strudel-flow` or `packages/strudel-editor/src/editor`
 - [ ] A sound change was checked muted, never through the speakers
 - [ ] Every artifact the issue named exists, not just the ones forced by a deletion
 

@@ -19,7 +19,7 @@ documented in [`guides/strudel-editor.md`](https://github.com/cnotv/generative-a
 
 Before writing a named style, look it up: its entry in
 [`guides/strudel-genres.md`](https://github.com/cnotv/generative-art/blob/main/documentation/docs/guides/strudel-genres.md) in generative-art for the form, groove and harmonic language, and
-its `STRUDEL_MUSIC_STYLES` entry in `src/views/Tools/StrudelEditor/config.ts` for the tempo,
+its `STRUDEL_MUSIC_STYLES` entry in `packages/strudel-editor/src/editor/config.ts` for the tempo,
 roles, instruments and visuals the editor's hints expect.
 
 Note: when modifying a song, always modify the claps and hats too: not every song should sound

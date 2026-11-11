@@ -6,7 +6,7 @@ const router = createRouter({
     {
       path: '/',
       name: 'Strudel Editor',
-      component: () => import('@/views/Tools/StrudelEditor/StrudelEditor.vue')
+      component: () => import('@webgamekit/strudel-editor').then((module) => module.StrudelEditor)
     },
     {
       // Links from the old lab address (/tools/StrudelEditor?tab=...) keep their query.

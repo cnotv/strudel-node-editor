@@ -39,6 +39,12 @@ export const STRUDEL_FLOW_NODE_DEFINITIONS: StrudelFlowNodeDefinition[] = [
     description: 'One custom Strudel expression.'
   },
   {
+    kind: 'arrange',
+    title: 'Arrange',
+    category: 'Instruments',
+    description: 'Parts that play one after another, each for a number of cycles.'
+  },
+  {
     kind: 'voice',
     title: 'Voice',
     category: 'Sounds',

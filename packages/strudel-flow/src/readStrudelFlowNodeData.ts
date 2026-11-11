@@ -1,6 +1,7 @@
 import {
   STRUDEL_FLOW_CHORD_SCALE_OPTIONS,
   STRUDEL_FLOW_DEFAULT_BEATS_STEPS,
+  STRUDEL_FLOW_MAX_ARRANGE_CYCLES,
   STRUDEL_FLOW_MAX_DRUM_ROWS,
   STRUDEL_FLOW_KEY_OPTIONS,
   STRUDEL_FLOW_MAX_FILTER_CUTOFF,
@@ -21,6 +22,7 @@ import {
   createDefaultPadGrid,
   createStrudelFlowDrumRow,
   STRUDEL_FLOW_CHORDS_DEFAULTS,
+  STRUDEL_FLOW_ARRANGE_DEFAULTS,
   STRUDEL_FLOW_CODE_DEFAULTS,
   STRUDEL_FLOW_DELAY_DEFAULTS,
   STRUDEL_FLOW_ENVELOPE_DEFAULTS,
@@ -44,6 +46,7 @@ import {
   readStoredString
 } from './readStoredValue'
 import type {
+  StrudelFlowArrangeSection,
   StrudelFlowCall,
   StrudelFlowChordsData,
   StrudelFlowDrumRow,
@@ -59,6 +62,7 @@ const NODE_KINDS: StrudelFlowNodeKind[] = [
   'notes',
   'samples',
   'code',
+  'arrange',
   'voice',
   'filter',
   'delay',
@@ -226,6 +230,14 @@ const readCalls = (value: unknown): StrudelFlowCall[] =>
     ? value.filter(isStoredCall).map((call) => ({ method: call.method, argument: call.argument }))
     : []
 
+const readArrangeSections = (value: unknown): StrudelFlowArrangeSection[] => {
+  const sections = (Array.isArray(value) ? value : []).filter(isStoredRecord).map((section) => ({
+    cycles: readInteger(section.cycles, 1, 1, STRUDEL_FLOW_MAX_ARRANGE_CYCLES),
+    pattern: readStoredString(section.pattern, '')
+  }))
+  return sections.length > 0 ? sections : STRUDEL_FLOW_ARRANGE_DEFAULTS.sections
+}
+
 type NodeDataReader = (raw: Record<string, unknown>) => StrudelFlowNodeData
 
 const NODE_DATA_READERS: { [Kind in StrudelFlowNodeKind]: NodeDataReader } = {
@@ -258,6 +270,11 @@ const NODE_DATA_READERS: { [Kind in StrudelFlowNodeKind]: NodeDataReader } = {
     ...readMuted(raw),
     kind: 'code',
     code: readStoredString(raw.code, STRUDEL_FLOW_CODE_DEFAULTS.code)
+  }),
+  arrange: (raw) => ({
+    ...readMuted(raw),
+    kind: 'arrange',
+    sections: readArrangeSections(raw.sections)
   }),
   voice: (raw) => ({
     kind: 'voice',

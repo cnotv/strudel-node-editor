@@ -10,6 +10,7 @@ import {
 } from './codeScanner'
 import {
   STRUDEL_FLOW_DEFAULT_BEATS_PER_CYCLE,
+  STRUDEL_FLOW_MAX_ARRANGE_CYCLES,
   STRUDEL_FLOW_MAX_DRUM_ROWS,
   STRUDEL_FLOW_STEP_COUNT,
   STRUDEL_FLOW_VISUAL_OPTIONS,
@@ -29,6 +30,7 @@ import {
 import { inlineStrudelFlowPatternVariables, readStrudelFlowVariables } from './patternVariables'
 import { normalizeStrudelFlowBeatsPerCycle, normalizeStrudelFlowBeatsPerMinute } from './tempo'
 import type {
+  StrudelFlowArrangeSection,
   StrudelFlowBeatsData,
   StrudelFlowChordsData,
   StrudelFlowDrumRow,
@@ -415,6 +417,30 @@ const withoutFirst = (calls: Call[], name: string): Call[] => {
 }
 
 // Reads the head of a chain into instruments, and says which chained calls it used up.
+// `arrange([4, intro], [8, verse])`; a section it cannot read keeps the whole call as code.
+const readArrangeHead = (argument: string): StrudelFlowNodeData | null => {
+  const sections = splitTopLevel(argument, ',').map((text): StrudelFlowArrangeSection | null => {
+    const inner = /^\[([\S\s]*)]$/.exec(text.trim())?.[1]
+    const [cyclesText, pattern, ...rest] = inner === undefined ? [] : splitTopLevel(inner, ',')
+    const cycles = Number(cyclesText)
+    return pattern === undefined ||
+      rest.length > 0 ||
+      !Number.isInteger(cycles) ||
+      cycles < 1 ||
+      cycles > STRUDEL_FLOW_MAX_ARRANGE_CYCLES
+      ? null
+      : { cycles, pattern }
+  })
+  return sections.length === 0 || sections.some((section) => section === null)
+    ? null
+    : {
+        kind: 'arrange',
+        sections: sections.filter(
+          (section): section is StrudelFlowArrangeSection => section !== null
+        )
+      }
+}
+
 const readHead = (headText: string, calls: Call[]): { branches: Branch[]; remaining: Call[] } => {
   const head = readCall(headText)
   if (head === null) {
@@ -433,6 +459,10 @@ const readHead = (headText: string, calls: Call[]): { branches: Branch[]; remain
   }
   if (head.name === 'stack') {
     return { branches: readStack(head.argument), remaining: calls }
+  }
+  const arrangement = head.name === 'arrange' ? readArrangeHead(head.argument) : null
+  if (arrangement !== null) {
+    return { branches: [instrumentBranch(arrangement)], remaining: calls }
   }
   const drumLine = readDrumLine(head)
   if (drumLine !== null) {

@@ -120,6 +120,15 @@ const generateCodePattern = (data: Extract<StrudelFlowNodeData, { kind: 'code' }
   return expression.includes('\n') ? `(\n${expression}\n)` : `(${expression})`
 }
 
+const generateArrangePattern = (
+  data: Extract<StrudelFlowNodeData, { kind: 'arrange' }>
+): string => {
+  const sections = data.sections
+    .filter((section) => section.pattern.trim().length > 0)
+    .map((section) => `[${section.cycles}, ${section.pattern.trim()}]`)
+  return sections.length === 0 ? '' : `arrange(${sections.join(', ')})`
+}
+
 const generateVoicePattern = (
   data: Extract<StrudelFlowNodeData, { kind: 'voice' }>,
   input: string
@@ -237,6 +246,7 @@ const PATTERN_GENERATORS: PatternGenerators = {
   notes: (data) => generateMiniNotationPattern(data.head ?? 'note', data.pattern),
   samples: (data) => generateMiniNotationPattern('s', data.pattern),
   code: generateCodePattern,
+  arrange: generateArrangePattern,
   voice: generateVoicePattern,
   filter: generateFilterPattern,
   delay: generateDelayPattern,

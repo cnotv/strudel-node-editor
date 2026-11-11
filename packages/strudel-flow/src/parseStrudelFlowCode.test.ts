@@ -34,6 +34,42 @@ const roundTrip = (nodes: StrudelFlowNode[], edges: StrudelFlowEdge[] = []) => {
 }
 
 describe('parseStrudelFlowCode', () => {
+  it('reads an arrange line as an Arrange node and writes the same call back', () => {
+    // Arrange
+    const code = [
+      'setcpm(32)',
+      'const kick = s("bd*4")',
+      '$: arrange([4, kick], [8, silence], [4, stack(kick, s("hh*8"))])'
+    ].join('\n')
+
+    // Act
+    const patch = parseStrudelFlowCode(code)
+    const compilation = patch === null ? null : compileStrudelFlow(patch)
+
+    // Assert
+    expect(patch?.nodes.map((node) => node.data)).toEqual([
+      {
+        kind: 'arrange',
+        sections: [
+          { cycles: 4, pattern: 'kick' },
+          { cycles: 8, pattern: 'silence' },
+          { cycles: 4, pattern: 'stack(kick, s("hh*8"))' }
+        ]
+      }
+    ])
+    expect(compilation?.code).toContain(
+      'arrange([4, kick], [8, silence], [4, stack(kick, s("hh*8"))])'
+    )
+  })
+
+  it('keeps an arrange call with an unreadable section as Code', () => {
+    // Act
+    const patch = parseStrudelFlowCode('$: arrange(kick, [4, snare])')
+
+    // Assert
+    expect(patch?.nodes.map((node) => node.data.kind)).toEqual(['code'])
+  })
+
   it('keeps the notation picked on a Notes node when the code is read again', () => {
     // Arrange
     const nodes = [createNode('notes-1', { kind: 'notes', pattern: 'c3 e3', notation: 'piano' })]

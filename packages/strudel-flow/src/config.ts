@@ -132,6 +132,9 @@ export const STRUDEL_FLOW_PAD_MODIFIER_OPTIONS = [
 ]
 
 export const STRUDEL_FLOW_MAX_DRUM_ROWS = 8
+
+/** The most cycles one arrangement section can play. */
+export const STRUDEL_FLOW_MAX_ARRANGE_CYCLES = 128
 export const STRUDEL_FLOW_DEFAULT_BEATS_STEPS = 16
 
 /** The starter beat: four on the floor, a backbeat snare and eighth-note hats. */

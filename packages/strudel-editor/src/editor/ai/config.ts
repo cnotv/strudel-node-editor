@@ -2,6 +2,9 @@ import type { StrudelComposerActionDefinition } from './types'
 
 export const STRUDEL_AI_OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions'
 
+/** Without a cap OpenRouter reserves the model's full output limit and can refuse for credit. */
+export const STRUDEL_AI_MAX_TOKENS = 3500
+
 // The key and sound model keep the names the Instruments tab first stored them under, so a key
 // saved there is still found after they moved to Settings.
 export const STRUDEL_AI_STORAGE_KEY_API_KEY = 'strudel-instruments-openrouter-key'
@@ -34,7 +37,8 @@ export const STRUDEL_AI_ERRORS = {
   network: 'Could not reach OpenRouter. Check the connection and try again.',
   badAnswer: 'The model did not return a usable answer. Try again or pick another model.',
   noCode: 'The model returned no code. Try again or describe the music differently.',
-  other: 'OpenRouter returned an error'
+  other: 'OpenRouter returned an error',
+  reason: 'OpenRouter says:'
 }
 
 /** Which of the errors above each refusing HTTP status from OpenRouter means. */

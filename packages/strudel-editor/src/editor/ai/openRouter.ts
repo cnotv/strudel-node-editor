@@ -1,6 +1,7 @@
 import { isRecordModule } from '../strudelModules'
 import {
   STRUDEL_AI_ERRORS,
+  STRUDEL_AI_MAX_TOKENS,
   STRUDEL_AI_MODEL_OPTIONS,
   STRUDEL_AI_OPENROUTER_URL,
   STRUDEL_AI_STATUS_ERRORS
@@ -79,6 +80,15 @@ const readStatusMessage = (status: number): string => {
     : STRUDEL_AI_ERRORS[errorKey]
 }
 
+const readRefusalReason = async (response: Response): Promise<string> => {
+  const refusalBody: unknown = await response.json().catch(() => null)
+  const refusal = isRecordModule(refusalBody) ? refusalBody.error : undefined
+  const reason = isRecordModule(refusal) ? refusal.message : undefined
+  return typeof reason === 'string' && reason.length > 0
+    ? ` ${STRUDEL_AI_ERRORS.reason} ${reason}`
+    : ''
+}
+
 /**
  * Posts a chat completion to OpenRouter and reads its JSON answer. The key goes only in the
  * Authorization header of this one request to OpenRouter.
@@ -98,12 +108,12 @@ export const askOpenRouter = async ({
   const response = await fetchImplementation(STRUDEL_AI_OPENROUTER_URL, {
     method: 'POST',
     headers: { Authorization: `Bearer ${apiKey.trim()}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
+    body: JSON.stringify({ max_tokens: STRUDEL_AI_MAX_TOKENS, ...body })
   }).catch(() => {
     throw new Error(STRUDEL_AI_ERRORS.network)
   })
   if (!response.ok) {
-    throw new Error(readStatusMessage(response.status))
+    throw new Error(`${readStatusMessage(response.status)}${await readRefusalReason(response)}`)
   }
   return readOpenRouterJsonAnswer(await response.json().catch(() => null))
 }

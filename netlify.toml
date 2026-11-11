@@ -1,8 +1,12 @@
 [build]
+  base = "/"
+  command = "pnpm build"
+  publish = "dist"
   edge_functions = "src/edge"
 
 [build.environment]
   NODE_VERSION = "24"
+  PNPM_VERSION = "10"
 
 [functions]
   node_bundler = "esbuild"

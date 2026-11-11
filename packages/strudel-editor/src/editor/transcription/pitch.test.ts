@@ -1,10 +1,13 @@
 import { describe, it, expect } from 'vitest'
-import { midiNoteToFreq } from '@webgamekit/audio'
 import { PITCH_FRAME_SIZE, TRANSCRIPTION_SAMPLE_RATE } from '../config'
 import { magnitudeSpectrum } from './fft'
 import { extractFrame, hannWindow } from './spectrogram'
 import { dominantBassNote, frequencyToMidiNote, midiNoteToName } from './pitch'
 import { createSine } from './syntheticSignals'
+
+// Equal temperament with A4 = 440 Hz at MIDI note 69, written out separately so the test does not
+// check frequencyToMidiNote against its own inverse.
+const midiNoteToFreq = (midiNote: number): number => 440 * Math.pow(2, (midiNote - 69) / 12)
 
 const BIN_WIDTH_HZ = TRANSCRIPTION_SAMPLE_RATE / PITCH_FRAME_SIZE
 const SPAN = { durationSeconds: 0.25, sampleRate: TRANSCRIPTION_SAMPLE_RATE }

@@ -129,9 +129,6 @@ importers:
       '@vue/tsconfig':
         specifier: ^0.5.1
         version: 0.5.1
-      '@webgamekit/audio':
-        specifier: ^0.1.0
-        version: 0.1.0
       autoprefixer:
         specifier: ^10.4.24
         version: 10.4.24(postcss@8.5.6)
@@ -261,9 +258,6 @@ importers:
       '@tonejs/midi':
         specifier: ^2.0.28
         version: 2.0.28
-      '@webgamekit/audio':
-        specifier: ^0.1.0
-        version: 0.1.0
       '@webgamekit/strudel-flow':
         specifier: workspace:^
         version: link:../strudel-flow
@@ -1789,9 +1783,6 @@ packages:
 
   '@vueuse/shared@10.11.1':
     resolution: {integrity: sha512-LHpC8711VFZlDaYUXEBbFBCQ7GS3dVU9mjOhhMhXP6txTV4EhYQg/KGnQuvt/sPAtoUKq7VVUnL6mVtFoL42sA==}
-
-  '@webgamekit/audio@0.1.0':
-    resolution: {integrity: sha512-/1J1KMnjubQJ+YryudlUud6BGv/LKHpCP5y291la6t+S/5WcpLMI6cIwHJX27z8tcQXStoJvHDIGgP2/rLvRdg==}
 
   abbrev@2.0.0:
     resolution: {integrity: sha512-6/mh1E2u2YgEsCHdY0Yx5oW+61gZU+1vXaoiHHrpKeuRNNgFvS+/jrwHiQhB5apAf5oB7UB7E19ol2R2LKH8hQ==}
@@ -6319,10 +6310,6 @@ snapshots:
     transitivePeerDependencies:
       - '@vue/composition-api'
       - vue
-
-  '@webgamekit/audio@0.1.0':
-    dependencies:
-      '@tonejs/midi': 2.0.28
 
   abbrev@2.0.0: {}
 

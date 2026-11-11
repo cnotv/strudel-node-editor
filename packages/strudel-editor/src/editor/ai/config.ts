@@ -3,7 +3,7 @@ import type { StrudelComposerActionDefinition } from './types'
 export const STRUDEL_AI_OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions'
 
 /** Without a cap OpenRouter reserves the model's full output limit and can refuse for credit. */
-export const STRUDEL_AI_MAX_TOKENS = 8000
+export const STRUDEL_AI_MAX_TOKENS = 3500
 
 // The key and sound model keep the names the Instruments tab first stored them under, so a key
 // saved there is still found after they moved to Settings.

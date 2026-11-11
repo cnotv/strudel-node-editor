@@ -80,7 +80,6 @@
     "@vitest/ui": "^4.0.18",
     "@vue/test-utils": "^2.4.5",
     "@vue/tsconfig": "^0.5.1",
-    "@webgamekit/audio": "^0.1.0",
     "autoprefixer": "^10.4.24",
     "clsx": "^2.1.1",
     "eslint": "^9.39.2",

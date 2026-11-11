@@ -6,7 +6,7 @@ const SEMITONES_PER_OCTAVE = 12
 const PARABOLA_VERTEX_SCALE = 0.5
 
 /**
- * Nearest equal-tempered MIDI note; the inverse of midiNoteToFreq in `@webgamekit/audio`.
+ * Nearest equal-tempered MIDI note for a frequency.
  * @param frequencyHz - frequency to name
  * @returns the closest MIDI note number
  */

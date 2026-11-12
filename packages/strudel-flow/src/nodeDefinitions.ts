@@ -41,8 +41,8 @@ export const STRUDEL_FLOW_NODE_DEFINITIONS: StrudelFlowNodeDefinition[] = [
   {
     kind: 'arrange',
     title: 'Arrange',
-    category: 'Instruments',
-    description: 'Parts that play one after another, each for a number of cycles.'
+    category: 'Effects',
+    description: 'Plays the chains cabled into it one after another, each for the cycles you pick.'
   },
   {
     kind: 'voice',

@@ -36,8 +36,7 @@ const INSTRUMENT_KINDS: StrudelFlowNodeKind[] = [
   'chords',
   'notes',
   'samples',
-  'code',
-  'arrange'
+  'code'
 ]
 
 /** The pad pattern the node opens with: an arpeggio rising and falling over eight steps. */
@@ -101,10 +100,7 @@ export const STRUDEL_FLOW_CODE_DEFAULTS: StrudelFlowCodeData = {
 
 export const STRUDEL_FLOW_ARRANGE_DEFAULTS: StrudelFlowArrangeData = {
   kind: 'arrange',
-  sections: [
-    { cycles: 4, pattern: 's("bd*4")' },
-    { cycles: 4, pattern: 'silence' }
-  ]
+  sequence: [0, 0, 0, 0, 1, 1, 1, 1]
 }
 
 export const STRUDEL_FLOW_VOICE_DEFAULTS: StrudelFlowVoiceData = {
@@ -220,7 +216,7 @@ const NODE_DATA_FACTORIES: { [Kind in StrudelFlowNodeKind]: () => StrudelFlowNod
   code: () => ({ ...STRUDEL_FLOW_CODE_DEFAULTS }),
   arrange: () => ({
     ...STRUDEL_FLOW_ARRANGE_DEFAULTS,
-    sections: STRUDEL_FLOW_ARRANGE_DEFAULTS.sections.map((section) => ({ ...section }))
+    sequence: [...STRUDEL_FLOW_ARRANGE_DEFAULTS.sequence]
   }),
   voice: () => ({ ...STRUDEL_FLOW_VOICE_DEFAULTS }),
   filter: () => ({ ...STRUDEL_FLOW_FILTER_DEFAULTS }),

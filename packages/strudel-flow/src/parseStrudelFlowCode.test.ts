@@ -34,12 +34,11 @@ const roundTrip = (nodes: StrudelFlowNode[], edges: StrudelFlowEdge[] = []) => {
 }
 
 describe('parseStrudelFlowCode', () => {
-  it('reads an arrange line as an Arrange node and writes the same call back', () => {
+  it('reads each part of an arrange line as its own nodes, cabled into an Arrange node', () => {
     // Arrange
     const code = [
       'setcpm(32)',
-      'const kick = s("bd*4")',
-      '$: arrange([4, kick], [8, silence], [4, stack(kick, s("hh*8"))])'
+      '$: arrange([4, note("c e")], [8, silence], [4, note("g a").lpf(800)], [4, note("c e")])'
     ].join('\n')
 
     // Act
@@ -47,18 +46,19 @@ describe('parseStrudelFlowCode', () => {
     const compilation = patch === null ? null : compileStrudelFlow(patch)
 
     // Assert
-    expect(patch?.nodes.map((node) => node.data)).toEqual([
-      {
-        kind: 'arrange',
-        sections: [
-          { cycles: 4, pattern: 'kick' },
-          { cycles: 8, pattern: 'silence' },
-          { cycles: 4, pattern: 'stack(kick, s("hh*8"))' }
-        ]
-      }
+    expect(patch?.nodes.map((node) => node.data.kind)).toEqual([
+      'notes',
+      'notes',
+      'filter',
+      'arrange'
     ])
+    expect(patch?.nodes.at(-1)?.data).toEqual({
+      kind: 'arrange',
+      sequence: [0, 0, 0, 0, ...Array.from({ length: 8 }, () => -1), 1, 1, 1, 1, 0, 0, 0, 0]
+    })
+    expect(patch?.edges).toHaveLength(3)
     expect(compilation?.code).toContain(
-      'arrange([4, kick], [8, silence], [4, stack(kick, s("hh*8"))])'
+      '$: arrange([4, note("c e")], [8, silence], [4, note("g a").lpf(800).lpq(1)], [4, note("c e")])'
     )
   })
 

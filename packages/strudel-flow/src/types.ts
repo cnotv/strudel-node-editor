@@ -344,16 +344,13 @@ export type StrudelFlowCodeData = StrudelFlowMuteFlag & {
   code: string
 }
 
-/** One part of an arrangement: how many cycles it plays, and the pattern code that plays. */
-export type StrudelFlowArrangeSection = {
-  cycles: number
-  pattern: string
-}
-
-/** An `arrange([4, intro], [8, verse])` line: its sections play one after another, in order. */
-export type StrudelFlowArrangeData = StrudelFlowMuteFlag & {
+/**
+ * An `arrange([4, intro], [8, verse])` line over the chains cabled into it. Each cycle names the
+ * part that plays, by its place among the cables from top to bottom; -1 plays nothing.
+ */
+export type StrudelFlowArrangeData = {
   kind: 'arrange'
-  sections: StrudelFlowArrangeSection[]
+  sequence: number[]
 }
 
 export type StrudelFlowVoiceData = {

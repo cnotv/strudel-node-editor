@@ -1,97 +1,108 @@
-import type { StrudelFlowArrangeSection } from './types'
+import type { StrudelFlowNode } from './types'
 
 const SILENCE = 'silence'
 const SILENT_PATTERNS = new Set([SILENCE, '~', ''])
 
+/** A cycle that plays no part. */
+export const STRUDEL_FLOW_ARRANGE_SILENT = -1
+
 /**
- * Whether a section plays nothing.
+ * Whether a section of an arrange call plays nothing.
  * @param pattern - a section's pattern code
  * @returns true for `silence`, `~` or an empty pattern
  */
 export const isStrudelFlowArrangeSilent = (pattern: string): boolean =>
   SILENT_PATTERNS.has(pattern.trim())
 
-const cycleOf = (pattern: string): string =>
-  isStrudelFlowArrangeSilent(pattern) ? SILENCE : pattern.trim()
-
 /**
- * The pattern playing in each cycle, one entry per cycle, in order.
- * @param sections - the arrangement's sections
- * @returns each cycle's pattern, `silence` where nothing plays
+ * Reads the sections of an arrange call as a part for every cycle.
+ * @param sections - each section's cycle count and pattern code
+ * @returns the parts in order of first appearance, and for each cycle the part that plays
  */
-export const expandStrudelFlowArrange = (sections: StrudelFlowArrangeSection[]): string[] =>
-  sections.flatMap(({ cycles, pattern }) => Array.from({ length: cycles }, () => cycleOf(pattern)))
-
-/**
- * Joins runs of cycles that play the same pattern back into sections.
- * @param cycles - each cycle's pattern
- * @returns the fewest sections that play the same cycles
- */
-export const compressStrudelFlowArrange = (cycles: string[]): StrudelFlowArrangeSection[] =>
-  cycles.reduce<StrudelFlowArrangeSection[]>((sections, pattern) => {
-    const last = sections.at(-1)
-    return last?.pattern === pattern
-      ? [...sections.slice(0, -1), { ...last, cycles: last.cycles + 1 }]
-      : [...sections, { cycles: 1, pattern }]
-  }, [])
-
-/**
- * The parts an arrangement plays, one grid row each, in order of first appearance.
- * @param sections - the arrangement's sections
- * @returns each distinct pattern that is not silence
- */
-export const readStrudelFlowArrangeRows = (sections: StrudelFlowArrangeSection[]): string[] =>
-  [...new Set(expandStrudelFlowArrange(sections))].filter(
-    (pattern) => !isStrudelFlowArrangeSilent(pattern)
-  )
-
-/**
- * Plays a part in a cycle, or silences the cycle when that part already plays there.
- * @param sections - the arrangement's sections
- * @param pattern - the part of the clicked row
- * @param cycle - the clicked cycle, from zero
- * @returns the sections after the click
- */
-export const toggleStrudelFlowArrangeCycle = (
-  sections: StrudelFlowArrangeSection[],
-  pattern: string,
-  cycle: number
-): StrudelFlowArrangeSection[] =>
-  compressStrudelFlowArrange(
-    expandStrudelFlowArrange(sections).map((playing, index) => {
-      if (index !== cycle) {
-        return playing
-      }
-      return playing === pattern ? SILENCE : pattern
-    })
-  )
-
-/**
- * Cuts or extends an arrangement to a length; added cycles are silent.
- * @param sections - the arrangement's sections
- * @param length - the cycles it should span
- * @returns the sections over exactly that many cycles
- */
-export const resizeStrudelFlowArrange = (
-  sections: StrudelFlowArrangeSection[],
-  length: number
-): StrudelFlowArrangeSection[] => {
-  const cycles = expandStrudelFlowArrange(sections)
-  return compressStrudelFlowArrange(Array.from({ length }, (_, index) => cycles[index] ?? SILENCE))
+export const readStrudelFlowArrangeSequence = (
+  sections: { cycles: number; pattern: string }[]
+): { parts: string[]; sequence: number[] } => {
+  const parts = [
+    ...new Set(
+      sections
+        .filter(({ pattern }) => !isStrudelFlowArrangeSilent(pattern))
+        .map(({ pattern }) => pattern.trim())
+    )
+  ]
+  return {
+    parts,
+    sequence: sections.flatMap(({ cycles, pattern }) =>
+      Array.from({ length: cycles }, () =>
+        isStrudelFlowArrangeSilent(pattern)
+          ? STRUDEL_FLOW_ARRANGE_SILENT
+          : parts.indexOf(pattern.trim())
+      )
+    )
+  }
 }
 
 /**
- * Plays another pattern wherever a part played.
- * @param sections - the arrangement's sections
- * @param from - the part's current pattern
- * @param to - the pattern to play instead
- * @returns the sections after the rename
+ * Joins runs of cycles that play the same part into sections.
+ * @param sequence - the part playing in each cycle
+ * @returns the fewest sections that play the same cycles
  */
-export const renameStrudelFlowArrangeRow = (
-  sections: StrudelFlowArrangeSection[],
-  from: string,
-  to: string
-): StrudelFlowArrangeSection[] =>
-  compressStrudelFlowArrange(
-    expandStrudelFlowArrange(sections).map((playing) => (playing === from ? cycleOf(to) : playing))
+export const compressStrudelFlowArrange = (
+  sequence: number[]
+): { cycles: number; part: number }[] =>
+  sequence.reduce<{ cycles: number; part: number }[]>((sections, part) => {
+    const last = sections.at(-1)
+    return last?.part === part
+      ? [...sections.slice(0, -1), { ...last, cycles: last.cycles + 1 }]
+      : [...sections, { cycles: 1, part }]
+  }, [])
+
+/**
+ * Plays a part in a cycle, or stops it when it already plays there.
+ * @param sequence - the part playing in each cycle
+ * @param part - the part to switch
+ * @param cycle - the cycle to switch it in
+ * @returns the sequence with that cycle changed
+ */
+export const toggleStrudelFlowArrangeCycle = (
+  sequence: number[],
+  part: number,
+  cycle: number
+): number[] =>
+  sequence.map((playing, index) =>
+    index === cycle ? (playing === part ? STRUDEL_FLOW_ARRANGE_SILENT : part) : playing
   )
+
+/**
+ * Gives an arrangement more or fewer cycles.
+ * @param sequence - the part playing in each cycle
+ * @param length - how many cycles it should span
+ * @returns the sequence cut at that length, or padded with silent cycles
+ */
+export const resizeStrudelFlowArrange = (sequence: number[], length: number): number[] =>
+  Array.from({ length }, (_, cycle) => sequence[cycle] ?? STRUDEL_FLOW_ARRANGE_SILENT)
+
+/**
+ * Writes an arrangement as an `arrange(...)` call.
+ * @param sequence - the part playing in each cycle
+ * @param partPatterns - the code of each part, in cable order
+ * @returns the call, or `silence` when no cycle plays a part that exists
+ */
+export const writeStrudelFlowArrange = (sequence: number[], partPatterns: string[]): string => {
+  const sections = compressStrudelFlowArrange(sequence).map(
+    ({ cycles, part }) => `[${cycles}, ${partPatterns[part] ?? SILENCE}]`
+  )
+  return sections.every((section) => section.endsWith(`${SILENCE}]`))
+    ? SILENCE
+    : `arrange(${sections.join(', ')})`
+}
+
+const comparePosition = (first: StrudelFlowNode, second: StrudelFlowNode): number =>
+  first.position.y - second.position.y || first.position.x - second.position.x
+
+/**
+ * Puts the nodes feeding an arrangement in part order: top to bottom, then left to right.
+ * @param sources - the nodes cabled into the Arrange node
+ * @returns the same nodes, one per part
+ */
+export const orderStrudelFlowArrangeParts = (sources: StrudelFlowNode[]): StrudelFlowNode[] =>
+  [...sources].sort(comparePosition)

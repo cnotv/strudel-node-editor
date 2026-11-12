@@ -53,6 +53,18 @@ describe('inlineStrudelFlowPatternVariables', () => {
       'note("<a c b c>")'
     ],
     [
+      'the root notes of a chord progression',
+      ['const plan = "<Em F Em Bb>"', 'const roots = plan.rootNotes(2)'],
+      'note(roots)',
+      'note("<e2 f2 e2 bb2>")'
+    ],
+    [
+      'root notes of chords inside a bar, in another octave',
+      ['const roots = "<[Bb^7 G7] [Cm7 F#7] ~>".rootNotes(3)'],
+      'note(roots)',
+      'note("<[bb3 g3] [c3 f#3] ~>")'
+    ],
+    [
       'a variable chained into a call',
       ['const fifth = "0,7"'],
       'note("c").add(note(fifth))',
@@ -78,6 +90,11 @@ describe('inlineStrudelFlowPatternVariables', () => {
       'a call with the wrong number of arguments',
       ['const head = (changes, end) => arrange([1, changes], [1, end])', 'const bass = head("a")'],
       'note(bass)'
+    ],
+    [
+      'root notes of something that is not chord symbols',
+      ['const roots = lead.rootNotes(2)'],
+      'note(roots)'
     ],
     ['an undeclared name', [], 'note(riff)'],
     ['a constant that names itself', ['const a = a'], 'note(a)']

@@ -3,6 +3,9 @@ import { isStringLiteral, readStringLiteral, splitMiniNotation, splitTopLevel } 
 const DECLARATION_PATTERN = /^(?:const|let|var)\s+([$A-Z_a-z][\w$]*)\s*=\s*([\S\s]+?);?\s*$/
 const IDENTIFIER_PATTERN = /^[$A-Z_a-z][\w$]*$/
 const ARRANGE_PATTERN = /^arrange\s*\(([\S\s]*)\)$/
+const ROOT_NOTES_PATTERN = /^([\S\s]+?)\s*\.rootNotes\(\s*(\d+)\s*\)$/
+// The root of a chord symbol such as `Bb^7` or `F#m`, which is what rootNotes keeps.
+const CHORD_SYMBOL_PATTERN = /(?<![\w#])([A-G][#b]?)[\w#+^-]*/g
 const CALL_PATTERN = /^([$A-Z_a-z][\w$]*)\s*\(([\S\s]*)\)$/
 // `(changes, end) => arrange(...)`: only an arrow function with a plain list of names.
 const ARROW_PATTERN = /^\(([^()]*)\)\s*=>\s*([\S\s]+)$/
@@ -121,6 +124,15 @@ const resolveArrange = (
   )
 }
 
+// Strudel's `rootNotes(octave)`: each chord of a progression becomes its root note.
+const toRootNotes = (chords: string, octave: string): string | null => {
+  const roots = chords.replace(
+    CHORD_SYMBOL_PATTERN,
+    (_symbol, root: string) => `${root.toLowerCase()}${octave}`
+  )
+  return roots === chords ? null : roots
+}
+
 const substituteParameters = (body: string, values: Map<string, string>): string =>
   body.replace(NAME_OR_STRING_PATTERN, (match, name: string | undefined) =>
     name === undefined ? match : (values.get(name) ?? match)
@@ -146,6 +158,26 @@ const expandDeclaredCall = (trimmed: string, variables: Map<string, string>): st
     : null
 }
 
+// A value written as code rather than as a string: root notes of chords, an arrangement, or a
+// call to an arrow function the song declared.
+const resolveCodePattern = (
+  trimmed: string,
+  variables: Map<string, string>,
+  depth: number
+): string | null => {
+  const rootNotes = ROOT_NOTES_PATTERN.exec(trimmed)
+  if (rootNotes !== null) {
+    const chords = resolveMiniNotation(rootNotes[1], variables, depth + 1)
+    return chords === null ? null : toRootNotes(chords, rootNotes[2])
+  }
+  const arrangement = ARRANGE_PATTERN.exec(trimmed)?.[1]
+  if (arrangement !== undefined) {
+    return resolveArrange(arrangement, variables, depth)
+  }
+  const expanded = expandDeclaredCall(trimmed, variables)
+  return expanded === null ? null : resolveMiniNotation(expanded, variables, depth + 1)
+}
+
 const resolveMiniNotation = (
   value: string,
   variables: Map<string, string>,
@@ -162,15 +194,9 @@ const resolveMiniNotation = (
     return readStringLiteral(trimmed)
   }
   const declared = IDENTIFIER_PATTERN.test(trimmed) ? variables.get(trimmed) : undefined
-  if (declared !== undefined) {
-    return resolveMiniNotation(declared, variables, depth + 1)
-  }
-  const arrangement = ARRANGE_PATTERN.exec(trimmed)?.[1]
-  if (arrangement !== undefined) {
-    return resolveArrange(arrangement, variables, depth)
-  }
-  const expanded = expandDeclaredCall(trimmed, variables)
-  return expanded === null ? null : resolveMiniNotation(expanded, variables, depth + 1)
+  return declared === undefined
+    ? resolveCodePattern(trimmed, variables, depth)
+    : resolveMiniNotation(declared, variables, depth + 1)
 }
 
 /**

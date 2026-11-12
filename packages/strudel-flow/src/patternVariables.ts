@@ -168,3 +168,43 @@ export const inlineStrudelFlowPatternVariables = (
     const pattern = resolveMiniNotation(name, variables, 0)
     return pattern === null ? call : `${head}(${JSON.stringify(pattern)})`
   })
+
+const resolveDeclaredExpression = (
+  name: string,
+  variables: Map<string, string>,
+  depth: number
+): string => {
+  const declared = depth > MAX_DEPTH ? undefined : variables.get(name)
+  return declared === undefined
+    ? name
+    : IDENTIFIER_PATTERN.test(declared)
+      ? resolveDeclaredExpression(declared, variables, depth + 1)
+      : declared
+}
+
+/**
+ * Writes the pattern a constant holds in place of its name in each section of an
+ * `arrange([n, name], ...)`, so every part reads as the nodes it is made of instead of one
+ * opaque name. Chained calls after the arrange stay as written.
+ * @param expression - one pattern expression
+ * @param variables - the program's constants, from `readStrudelFlowVariables`
+ * @returns the expression with each named part spelled out, or unchanged when it is no arrange
+ */
+export const inlineStrudelFlowArrangeParts = (
+  expression: string,
+  variables: Map<string, string>
+): string => {
+  const [head, ...chained] = splitTopLevel(expression.trim(), '.')
+  const argument = ARRANGE_PATTERN.exec(head ?? '')?.[1]
+  if (argument === undefined) {
+    return expression
+  }
+  const sections = splitTopLevel(argument, ',').map((section) => {
+    const inner = SECTION_PATTERN.exec(section.trim())?.[1]
+    const [cycles, part, ...rest] = inner === undefined ? [] : splitTopLevel(inner, ',')
+    return part === undefined || rest.length > 0 || !IDENTIFIER_PATTERN.test(part.trim())
+      ? section
+      : `[${cycles}, ${resolveDeclaredExpression(part.trim(), variables, 0)}]`
+  })
+  return [`arrange(${sections.join(', ')})`, ...chained].join('.')
+}

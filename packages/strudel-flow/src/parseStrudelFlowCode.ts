@@ -29,7 +29,11 @@ import {
   createStrudelFlowNodeData,
   isStrudelFlowInstrumentKind
 } from './nodeDefaults'
-import { inlineStrudelFlowPatternVariables, readStrudelFlowVariables } from './patternVariables'
+import {
+  inlineStrudelFlowArrangeParts,
+  inlineStrudelFlowPatternVariables,
+  readStrudelFlowVariables
+} from './patternVariables'
 import { normalizeStrudelFlowBeatsPerCycle, normalizeStrudelFlowBeatsPerMinute } from './tempo'
 import type {
   StrudelFlowBeatsData,
@@ -894,7 +898,12 @@ export const parseStrudelFlowCode = (
   const build = (reusable: StrudelFlowNode[]): BuildState =>
     program.blocks
       .map((block) => {
-        const chain = readChain(inlineStrudelFlowPatternVariables(block.expression, variables))
+        const chain = readChain(
+          inlineStrudelFlowArrangeParts(
+            inlineStrudelFlowPatternVariables(block.expression, variables),
+            variables
+          )
+        )
         return { ...chain, branches: muteBranches(chain.branches, block.muted) }
       })
       .reduce(addChain, {

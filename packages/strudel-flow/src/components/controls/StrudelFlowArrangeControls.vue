@@ -25,6 +25,17 @@ const emit = defineEmits<{
 const nodeId = useNodeId()
 const { getEdges, getNodes } = useVueFlow()
 
+// A part is named for the instrument that starts its chain, not the effect that ends it.
+const instrumentOf = (node: StrudelFlowNode, visited: string[] = []): StrudelFlowNode => {
+  const sourceId = getEdges.value.find(
+    (edge) => edge.target === node.id && !visited.includes(edge.source)
+  )?.source
+  const source = getNodes.value.find((candidate) => candidate.id === sourceId)
+  return source === undefined
+    ? node
+    : instrumentOf(source as StrudelFlowNode, [...visited, node.id])
+}
+
 // A part is a node cabled into this one; they sit in rows from top to bottom, as on the canvas.
 const parts = computed(() => {
   const sourceIds = new Set(
@@ -33,7 +44,7 @@ const parts = computed(() => {
   return orderStrudelFlowArrangeParts(
     getNodes.value.filter((node): node is StrudelFlowNode => sourceIds.has(node.id))
   ).map((node, index) => ({
-    label: `${index + 1}. ${getStrudelFlowNodeDefinition(node.data.kind).title}`
+    label: `${index + 1}. ${getStrudelFlowNodeDefinition(instrumentOf(node).data.kind).title}`
   }))
 })
 

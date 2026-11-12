@@ -62,6 +62,30 @@ describe('parseStrudelFlowCode', () => {
     )
   })
 
+  it('spells out a constant used as a part, so its sound and gain show as nodes', () => {
+    // Arrange
+    const code = [
+      'const kick = s("rolandtr909_bd*4").gain(0.9)',
+      '$: arrange([8, kick], [16, kick], [8, silence], [16, kick], [4, kick])'
+    ].join('\n')
+
+    // Act
+    const patch = parseStrudelFlowCode(code)
+    const kinds = patch?.nodes.map((node) => node.data.kind)
+
+    // Assert
+    expect(kinds).not.toContain('code')
+    expect(kinds).toContain('gain')
+    expect(patch?.nodes.at(-1)?.data).toEqual({
+      kind: 'arrange',
+      sequence: [
+        ...Array.from({ length: 24 }, () => 0),
+        ...Array.from({ length: 8 }, () => -1),
+        ...Array.from({ length: 20 }, () => 0)
+      ]
+    })
+  })
+
   it('keeps an arrange call with an unreadable section as Code', () => {
     // Act
     const patch = parseStrudelFlowCode('$: arrange(kick, [4, snare])')

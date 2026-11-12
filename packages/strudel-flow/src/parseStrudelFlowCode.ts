@@ -898,9 +898,11 @@ export const parseStrudelFlowCode = (
   const build = (reusable: StrudelFlowNode[]): BuildState =>
     program.blocks
       .map((block) => {
+        // A part spelled out of its name brings its own `chord(plan)`, so constants are inlined
+        // after the parts, not before.
         const chain = readChain(
-          inlineStrudelFlowArrangeParts(
-            inlineStrudelFlowPatternVariables(block.expression, variables),
+          inlineStrudelFlowPatternVariables(
+            inlineStrudelFlowArrangeParts(block.expression, variables),
             variables
           )
         )

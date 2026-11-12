@@ -86,6 +86,28 @@ describe('parseStrudelFlowCode', () => {
     })
   })
 
+  it('reads chord(plan) in a spelled-out part as the chord, not as Code', () => {
+    // Arrange
+    const code = [
+      'const plan = "<Em F Em Bb>"',
+      'const pad = chord(plan).dict("ireal").voicing().s("gm_string_ensemble_1").gain(0.3)',
+      'const acid = chord(plan).dict("ireal").voicing().arp("0 2 1 3").s("sawtooth")',
+      '$: arrange([8, pad], [16, silence], [8, acid])'
+    ].join('\n')
+
+    // Act
+    const patch = parseStrudelFlowCode(code)
+    const codeNodes = patch?.nodes.filter((node) => node.data.kind === 'code') ?? []
+    const chordNodes =
+      patch?.nodes.filter(
+        (node) => node.data.kind === 'notes' && node.data.pattern === '<Em F Em Bb>'
+      ) ?? []
+
+    // Assert
+    expect(codeNodes).toEqual([])
+    expect(chordNodes).toHaveLength(2)
+  })
+
   it('keeps an arrange call with an unreadable section as Code', () => {
     // Act
     const patch = parseStrudelFlowCode('$: arrange(kick, [4, snare])')

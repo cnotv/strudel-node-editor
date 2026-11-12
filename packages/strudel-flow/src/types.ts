@@ -87,7 +87,15 @@ export type StrudelFlowChordsData = StrudelFlowMuteFlag & {
 }
 
 /** How a Notes node draws its notes: picked from the sound it plays, or one chosen by hand. */
-export type StrudelFlowNotation = 'auto' | 'guitar' | 'bass' | 'sheet' | 'piano' | 'names' | 'text'
+export type StrudelFlowNotation =
+  | 'auto'
+  | 'grid'
+  | 'guitar'
+  | 'bass'
+  | 'sheet'
+  | 'piano'
+  | 'names'
+  | 'text'
 
 /** The view a notation resolves to once Auto has looked at the sound. */
 export type StrudelFlowNotationView = Exclude<StrudelFlowNotation, 'auto'>

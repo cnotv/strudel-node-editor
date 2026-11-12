@@ -2,6 +2,7 @@
 import { computed, inject, ref, watch } from 'vue'
 import { useNodeId } from '@vue-flow/core'
 import StrudelFlowSelect from '../controls/StrudelFlowSelect.vue'
+import StrudelFlowNoteGrid from './StrudelFlowNoteGrid.vue'
 import StrudelFlowNoteNames from './StrudelFlowNoteNames.vue'
 import StrudelFlowPianoRoll from './StrudelFlowPianoRoll.vue'
 import StrudelFlowSheet from './StrudelFlowSheet.vue'
@@ -96,7 +97,13 @@ const onNotationChange = (value: string): void => {
       <span class="strudel-flow-switch__thumb" aria-hidden="true" />
     </button>
   </div>
-  <template v-if="bars.length > 0 && view !== 'text'">
+  <StrudelFlowNoteGrid
+    v-if="view === 'grid'"
+    :bars="bars"
+    :beats-per-bar="beatsPerCycle"
+    @update:pattern="emit('update', { ...data, pattern: $event })"
+  />
+  <template v-else-if="bars.length > 0 && view !== 'text'">
     <StrudelFlowTabStaff
       v-if="view === 'bass' || view === 'guitar'"
       :bars="bars"

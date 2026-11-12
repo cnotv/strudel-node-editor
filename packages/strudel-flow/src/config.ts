@@ -138,6 +138,13 @@ export const STRUDEL_FLOW_MAX_ARRANGE_CYCLES = 128
 
 /** The most parts one arrangement can switch between. */
 export const STRUDEL_FLOW_MAX_ARRANGE_PARTS = 64
+
+/** The Notes grid's resolution: two steps to a beat is an eighth note. */
+export const STRUDEL_FLOW_NOTE_GRID_STEPS_PER_BEAT = 2
+
+/** The most bars the Notes grid can hold. */
+export const STRUDEL_FLOW_MAX_NOTE_GRID_BARS = 128
+
 export const STRUDEL_FLOW_DEFAULT_BEATS_STEPS = 16
 
 /** The starter beat: four on the floor, a backbeat snare and eighth-note hats. */
@@ -235,6 +242,7 @@ export const STRUDEL_FLOW_CHORD_FRET_SPAN = 4
 
 export const STRUDEL_FLOW_NOTATION_OPTIONS: { value: StrudelFlowNotation; label: string }[] = [
   { value: 'auto', label: 'Auto' },
+  { value: 'grid', label: 'Grid' },
   { value: 'guitar', label: 'Guitar tab' },
   { value: 'bass', label: 'Bass tab' },
   { value: 'sheet', label: 'Piano sheet' },

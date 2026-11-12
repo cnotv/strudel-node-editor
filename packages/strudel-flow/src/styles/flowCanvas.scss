@@ -871,6 +871,7 @@
 }
 
 .strudel-flow-node[data-node-kind='beats'],
+.strudel-flow-node[data-node-kind='notes'],
 .strudel-flow-node[data-node-kind='arrange'] {
   width: 44rem;
 }
@@ -882,7 +883,6 @@
   width: 20rem;
 }
 
-.strudel-flow-node[data-node-kind='notes'],
 .strudel-flow-node[data-node-kind='mask'] {
   width: 24rem;
 }

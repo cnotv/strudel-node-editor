@@ -85,7 +85,7 @@ export const STRUDEL_FLOW_CHORDS_DEFAULTS: StrudelFlowChordsData = {
 export const STRUDEL_FLOW_NOTES_DEFAULTS: StrudelFlowNotesData = {
   kind: 'notes',
   pattern: 'c3 [e3 g3] a3 [g3 e3]',
-  notation: 'auto'
+  notation: 'grid'
 }
 
 export const STRUDEL_FLOW_SAMPLES_DEFAULTS: StrudelFlowSamplesData = {

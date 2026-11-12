@@ -1,6 +1,6 @@
 {
   "name": "@webgamekit/strudel-editor",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "The Strudel live-coding editor as a Vue 3 component: code editor, node editor, timeline, transcription and WAV or MIDI export.",
   "repository": {
     "type": "git",
@@ -18,6 +18,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./helpers": {
+      "types": "./dist/helpers.d.ts",
+      "import": "./dist/helpers.js"
     },
     "./style.css": "./dist/style.css",
     "./tokens.css": "./dist/tokens.css"

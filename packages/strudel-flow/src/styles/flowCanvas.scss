@@ -525,7 +525,7 @@
 
 .strudel-flow-arrange__row {
   display: grid;
-  grid-template-columns: 7rem repeat(var(--arrange-cycles), 1.5rem);
+  grid-template-columns: 9rem repeat(var(--arrange-cycles), 1.5rem);
   gap: var(--spacing-1);
 }
 

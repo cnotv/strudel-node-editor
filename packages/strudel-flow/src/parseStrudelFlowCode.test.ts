@@ -467,6 +467,24 @@ describe('parseStrudelFlowCode', () => {
     expect(compileStrudelFlow(parsed!).code).toBe(`setcpm(120/4)\n${code}`)
   })
 
+  it('reads n("0 1 2") with no scale as a Notes node and writes it back unchanged', () => {
+    // Arrange
+    const code = '$: n("0 1 2 1 0 1 2 1")'
+
+    // Act
+    const parsed = parseStrudelFlowCode(`${code}.s("sawtooth")`)
+    const bare = parseStrudelFlowCode(code)
+
+    // Assert
+    expect(parsed?.nodes[0]?.data).toEqual({
+      kind: 'notes',
+      pattern: '0 1 2 1 0 1 2 1',
+      notation: 'text',
+      head: 'n'
+    })
+    expect(compileStrudelFlow(bare!).code).toBe(`setcpm(120/4)\n${code}`)
+  })
+
   it('keeps chord symbols that no key holds as a Notes node', () => {
     // Arrange
     const code = '$: chord("<Cm7 Fm7>").voicing()'

@@ -3,6 +3,12 @@ import { isStringLiteral, readStringLiteral, splitMiniNotation, splitTopLevel } 
 const DECLARATION_PATTERN = /^(?:const|let|var)\s+([$A-Z_a-z][\w$]*)\s*=\s*([\S\s]+?);?\s*$/
 const IDENTIFIER_PATTERN = /^[$A-Z_a-z][\w$]*$/
 const ARRANGE_PATTERN = /^arrange\s*\(([\S\s]*)\)$/
+const CALL_PATTERN = /^([$A-Z_a-z][\w$]*)\s*\(([\S\s]*)\)$/
+// `(changes, end) => arrange(...)`: only an arrow function with a plain list of names.
+const ARROW_PATTERN = /^\(([^()]*)\)\s*=>\s*([\S\s]+)$/
+// A string literal is matched first so a word inside one is never taken for a name.
+const NAME_OR_STRING_PATTERN =
+  /"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|(?<![\w$.])([$A-Z_a-z][\w$]*)(?![\w$])/g
 const SECTION_PATTERN = /^\[([\S\s]*)]$/
 const REPEAT_PATTERN = /^([\S\s]+)!(\d+)$/
 // A head called on its own, never as a method: `.chord(x)` voices a pattern rather than being one.
@@ -115,6 +121,31 @@ const resolveArrange = (
   )
 }
 
+const substituteParameters = (body: string, values: Map<string, string>): string =>
+  body.replace(NAME_OR_STRING_PATTERN, (match, name: string | undefined) =>
+    name === undefined ? match : (values.get(name) ?? match)
+  )
+
+// A call to an arrow function the song declared reads as the function's body with each
+// argument written in place of its parameter.
+const expandDeclaredCall = (trimmed: string, variables: Map<string, string>): string | null => {
+  const call = CALL_PATTERN.exec(trimmed)
+  const declared = call === null ? undefined : variables.get(call[1])
+  const arrow = declared === undefined ? null : ARROW_PATTERN.exec(declared)
+  if (call === null || arrow === null) {
+    return null
+  }
+  const parameters = splitTopLevel(arrow[1], ',')
+  const values = splitTopLevel(call[2], ',')
+  return parameters.length === values.length &&
+    parameters.every((name) => IDENTIFIER_PATTERN.test(name))
+    ? substituteParameters(
+        arrow[2],
+        new Map(parameters.map((name, index) => [name, values[index]]))
+      )
+    : null
+}
+
 const resolveMiniNotation = (
   value: string,
   variables: Map<string, string>,
@@ -135,7 +166,11 @@ const resolveMiniNotation = (
     return resolveMiniNotation(declared, variables, depth + 1)
   }
   const arrangement = ARRANGE_PATTERN.exec(trimmed)?.[1]
-  return arrangement === undefined ? null : resolveArrange(arrangement, variables, depth)
+  if (arrangement !== undefined) {
+    return resolveArrange(arrangement, variables, depth)
+  }
+  const expanded = expandDeclaredCall(trimmed, variables)
+  return expanded === null ? null : resolveMiniNotation(expanded, variables, depth + 1)
 }
 
 /**

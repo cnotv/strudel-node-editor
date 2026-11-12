@@ -108,6 +108,25 @@ describe('parseStrudelFlowCode', () => {
     expect(chordNodes).toHaveLength(2)
   })
 
+  it('reads note(bass) as notes when bass is built with a function the song defines', () => {
+    // Arrange
+    const code = [
+      'const head = (changes, end) => arrange([7, changes], [1, end])',
+      'const walkTurn = "c2 eb2 f1 a1"',
+      'const walkA = "<[bb1 d2 g1 b1] [c2 eb2 f1 a1]>"',
+      'const bass = arrange([4, walkTurn], [8, head(walkA, walkTurn)], [1, "bb1"])',
+      '$: note(bass).s("gm_acoustic_bass").gain(.75)'
+    ].join('\n')
+
+    // Act
+    const patch = parseStrudelFlowCode(code)
+    const kinds = patch?.nodes.map((node) => node.data.kind)
+
+    // Assert
+    expect(kinds).not.toContain('code')
+    expect(kinds).toEqual(['notes', 'voice', 'gain'])
+  })
+
   it('keeps an arrange call with an unreadable section as Code', () => {
     // Act
     const patch = parseStrudelFlowCode('$: arrange(kick, [4, snare])')

@@ -6,6 +6,7 @@ import { Code2, Ellipsis, Headphones, SquareCode, Trash2, Volume2, VolumeX } fro
 import StrudelFlowBeatsControls from './controls/StrudelFlowBeatsControls.vue'
 import StrudelFlowCallList from './controls/StrudelFlowCallList.vue'
 import StrudelFlowChordsControls from './controls/StrudelFlowChordsControls.vue'
+import StrudelFlowArrangeControls from './controls/StrudelFlowArrangeControls.vue'
 import StrudelFlowCodeControls from './controls/StrudelFlowCodeControls.vue'
 import StrudelFlowDelayControls from './controls/StrudelFlowDelayControls.vue'
 import StrudelFlowEnvelopeControls from './controls/StrudelFlowEnvelopeControls.vue'
@@ -56,6 +57,7 @@ const NODE_CONTROLS: Record<Exclude<StrudelFlowNodeKind, 'effect'>, Component> =
   notes: markRaw(StrudelFlowPatternControls),
   samples: markRaw(StrudelFlowSamplesControls),
   code: markRaw(StrudelFlowCodeControls),
+  arrange: markRaw(StrudelFlowArrangeControls),
   voice: markRaw(StrudelFlowVoiceControls),
   filter: markRaw(StrudelFlowFilterControls),
   delay: markRaw(StrudelFlowDelayControls),

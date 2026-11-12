@@ -34,6 +34,107 @@ const roundTrip = (nodes: StrudelFlowNode[], edges: StrudelFlowEdge[] = []) => {
 }
 
 describe('parseStrudelFlowCode', () => {
+  it('reads each part of an arrange line as its own nodes, cabled into an Arrange node', () => {
+    // Arrange
+    const code = [
+      'setcpm(32)',
+      '$: arrange([4, note("c e")], [8, silence], [4, note("g a").lpf(800)], [4, note("c e")])'
+    ].join('\n')
+
+    // Act
+    const patch = parseStrudelFlowCode(code)
+    const compilation = patch === null ? null : compileStrudelFlow(patch)
+
+    // Assert
+    expect(patch?.nodes.map((node) => node.data.kind)).toEqual([
+      'notes',
+      'notes',
+      'filter',
+      'arrange'
+    ])
+    expect(patch?.nodes.at(-1)?.data).toEqual({
+      kind: 'arrange',
+      sequence: [0, 0, 0, 0, ...Array.from({ length: 8 }, () => -1), 1, 1, 1, 1, 0, 0, 0, 0]
+    })
+    expect(patch?.edges).toHaveLength(3)
+    expect(compilation?.code).toContain(
+      '$: arrange([4, note("c e")], [8, silence], [4, note("g a").lpf(800).lpq(1)], [4, note("c e")])'
+    )
+  })
+
+  it('spells out a constant used as a part, so its sound and gain show as nodes', () => {
+    // Arrange
+    const code = [
+      'const kick = s("rolandtr909_bd*4").gain(0.9)',
+      '$: arrange([8, kick], [16, kick], [8, silence], [16, kick], [4, kick])'
+    ].join('\n')
+
+    // Act
+    const patch = parseStrudelFlowCode(code)
+    const kinds = patch?.nodes.map((node) => node.data.kind)
+
+    // Assert
+    expect(kinds).not.toContain('code')
+    expect(kinds).toContain('gain')
+    expect(patch?.nodes.at(-1)?.data).toEqual({
+      kind: 'arrange',
+      sequence: [
+        ...Array.from({ length: 24 }, () => 0),
+        ...Array.from({ length: 8 }, () => -1),
+        ...Array.from({ length: 20 }, () => 0)
+      ]
+    })
+  })
+
+  it('reads chord(plan) in a spelled-out part as the chord, not as Code', () => {
+    // Arrange
+    const code = [
+      'const plan = "<Em F Em Bb>"',
+      'const pad = chord(plan).dict("ireal").voicing().s("gm_string_ensemble_1").gain(0.3)',
+      'const acid = chord(plan).dict("ireal").voicing().arp("0 2 1 3").s("sawtooth")',
+      '$: arrange([8, pad], [16, silence], [8, acid])'
+    ].join('\n')
+
+    // Act
+    const patch = parseStrudelFlowCode(code)
+    const codeNodes = patch?.nodes.filter((node) => node.data.kind === 'code') ?? []
+    const chordNodes =
+      patch?.nodes.filter(
+        (node) => node.data.kind === 'notes' && node.data.pattern === '<Em F Em Bb>'
+      ) ?? []
+
+    // Assert
+    expect(codeNodes).toEqual([])
+    expect(chordNodes).toHaveLength(2)
+  })
+
+  it('reads note(bass) as notes when bass is built with a function the song defines', () => {
+    // Arrange
+    const code = [
+      'const head = (changes, end) => arrange([7, changes], [1, end])',
+      'const walkTurn = "c2 eb2 f1 a1"',
+      'const walkA = "<[bb1 d2 g1 b1] [c2 eb2 f1 a1]>"',
+      'const bass = arrange([4, walkTurn], [8, head(walkA, walkTurn)], [1, "bb1"])',
+      '$: note(bass).s("gm_acoustic_bass").gain(.75)'
+    ].join('\n')
+
+    // Act
+    const patch = parseStrudelFlowCode(code)
+    const kinds = patch?.nodes.map((node) => node.data.kind)
+
+    // Assert
+    expect(kinds).not.toContain('code')
+    expect(kinds).toEqual(['notes', 'voice', 'gain'])
+  })
+
+  it('keeps an arrange call with an unreadable section as Code', () => {
+    // Act
+    const patch = parseStrudelFlowCode('$: arrange(kick, [4, snare])')
+
+    // Assert
+    expect(patch?.nodes.map((node) => node.data.kind)).toEqual(['code'])
+  })
+
   it('keeps the notation picked on a Notes node when the code is read again', () => {
     // Arrange
     const nodes = [createNode('notes-1', { kind: 'notes', pattern: 'c3 e3', notation: 'piano' })]

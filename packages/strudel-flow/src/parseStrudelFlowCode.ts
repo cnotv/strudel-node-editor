@@ -1,3 +1,4 @@
+import { readStrudelFlowArrangeSequence } from './arrangeGrid'
 import { readStrudelFlowChordSymbols } from './chordSymbols'
 import {
   isStringLiteral,
@@ -10,6 +11,8 @@ import {
 } from './codeScanner'
 import {
   STRUDEL_FLOW_DEFAULT_BEATS_PER_CYCLE,
+  STRUDEL_FLOW_MAX_ARRANGE_CYCLES,
+  STRUDEL_FLOW_MAX_ARRANGE_PARTS,
   STRUDEL_FLOW_MAX_DRUM_ROWS,
   STRUDEL_FLOW_STEP_COUNT,
   STRUDEL_FLOW_VISUAL_OPTIONS,
@@ -26,7 +29,11 @@ import {
   createStrudelFlowNodeData,
   isStrudelFlowInstrumentKind
 } from './nodeDefaults'
-import { inlineStrudelFlowPatternVariables, readStrudelFlowVariables } from './patternVariables'
+import {
+  inlineStrudelFlowArrangeParts,
+  inlineStrudelFlowPatternVariables,
+  readStrudelFlowVariables
+} from './patternVariables'
 import { normalizeStrudelFlowBeatsPerCycle, normalizeStrudelFlowBeatsPerMinute } from './tempo'
 import type {
   StrudelFlowBeatsData,
@@ -414,8 +421,46 @@ const withoutFirst = (calls: Call[], name: string): Call[] => {
   return index === -1 ? calls : [...calls.slice(0, index), ...calls.slice(index + 1)]
 }
 
-// Reads the head of a chain into instruments, and says which chained calls it used up.
-const readHead = (headText: string, calls: Call[]): { branches: Branch[]; remaining: Call[] } => {
+// `arrange([4, intro], [8, verse])`: each part becomes a branch of its own, cabled into an Arrange
+// node that picks the part for every cycle. A section it cannot read keeps the call as code.
+const readArrangeParts = (argument: string): { branches: Branch[]; sequence: number[] } | null => {
+  const sections = splitTopLevel(argument, ',').map((text) => {
+    const inner = /^\[([\S\s]*)]$/.exec(text.trim())?.[1]
+    const [cyclesText, pattern, ...rest] = inner === undefined ? [] : splitTopLevel(inner, ',')
+    const cycles = Number(cyclesText)
+    return pattern === undefined ||
+      rest.length > 0 ||
+      !Number.isInteger(cycles) ||
+      cycles < 1 ||
+      cycles > STRUDEL_FLOW_MAX_ARRANGE_CYCLES
+      ? null
+      : { cycles, pattern }
+  })
+  if (sections.length === 0 || sections.some((section) => section === null)) {
+    return null
+  }
+  const { parts, sequence } = readStrudelFlowArrangeSequence(
+    sections.filter((section): section is NonNullable<typeof section> => section !== null)
+  )
+  return parts.length === 0 || parts.length > STRUDEL_FLOW_MAX_ARRANGE_PARTS
+    ? null
+    : { branches: parts.map(readArrangePart), sequence }
+}
+
+// A part that is one instrument with its own effects shows as those nodes; anything wider, such
+// as a stack, stays one Code node so the part keeps a single cable.
+const readArrangePart = (part: string): Branch => {
+  const branches = readStackElement(part)
+  const [branch] = branches
+  return branches.length === 1 && branch?.instruments.length === 1
+    ? branch
+    : instrumentBranch(codeInstrument(part))
+}
+
+const readHead = (
+  headText: string,
+  calls: Call[]
+): { branches: Branch[]; remaining: Call[]; effects?: StrudelFlowNodeData[] } => {
   const head = readCall(headText)
   if (head === null) {
     return { branches: [instrumentBranch(codeInstrument(headText))], remaining: calls }
@@ -433,6 +478,14 @@ const readHead = (headText: string, calls: Call[]): { branches: Branch[]; remain
   }
   if (head.name === 'stack') {
     return { branches: readStack(head.argument), remaining: calls }
+  }
+  const arrangement = head.name === 'arrange' ? readArrangeParts(head.argument) : null
+  if (arrangement !== null) {
+    return {
+      branches: arrangement.branches,
+      remaining: calls,
+      effects: [{ kind: 'arrange', sequence: arrangement.sequence }]
+    }
   }
   const drumLine = readDrumLine(head)
   if (drumLine !== null) {
@@ -562,7 +615,7 @@ const readChain = (expression: string): ParsedChain => {
   )
   const isMuted = chainedCalls.some((call) => call.name === 'hush')
   return applyCalls(
-    { branches: head.branches, effects: [] },
+    { branches: head.branches, effects: head.effects ?? [] },
     isMuted ? [...head.remaining, { name: 'hush', argument: '' }] : head.remaining
   )
 }
@@ -845,7 +898,14 @@ export const parseStrudelFlowCode = (
   const build = (reusable: StrudelFlowNode[]): BuildState =>
     program.blocks
       .map((block) => {
-        const chain = readChain(inlineStrudelFlowPatternVariables(block.expression, variables))
+        // A part spelled out of its name brings its own `chord(plan)`, so constants are inlined
+        // after the parts, not before.
+        const chain = readChain(
+          inlineStrudelFlowPatternVariables(
+            inlineStrudelFlowArrangeParts(block.expression, variables),
+            variables
+          )
+        )
         return { ...chain, branches: muteBranches(chain.branches, block.muted) }
       })
       .reduce(addChain, {

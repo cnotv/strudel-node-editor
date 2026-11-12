@@ -3,6 +3,12 @@ import { isStringLiteral, readStringLiteral, splitMiniNotation, splitTopLevel } 
 const DECLARATION_PATTERN = /^(?:const|let|var)\s+([$A-Z_a-z][\w$]*)\s*=\s*([\S\s]+?);?\s*$/
 const IDENTIFIER_PATTERN = /^[$A-Z_a-z][\w$]*$/
 const ARRANGE_PATTERN = /^arrange\s*\(([\S\s]*)\)$/
+const CALL_PATTERN = /^([$A-Z_a-z][\w$]*)\s*\(([\S\s]*)\)$/
+// `(changes, end) => arrange(...)`: only an arrow function with a plain list of names.
+const ARROW_PATTERN = /^\(([^()]*)\)\s*=>\s*([\S\s]+)$/
+// A string literal is matched first so a word inside one is never taken for a name.
+const NAME_OR_STRING_PATTERN =
+  /"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|(?<![\w$.])([$A-Z_a-z][\w$]*)(?![\w$])/g
 const SECTION_PATTERN = /^\[([\S\s]*)]$/
 const REPEAT_PATTERN = /^([\S\s]+)!(\d+)$/
 // A head called on its own, never as a method: `.chord(x)` voices a pattern rather than being one.
@@ -115,6 +121,31 @@ const resolveArrange = (
   )
 }
 
+const substituteParameters = (body: string, values: Map<string, string>): string =>
+  body.replace(NAME_OR_STRING_PATTERN, (match, name: string | undefined) =>
+    name === undefined ? match : (values.get(name) ?? match)
+  )
+
+// A call to an arrow function the song declared reads as the function's body with each
+// argument written in place of its parameter.
+const expandDeclaredCall = (trimmed: string, variables: Map<string, string>): string | null => {
+  const call = CALL_PATTERN.exec(trimmed)
+  const declared = call === null ? undefined : variables.get(call[1])
+  const arrow = declared === undefined ? null : ARROW_PATTERN.exec(declared)
+  if (call === null || arrow === null) {
+    return null
+  }
+  const parameters = splitTopLevel(arrow[1], ',')
+  const values = splitTopLevel(call[2], ',')
+  return parameters.length === values.length &&
+    parameters.every((name) => IDENTIFIER_PATTERN.test(name))
+    ? substituteParameters(
+        arrow[2],
+        new Map(parameters.map((name, index) => [name, values[index]]))
+      )
+    : null
+}
+
 const resolveMiniNotation = (
   value: string,
   variables: Map<string, string>,
@@ -135,7 +166,11 @@ const resolveMiniNotation = (
     return resolveMiniNotation(declared, variables, depth + 1)
   }
   const arrangement = ARRANGE_PATTERN.exec(trimmed)?.[1]
-  return arrangement === undefined ? null : resolveArrange(arrangement, variables, depth)
+  if (arrangement !== undefined) {
+    return resolveArrange(arrangement, variables, depth)
+  }
+  const expanded = expandDeclaredCall(trimmed, variables)
+  return expanded === null ? null : resolveMiniNotation(expanded, variables, depth + 1)
 }
 
 /**
@@ -168,3 +203,43 @@ export const inlineStrudelFlowPatternVariables = (
     const pattern = resolveMiniNotation(name, variables, 0)
     return pattern === null ? call : `${head}(${JSON.stringify(pattern)})`
   })
+
+const resolveDeclaredExpression = (
+  name: string,
+  variables: Map<string, string>,
+  depth: number
+): string => {
+  const declared = depth > MAX_DEPTH ? undefined : variables.get(name)
+  return declared === undefined
+    ? name
+    : IDENTIFIER_PATTERN.test(declared)
+      ? resolveDeclaredExpression(declared, variables, depth + 1)
+      : declared
+}
+
+/**
+ * Writes the pattern a constant holds in place of its name in each section of an
+ * `arrange([n, name], ...)`, so every part reads as the nodes it is made of instead of one
+ * opaque name. Chained calls after the arrange stay as written.
+ * @param expression - one pattern expression
+ * @param variables - the program's constants, from `readStrudelFlowVariables`
+ * @returns the expression with each named part spelled out, or unchanged when it is no arrange
+ */
+export const inlineStrudelFlowArrangeParts = (
+  expression: string,
+  variables: Map<string, string>
+): string => {
+  const [head, ...chained] = splitTopLevel(expression.trim(), '.')
+  const argument = ARRANGE_PATTERN.exec(head ?? '')?.[1]
+  if (argument === undefined) {
+    return expression
+  }
+  const sections = splitTopLevel(argument, ',').map((section) => {
+    const inner = SECTION_PATTERN.exec(section.trim())?.[1]
+    const [cycles, part, ...rest] = inner === undefined ? [] : splitTopLevel(inner, ',')
+    return part === undefined || rest.length > 0 || !IDENTIFIER_PATTERN.test(part.trim())
+      ? section
+      : `[${cycles}, ${resolveDeclaredExpression(part.trim(), variables, 0)}]`
+  })
+  return [`arrange(${sections.join(', ')})`, ...chained].join('.')
+}

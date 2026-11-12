@@ -1,5 +1,6 @@
 import { STRUDEL_FLOW_WIDGET_ID_PREFIX } from './config'
 import { isStrudelFlowInstrumentKind } from './nodeDefaults'
+import { orderStrudelFlowArrangeParts, writeStrudelFlowArrange } from './arrangeGrid'
 import { generateStrudelFlowNodePattern } from './nodePatterns'
 import { normalizeStrudelFlowBeatsPerCycle, normalizeStrudelFlowBeatsPerMinute } from './tempo'
 import type {
@@ -216,7 +217,45 @@ const planComponent = (
   }
 }
 
+// An Arrange node every branch passes through takes the branches as its parts, in the order of
+// the nodes cabled into it, and plays them one after another instead of stacking them.
+const compileArrangement = (
+  plan: ComponentPlan,
+  arrangeIndex: number,
+  nodesById: Map<string, StrudelFlowNode>
+): string => {
+  const before = plan.sharedIds.slice(0, arrangeIndex)
+  const arrange = nodesById.get(plan.sharedIds[arrangeIndex])?.data
+  const parts = plan.branches.flatMap((branch) => {
+    const tail = nodesById.get([...branch.effectIds, ...before].at(-1) ?? branch.nodeId)
+    return tail === undefined
+      ? []
+      : [
+          {
+            tail,
+            pattern: applyEffects(
+              applyEffects(branch.pattern, branch.effectIds, nodesById),
+              before,
+              nodesById
+            )
+          }
+        ]
+  })
+  const ordered = orderStrudelFlowArrangeParts(parts.map((part) => part.tail)).map(
+    (tail) => parts.find((part) => part.tail === tail)?.pattern ?? ''
+  )
+  const arranged = writeStrudelFlowArrange(
+    arrange?.kind === 'arrange' ? arrange.sequence : [],
+    ordered
+  )
+  return `${plan.label} ${applyEffects(arranged, plan.sharedIds.slice(arrangeIndex + 1), nodesById)}`
+}
+
 const compilePlan = (plan: ComponentPlan, nodesById: Map<string, StrudelFlowNode>): string => {
+  const arrangeIndex = plan.sharedIds.findIndex((id) => nodesById.get(id)?.data.kind === 'arrange')
+  if (arrangeIndex !== -1) {
+    return compileArrangement(plan, arrangeIndex, nodesById)
+  }
   const branches = plan.branches.map((branch) =>
     applyEffects(branch.pattern, branch.effectIds, nodesById)
   )

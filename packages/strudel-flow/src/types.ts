@@ -7,6 +7,7 @@ export type StrudelFlowNodeKind =
   | 'notes'
   | 'samples'
   | 'code'
+  | 'arrange'
   | 'voice'
   | 'filter'
   | 'delay'
@@ -343,6 +344,15 @@ export type StrudelFlowCodeData = StrudelFlowMuteFlag & {
   code: string
 }
 
+/**
+ * An `arrange([4, intro], [8, verse])` line over the chains cabled into it. Each cycle names the
+ * part that plays, by its place among the cables from top to bottom; -1 plays nothing.
+ */
+export type StrudelFlowArrangeData = {
+  kind: 'arrange'
+  sequence: number[]
+}
+
 export type StrudelFlowVoiceData = {
   kind: 'voice'
   sound: string
@@ -468,6 +478,7 @@ export type StrudelFlowNodeData =
   | StrudelFlowNotesData
   | StrudelFlowSamplesData
   | StrudelFlowCodeData
+  | StrudelFlowArrangeData
   | StrudelFlowVoiceData
   | StrudelFlowFilterData
   | StrudelFlowDelayData

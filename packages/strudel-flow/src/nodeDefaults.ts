@@ -7,6 +7,7 @@ import {
 } from './config'
 import type {
   StrudelFlowChordsData,
+  StrudelFlowArrangeData,
   StrudelFlowCodeData,
   StrudelFlowDelayData,
   StrudelFlowDrumRow,
@@ -95,6 +96,11 @@ export const STRUDEL_FLOW_SAMPLES_DEFAULTS: StrudelFlowSamplesData = {
 export const STRUDEL_FLOW_CODE_DEFAULTS: StrudelFlowCodeData = {
   kind: 'code',
   code: 'n("<[0,2,4,6] [5,7,9,11]>").scale("C3:major").slow(2)'
+}
+
+export const STRUDEL_FLOW_ARRANGE_DEFAULTS: StrudelFlowArrangeData = {
+  kind: 'arrange',
+  sequence: [0, 0, 0, 0, 1, 1, 1, 1]
 }
 
 export const STRUDEL_FLOW_VOICE_DEFAULTS: StrudelFlowVoiceData = {
@@ -208,6 +214,10 @@ const NODE_DATA_FACTORIES: { [Kind in StrudelFlowNodeKind]: () => StrudelFlowNod
   notes: () => ({ ...STRUDEL_FLOW_NOTES_DEFAULTS }),
   samples: () => ({ ...STRUDEL_FLOW_SAMPLES_DEFAULTS }),
   code: () => ({ ...STRUDEL_FLOW_CODE_DEFAULTS }),
+  arrange: () => ({
+    ...STRUDEL_FLOW_ARRANGE_DEFAULTS,
+    sequence: [...STRUDEL_FLOW_ARRANGE_DEFAULTS.sequence]
+  }),
   voice: () => ({ ...STRUDEL_FLOW_VOICE_DEFAULTS }),
   filter: () => ({ ...STRUDEL_FLOW_FILTER_DEFAULTS }),
   delay: () => ({ ...STRUDEL_FLOW_DELAY_DEFAULTS }),

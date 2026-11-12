@@ -506,6 +506,99 @@
   text-transform: uppercase;
 }
 
+/* Arrange node: a part per row and a cell per cycle, as in Beats. */
+.strudel-flow-arrange {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.strudel-flow-arrange__grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  padding: var(--spacing-2);
+  overflow-x: auto;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--sf-muted) 40%, transparent);
+}
+
+.strudel-flow-arrange__row {
+  display: grid;
+  grid-template-columns: 9rem repeat(var(--arrange-cycles), 1.5rem);
+  gap: var(--spacing-1);
+}
+
+.strudel-flow-arrange__label {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  background: var(--sf-card);
+  color: var(--sf-card-foreground);
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+}
+
+.strudel-flow-arrange__cell {
+  height: 2rem;
+}
+
+.strudel-flow-arrange__mark {
+  color: var(--sf-muted-foreground);
+  font-size: var(--font-size-xs);
+  white-space: nowrap;
+}
+
+.strudel-flow-arrange__part {
+  box-sizing: border-box;
+  flex: 1;
+  min-width: 0;
+  padding: var(--spacing-1) var(--spacing-1-5);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: var(--sf-muted);
+  color: var(--sf-card-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+}
+
+.strudel-flow-arrange__part:focus-visible {
+  border-color: var(--sf-border);
+  outline: none;
+  box-shadow: 0 0 0 2px var(--sf-ring);
+}
+
+.strudel-flow-arrange__remove,
+.strudel-flow-arrange__add {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--sf-muted-foreground);
+  cursor: pointer;
+}
+
+.strudel-flow-arrange__add {
+  align-self: flex-start;
+}
+
+.strudel-flow-arrange__remove svg,
+.strudel-flow-arrange__add svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.strudel-flow-arrange__empty {
+  margin: 0;
+  color: var(--sf-muted-foreground);
+  font-size: var(--font-size-sm);
+}
+
 /* Code expression. */
 .strudel-flow-textarea {
   box-sizing: border-box;
@@ -777,7 +870,8 @@
   width: 26rem;
 }
 
-.strudel-flow-node[data-node-kind='beats'] {
+.strudel-flow-node[data-node-kind='beats'],
+.strudel-flow-node[data-node-kind='arrange'] {
   width: 44rem;
 }
 

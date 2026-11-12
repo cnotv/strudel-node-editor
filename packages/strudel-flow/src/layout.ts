@@ -21,6 +21,7 @@ const NODE_SIZES: Record<StrudelFlowNodeKind, NodeSize> = {
   notes: { width: 384, height: 440 },
   samples: { width: 480, height: 320 },
   code: { width: 448, height: 300 },
+  arrange: { width: 704, height: 420 },
   voice: { width: 320, height: 240 },
   filter: { width: 448, height: 240 },
   delay: { width: 448, height: 240 },

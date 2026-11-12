@@ -33,6 +33,26 @@ describe('inlineStrudelFlowPatternVariables', () => {
       'note("<a b ~>")'
     ],
     [
+      'a call to an arrow function the song defines',
+      [
+        'const head = (changes, end) => arrange([1, changes], [1, end])',
+        'const bass = arrange([2, head("<a b>", "c")])'
+      ],
+      'note(bass)',
+      'note("<a c b c>")'
+    ],
+    [
+      'a call whose arguments are constants',
+      [
+        'const head = (changes, end) => arrange([1, changes], [1, end])',
+        'const line = "<a b>"',
+        'const turn = "c"',
+        'const bass = arrange([2, head(line, turn)])'
+      ],
+      'note(bass)',
+      'note("<a c b c>")'
+    ],
+    [
       'a variable chained into a call',
       ['const fifth = "0,7"'],
       'note("c").add(note(fifth))',
@@ -54,6 +74,11 @@ describe('inlineStrudelFlowPatternVariables', () => {
     ['an item that lasts several cycles', ['const x = arrange([2, "<a@2>"])'], 'note(x)'],
     ['an alternation inside a step', ['const x = arrange([2, "[<a b> c]"])'], 'note(x)'],
     ['a chord called as a method', ['const changes = "<Am F>"'], 'n("0").chord(changes)'],
+    [
+      'a call with the wrong number of arguments',
+      ['const head = (changes, end) => arrange([1, changes], [1, end])', 'const bass = head("a")'],
+      'note(bass)'
+    ],
     ['an undeclared name', [], 'note(riff)'],
     ['a constant that names itself', ['const a = a'], 'note(a)']
   ])('leaves %s as written', (_name, setup, expression) => {

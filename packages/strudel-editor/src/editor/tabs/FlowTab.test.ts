@@ -24,6 +24,7 @@ describe('FlowTab', () => {
       'Notes',
       'Samples',
       'Code',
+      'Arrange',
       'Filter',
       'Delay',
       'Space',

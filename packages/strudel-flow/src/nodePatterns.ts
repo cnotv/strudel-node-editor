@@ -237,6 +237,7 @@ const PATTERN_GENERATORS: PatternGenerators = {
   notes: (data) => generateMiniNotationPattern(data.head ?? 'note', data.pattern),
   samples: (data) => generateMiniNotationPattern('s', data.pattern),
   code: generateCodePattern,
+  arrange: (_data, input) => input,
   voice: generateVoicePattern,
   filter: generateFilterPattern,
   delay: generateDelayPattern,

@@ -525,7 +525,7 @@
 
 .strudel-flow-arrange__row {
   display: grid;
-  grid-template-columns: 9rem repeat(var(--arrange-cycles), 1.5rem);
+  grid-template-columns: 7rem repeat(var(--arrange-cycles), 1.5rem);
   gap: var(--spacing-1);
 }
 
@@ -871,6 +871,7 @@
 }
 
 .strudel-flow-node[data-node-kind='beats'],
+.strudel-flow-node[data-node-kind='notes'],
 .strudel-flow-node[data-node-kind='arrange'] {
   width: 44rem;
 }
@@ -882,7 +883,6 @@
   width: 20rem;
 }
 
-.strudel-flow-node[data-node-kind='notes'],
 .strudel-flow-node[data-node-kind='mask'] {
   width: 24rem;
 }

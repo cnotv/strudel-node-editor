@@ -80,3 +80,13 @@ export const formatStrudelFlowBeats = (beats: number): string => {
   const numerator = Math.round(beats * denominator)
   return denominator === 1 ? String(numerator) : `${numerator}/${denominator}`
 }
+
+/**
+ * A MIDI note written as a Strudel note name, with a sharp where it needs one.
+ * @param midiNote - the MIDI note number
+ * @returns the name, such as `c#3`
+ */
+export const formatStrudelFlowMidiNote = (midiNote: number): string => {
+  const { letter, alteration, octave } = spellMidiNote(midiNote)
+  return `${letter}${alteration > 0 ? '#' : ''}${octave}`
+}

@@ -506,50 +506,53 @@
   text-transform: uppercase;
 }
 
-/* Arrange node: a bar of its sections sized by their cycles, then one row per section. */
-.strudel-flow-arrange__timeline {
-  display: flex;
-  gap: 2px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.strudel-flow-arrange__segment {
-  flex-basis: 0;
-  min-width: 0;
-  padding: var(--spacing-1) var(--spacing-1-5);
-  overflow: hidden;
-  border-radius: var(--radius-md);
-  background: var(--sf-accent);
-  color: var(--sf-card-foreground);
-  font-family: var(--font-mono);
-  font-size: var(--font-size-xs);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.strudel-flow-arrange__segment--silent {
-  background: var(--sf-muted);
-}
-
-.strudel-flow-arrange__sections {
+/* Arrange node: a part per row and a cell per cycle, as in Beats. */
+.strudel-flow-arrange {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-1-5);
-  margin: 0;
-  padding: 0;
-  list-style: none;
+  gap: var(--spacing-2);
+}
+
+.strudel-flow-arrange__grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  padding: var(--spacing-2);
+  overflow-x: auto;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--sf-muted) 40%, transparent);
 }
 
 .strudel-flow-arrange__row {
-  display: flex;
-  gap: var(--spacing-1-5);
+  display: grid;
+  grid-template-columns: 9rem repeat(var(--arrange-cycles), 1.5rem);
+  gap: var(--spacing-1);
 }
 
-.strudel-flow-arrange__cycles,
-.strudel-flow-arrange__pattern {
+.strudel-flow-arrange__label {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  background: var(--sf-card);
+}
+
+.strudel-flow-arrange__cell {
+  height: 2rem;
+}
+
+.strudel-flow-arrange__mark {
+  color: var(--sf-muted-foreground);
+  font-size: var(--font-size-xs);
+  white-space: nowrap;
+}
+
+.strudel-flow-arrange__part {
   box-sizing: border-box;
+  flex: 1;
+  min-width: 0;
   padding: var(--spacing-1) var(--spacing-1-5);
   border: 1px solid transparent;
   border-radius: var(--radius-md);
@@ -559,17 +562,7 @@
   font-size: var(--font-size-sm);
 }
 
-.strudel-flow-arrange__cycles {
-  width: 4rem;
-}
-
-.strudel-flow-arrange__pattern {
-  flex: 1;
-  min-width: 0;
-}
-
-.strudel-flow-arrange__cycles:focus-visible,
-.strudel-flow-arrange__pattern:focus-visible {
+.strudel-flow-arrange__part:focus-visible {
   border-color: var(--sf-border);
   outline: none;
   box-shadow: 0 0 0 2px var(--sf-ring);
@@ -580,11 +573,15 @@
   display: inline-flex;
   align-items: center;
   gap: var(--spacing-1);
+  padding: 0;
   border: 0;
-  border-radius: var(--radius-md);
   background: transparent;
   color: var(--sf-muted-foreground);
   cursor: pointer;
+}
+
+.strudel-flow-arrange__add {
+  align-self: flex-start;
 }
 
 .strudel-flow-arrange__remove svg,
@@ -864,7 +861,8 @@
   width: 26rem;
 }
 
-.strudel-flow-node[data-node-kind='beats'] {
+.strudel-flow-node[data-node-kind='beats'],
+.strudel-flow-node[data-node-kind='arrange'] {
   width: 44rem;
 }
 

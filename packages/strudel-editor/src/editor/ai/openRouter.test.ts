@@ -27,7 +27,29 @@ describe('askOpenRouter', () => {
     expect(url).toBe(STRUDEL_AI_OPENROUTER_URL)
     expect(new Headers(init?.headers).get('Authorization')).toBe('Bearer secret-key')
     expect(String(init?.body)).not.toContain('secret-key')
+    expect(JSON.parse(String(init?.body))).not.toHaveProperty('reasoning')
     expect(answer).toEqual({ ok: true })
+  })
+
+  it.each([
+    ['deepseek/deepseek-v4.1-flash', 'none'],
+    ['anthropic/claude-sonnet-5.5', 'low']
+  ])('asks %s to reason at %s effort', async (model, effort) => {
+    // Arrange
+    const mockFetch = vi.fn<typeof fetch>(
+      async () => new Response(JSON.stringify(buildResponseBody('{"ok":true}')))
+    )
+
+    // Act
+    await askOpenRouter({
+      apiKey: 'secret-key',
+      body: { model },
+      fetchImplementation: mockFetch
+    })
+
+    // Assert
+    const [, init] = mockFetch.mock.calls[0] ?? []
+    expect(JSON.parse(String(init?.body))).toMatchObject({ reasoning: { effort } })
   })
 
   it('caps the answer length so OpenRouter does not reserve the model maximum', async () => {
@@ -108,6 +130,14 @@ describe('readOpenRouterJsonAnswer', () => {
   ])('rejects %s', (_case, body) => {
     // Act and Assert
     expect(() => readOpenRouterJsonAnswer(body)).toThrow(STRUDEL_AI_ERRORS.badAnswer)
+  })
+
+  it('reports an answer the model ran out of tokens to finish', () => {
+    // Arrange
+    const body = { choices: [{ finish_reason: 'length', message: { content: '{"code":' } }] }
+
+    // Act and Assert
+    expect(() => readOpenRouterJsonAnswer(body)).toThrow(STRUDEL_AI_ERRORS.truncated)
   })
 })
 

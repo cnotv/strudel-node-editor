@@ -4,6 +4,7 @@ import {
   STRUDEL_AI_MAX_TOKENS,
   STRUDEL_AI_MODEL_OPTIONS,
   STRUDEL_AI_OPENROUTER_URL,
+  STRUDEL_AI_REASONING_EFFORT_BY_MODEL,
   STRUDEL_AI_STATUS_ERRORS
 } from './config'
 import type { OpenRouterRequestOptions } from './types'
@@ -37,11 +38,13 @@ export const buildStrictJsonFormat = (
   json_schema: { name, strict: true, schema }
 })
 
+const readFirstChoice = (responseBody: unknown): unknown =>
+  isRecordModule(responseBody) && Array.isArray(responseBody.choices)
+    ? responseBody.choices[0]
+    : undefined
+
 const readMessageContent = (responseBody: unknown): string => {
-  const firstChoice =
-    isRecordModule(responseBody) && Array.isArray(responseBody.choices)
-      ? responseBody.choices[0]
-      : undefined
+  const firstChoice = readFirstChoice(responseBody)
   const message = isRecordModule(firstChoice) ? firstChoice.message : undefined
   const content = isRecordModule(message) ? message.content : undefined
   if (typeof content !== 'string') {
@@ -68,10 +71,19 @@ const parseJsonObject = (text: string): Record<string, unknown> => {
  * Reads the JSON object a chat completion answered with.
  * @param responseBody - the parsed OpenRouter response
  * @returns the object in the first choice's message
- * @throws {Error} a readable error when there is no message or it is not a JSON object
+ * @throws {Error} a readable error when the model ran out of tokens before answering, when there
+ * is no message or when it is not a JSON object
  */
-export const readOpenRouterJsonAnswer = (responseBody: unknown): Record<string, unknown> =>
-  parseJsonObject(readMessageContent(responseBody))
+export const readOpenRouterJsonAnswer = (responseBody: unknown): Record<string, unknown> => {
+  const firstChoice = readFirstChoice(responseBody)
+  if (isRecordModule(firstChoice) && firstChoice.finish_reason === 'length') {
+    throw new Error(STRUDEL_AI_ERRORS.truncated)
+  }
+  return parseJsonObject(readMessageContent(responseBody))
+}
+
+const readReasoningEffort = (model: unknown): 'none' | 'low' | undefined =>
+  typeof model === 'string' ? STRUDEL_AI_REASONING_EFFORT_BY_MODEL[model] : undefined
 
 const readStatusMessage = (status: number): string => {
   const errorKey = STRUDEL_AI_STATUS_ERRORS[status]
@@ -105,10 +117,15 @@ export const askOpenRouter = async ({
   if (apiKey.trim().length === 0) {
     throw new Error(STRUDEL_AI_ERRORS.noKey)
   }
+  const reasoningEffort = readReasoningEffort(body.model)
   const response = await fetchImplementation(STRUDEL_AI_OPENROUTER_URL, {
     method: 'POST',
     headers: { Authorization: `Bearer ${apiKey.trim()}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ max_tokens: STRUDEL_AI_MAX_TOKENS, ...body })
+    body: JSON.stringify({
+      max_tokens: STRUDEL_AI_MAX_TOKENS,
+      ...(reasoningEffort === undefined ? {} : { reasoning: { effort: reasoningEffort } }),
+      ...body
+    })
   }).catch(() => {
     throw new Error(STRUDEL_AI_ERRORS.network)
   })

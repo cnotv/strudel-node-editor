@@ -29,6 +29,20 @@ export const STRUDEL_AI_MODEL_OPTIONS = [
   { value: 'qwen/qwen3.8-flash', label: 'Qwen3.8 Flash' }
 ]
 
+/**
+ * The reasoning effort each model gets. Thinking counts against the token cap, and a model left at
+ * its default can spend all of it thinking and answer with no content, so the models that can turn
+ * it off do; the ones that must think get the lowest effort they accept.
+ */
+export const STRUDEL_AI_REASONING_EFFORT_BY_MODEL: Record<string, 'none' | 'low'> = {
+  'anthropic/claude-haiku-5.5': 'none',
+  'anthropic/claude-sonnet-5.5': 'low',
+  'google/gemini-3.8-flash': 'low',
+  'openai/gpt-5.4-mini': 'none',
+  'deepseek/deepseek-v4.1-flash': 'none',
+  'qwen/qwen3.8-flash': 'none'
+}
+
 export const STRUDEL_AI_ERRORS = {
   noKey: 'Add your OpenRouter key in the Settings tab first.',
   unauthorised: 'OpenRouter did not accept the key. Check it and try again.',
@@ -36,6 +50,8 @@ export const STRUDEL_AI_ERRORS = {
   rateLimited: 'OpenRouter is rate limiting this key. Wait a moment and try again.',
   network: 'Could not reach OpenRouter. Check the connection and try again.',
   badAnswer: 'The model did not return a usable answer. Try again or pick another model.',
+  truncated:
+    'The model ran out of room before it finished. Try again, ask for a shorter piece, or pick another model.',
   noCode: 'The model returned no code. Try again or describe the music differently.',
   other: 'OpenRouter returned an error',
   reason: 'OpenRouter says:'

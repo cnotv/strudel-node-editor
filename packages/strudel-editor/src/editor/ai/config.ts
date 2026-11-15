@@ -2,7 +2,11 @@ import type { StrudelComposerActionDefinition } from './types'
 
 export const STRUDEL_AI_OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions'
 
-/** Without a cap OpenRouter reserves the model's full output limit and can refuse for credit. */
+/**
+ * The whole completion budget, thinking and answer together. OpenRouter reserves it against the
+ * player's credit, so it stays small enough for a low balance; the reasoning choices below leave
+ * about 2,500 tokens of it for the song.
+ */
 export const STRUDEL_AI_MAX_TOKENS = 3500
 
 // The key and sound model keep the names the Instruments tab first stored them under, so a key
@@ -30,9 +34,10 @@ export const STRUDEL_AI_MODEL_OPTIONS = [
 ]
 
 /**
- * The reasoning effort each model gets. Thinking counts against the token cap, and a model left at
- * its default can spend all of it thinking and answer with no content, so the models that can turn
- * it off do; the ones that must think get the lowest effort they accept.
+ * The reasoning effort each model gets. Thinking counts against the same 3,500-token cap, so a
+ * model left at its default can spend it all thinking and return no content: the models that can
+ * turn it off do, and the mandatory reasoners get the lowest effort they accept, leaving the rest
+ * for the answer.
  */
 export const STRUDEL_AI_REASONING_EFFORT_BY_MODEL: Record<string, 'none' | 'low'> = {
   'anthropic/claude-haiku-5.5': 'none',

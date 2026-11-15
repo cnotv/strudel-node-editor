@@ -3,7 +3,9 @@ import {
   STRUDEL_AI_DEFAULT_COMPOSE_MODEL,
   STRUDEL_AI_ERRORS,
   STRUDEL_AI_MAX_TOKENS,
-  STRUDEL_AI_OPENROUTER_URL
+  STRUDEL_AI_MODEL_OPTIONS,
+  STRUDEL_AI_OPENROUTER_URL,
+  STRUDEL_AI_REASONING_EFFORT_BY_MODEL
 } from './config'
 import { askOpenRouter, readKnownOpenRouterModel, readOpenRouterJsonAnswer } from './openRouter'
 
@@ -153,4 +155,14 @@ describe('readKnownOpenRouterModel', () => {
     // Assert
     expect(model).toBe(expectedModel)
   })
+})
+
+describe('reasoning effort', () => {
+  it.each(STRUDEL_AI_MODEL_OPTIONS.map(({ value }) => value))(
+    'leaves room for the answer on %s',
+    (model) => {
+      // Act and Assert
+      expect(STRUDEL_AI_REASONING_EFFORT_BY_MODEL[model]).toBeDefined()
+    }
+  )
 })

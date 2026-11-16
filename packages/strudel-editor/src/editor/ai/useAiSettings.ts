@@ -8,7 +8,7 @@ import {
   STRUDEL_AI_STORAGE_KEY_COMPOSE_MODEL,
   STRUDEL_AI_STORAGE_KEY_SOUND_MODEL
 } from './config'
-import { readKnownOpenRouterModel } from './openRouter'
+import { readStoredOpenRouterModel } from './openRouter'
 
 /**
  * The player's OpenRouter key and the model each AI feature uses, set in the Settings tab and
@@ -18,13 +18,13 @@ import { readKnownOpenRouterModel } from './openRouter'
 export const useAiSettings = defineStore('strudelAiSettings', () => {
   const apiKey = ref(readStored(STRUDEL_AI_STORAGE_KEY_API_KEY) ?? '')
   const composeModel = ref(
-    readKnownOpenRouterModel(
+    readStoredOpenRouterModel(
       readStored(STRUDEL_AI_STORAGE_KEY_COMPOSE_MODEL),
       STRUDEL_AI_DEFAULT_COMPOSE_MODEL
     )
   )
   const soundModel = ref(
-    readKnownOpenRouterModel(
+    readStoredOpenRouterModel(
       readStored(STRUDEL_AI_STORAGE_KEY_SOUND_MODEL),
       STRUDEL_AI_DEFAULT_SOUND_MODEL
     )

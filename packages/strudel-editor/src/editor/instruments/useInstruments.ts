@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { computed, ref, watch } from 'vue'
 import { isRecordModule, requireCallable, requireRecordModule } from '../strudelModules'
 import { loadStrudelSoundLibrary } from '../strudelSoundLibrary'
+import { ensureOpenRouterModels } from '../ai/openRouterModels'
 import { useAiSettings } from '../ai/useAiSettings'
 import { INSTRUMENT_REGENERATE_DELAY_MS, INSTRUMENT_TAG_PREFIX } from './config'
 import { askInstrumentToneAssistant } from './instrumentToneAssistant'
@@ -158,6 +159,7 @@ export const useInstruments = defineStore('instruments', () => {
     assistantBusy.value = true
     assistantError.value = ''
     try {
+      await ensureOpenRouterModels(settings.soundModel)
       const suggestion = await askInstrumentToneAssistant({
         apiKey: settings.apiKey,
         description,

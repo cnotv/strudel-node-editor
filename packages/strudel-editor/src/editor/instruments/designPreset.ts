@@ -1,3 +1,4 @@
+import { ensureOpenRouterModels } from '../ai/openRouterModels'
 import { useAiSettings } from '../ai/useAiSettings'
 import { askInstrumentToneAssistant } from './instrumentToneAssistant'
 import type { createPresetLibrary } from './presetLibrary'
@@ -27,6 +28,7 @@ export const designInstrumentPreset = async (
   }
   const settings = useAiSettings()
   try {
+    await ensureOpenRouterModels(settings.soundModel)
     const suggestion = await askInstrumentToneAssistant({
       apiKey: settings.apiKey,
       description,

@@ -3,11 +3,9 @@ import {
   STRUDEL_AI_DEFAULT_COMPOSE_MODEL,
   STRUDEL_AI_ERRORS,
   STRUDEL_AI_MAX_TOKENS,
-  STRUDEL_AI_MODEL_OPTIONS,
-  STRUDEL_AI_OPENROUTER_URL,
-  STRUDEL_AI_REASONING_EFFORT_BY_MODEL
+  STRUDEL_AI_OPENROUTER_URL
 } from './config'
-import { askOpenRouter, readKnownOpenRouterModel, readOpenRouterJsonAnswer } from './openRouter'
+import { askOpenRouter, readOpenRouterJsonAnswer, readStoredOpenRouterModel } from './openRouter'
 
 const buildResponseBody = (content: string): unknown => ({ choices: [{ message: { content } }] })
 
@@ -35,7 +33,11 @@ describe('askOpenRouter', () => {
 
   it.each([
     ['deepseek/deepseek-v4.1-flash', 'none'],
-    ['anthropic/claude-sonnet-5.5', 'low']
+    ['qwen/qwen3.8-flash', 'none'],
+    ['anthropic/claude-haiku-5.5', 'none'],
+    ['openai/gpt-5.4-mini', 'none'],
+    ['anthropic/claude-sonnet-5.5', 'low'],
+    ['google/gemini-3.8-flash', 'low']
   ])('asks %s to reason at %s effort', async (model, effort) => {
     // Arrange
     const mockFetch = vi.fn<typeof fetch>(
@@ -143,26 +145,17 @@ describe('readOpenRouterJsonAnswer', () => {
   })
 })
 
-describe('readKnownOpenRouterModel', () => {
+describe('readStoredOpenRouterModel', () => {
   it.each([
-    ['a listed model', 'google/gemini-3.8-flash', 'google/gemini-3.8-flash'],
+    ['a stored model', 'google/gemini-3.8-flash', 'google/gemini-3.8-flash'],
+    ['a model from a newer list', 'someone/new-model', 'someone/new-model'],
     ['nothing stored', null, STRUDEL_AI_DEFAULT_COMPOSE_MODEL],
-    ['a model no longer listed', 'someone/old-model', STRUDEL_AI_DEFAULT_COMPOSE_MODEL]
-  ])('keeps only a model the dropdown offers: %s', (_case, storedModel, expectedModel) => {
+    ['an empty value', '  ', STRUDEL_AI_DEFAULT_COMPOSE_MODEL]
+  ])('keeps the saved model, or falls back: %s', (_case, storedModel, expectedModel) => {
     // Act
-    const model = readKnownOpenRouterModel(storedModel, STRUDEL_AI_DEFAULT_COMPOSE_MODEL)
+    const model = readStoredOpenRouterModel(storedModel, STRUDEL_AI_DEFAULT_COMPOSE_MODEL)
 
     // Assert
     expect(model).toBe(expectedModel)
   })
-})
-
-describe('reasoning effort', () => {
-  it.each(STRUDEL_AI_MODEL_OPTIONS.map(({ value }) => value))(
-    'leaves room for the answer on %s',
-    (model) => {
-      // Act and Assert
-      expect(STRUDEL_AI_REASONING_EFFORT_BY_MODEL[model]).toBeDefined()
-    }
-  )
 })

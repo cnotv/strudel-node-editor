@@ -115,10 +115,18 @@ const selectedLabel = computed(
   gap: var(--spacing-2);
 }
 
+.select__trigger > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .select__content {
   position: relative;
   z-index: 100;
   min-width: 8rem;
+  max-width: min(32rem, calc(100vw - 2rem));
   overflow: hidden;
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border);
@@ -137,6 +145,8 @@ const selectedLabel = computed(
 
 .select__viewport {
   padding: 0.25rem;
+  max-height: min(20rem, var(--radix-select-content-available-height, 20rem));
+  overflow-y: auto;
 }
 
 .select__item {

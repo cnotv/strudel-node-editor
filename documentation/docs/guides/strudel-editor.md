@@ -634,7 +634,7 @@ The **AI** section of the Settings tab holds what every AI feature shares:
 - the **Compose model**, used by the Compose tab, Claude Sonnet 5.5 by default;
 - the **Sound model**, used by the Instruments tab's AI tone and for the instruments the composer designs, Claude Haiku 5.5 by default.
 
-Both dropdowns list the same OpenRouter models, the ones that answer in strict JSON.
+Both dropdowns list every OpenRouter model that answers in strict JSON. Type in the filter above them to narrow the list by name or id.
 
 ## MIDI devices
 

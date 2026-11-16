@@ -78,21 +78,38 @@ set `--strudel-editor-height` on the editor or any ancestor:
 </StrudelEditor>
 ```
 
+## Listening to the editor
+
+`StrudelEditor` emits what a host needs to stay in sync, so nothing has to be polled:
+
+| Event         | Payload                       | When                                              |
+| ------------- | ----------------------------- | ------------------------------------------------- |
+| `update:code` | the code on screen            | every change: typing, a picked pattern, an import |
+| `saved`       | the saved songs, newest first | after a save or a delete in the editor            |
+
+```vue
+<StrudelEditor @update:code="onCode" @saved="onSavedSongs" />
+```
+
+`update:code` is the live code. `STRUDEL_SAVED_CODE_STORAGE_KEY` is the same code persisted on
+every change, for a host that prefers to read storage after the editor closes. `saved` carries
+the whole saved list, so a host's list refreshes without reading storage at all.
+
 ## Reading and writing the editor's state
 
 The exports below come from the package root, except the light helpers, which come from
 `@webgamekit/strudel-editor/helpers` so a host can list songs and read addresses without
 loading the whole editor.
 
-| Export                                       | Use                                                                                                  |
-| -------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `StrudelCodeEditor`                          | Only the CodeMirror editor, with `v-model:code` and `evaluate`, `stop` and `ready` events.           |
-| `STRUDEL_SAVED_CODE_STORAGE_KEY`             | The `localStorage` key holding the code the editor last had, so a host can seed or read it.          |
-| `readStrudelAddress`, `writeStrudelAddress`  | Read or clear `tab`, `pattern` and `mode` on a route query, so a host can keep its own query intact. |
-| `readStrudelNoteBars`                        | The note bars of a pattern's code, for drawing a timeline.                                           |
-| `useStrudelSounds`                           | The sound names Strudel has loaded.                                                                  |
-| `loadDefaultStrudelPlayback`                 | A playback with no UI, for playing or rendering code in the host.                                    |
-| Types `StrudelEditorMode`, `StrudelPlayback` | The shapes the above return.                                                                         |
+| Export                                       | Use                                                                                                        |
+| -------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `StrudelCodeEditor`                          | Only the CodeMirror editor, with `v-model:code` and `evaluate`, `stop` and `ready` events.                 |
+| `STRUDEL_SAVED_CODE_STORAGE_KEY`             | The `localStorage` key holding the code on screen, written on every change, so a host can seed or read it. |
+| `readStrudelAddress`, `writeStrudelAddress`  | Read or clear `tab`, `pattern` and `mode` on a route query, so a host can keep its own query intact.       |
+| `readStrudelNoteBars`                        | The note bars of a pattern's code, for drawing a timeline.                                                 |
+| `useStrudelSounds`                           | The sound names Strudel has loaded.                                                                        |
+| `loadDefaultStrudelPlayback`                 | A playback with no UI, for playing or rendering code in the host.                                          |
+| Types `StrudelEditorMode`, `StrudelPlayback` | The shapes the above return.                                                                               |
 
 Because the editor writes its tab and pattern into the route query, a host that does not want
 them should clear them when it closes the editor, as the Sound panel does with
@@ -137,6 +154,20 @@ editor that is already mounted keeps the list it read when it opened.
   from the settings tab; the key stays in `localStorage`.
 - **Storage.** Saved patterns, the current code and the AI settings use `localStorage` keys
   prefixed `strudel-`.
+
+## Content security policy and workers
+
+The editor fetches from these hosts, so the embedding page must allow them in `connect-src`:
+
+| Host                        | What it serves                                                | When                                      |
+| --------------------------- | ------------------------------------------------------------- | ----------------------------------------- |
+| `strudel.b-cdn.net`         | Sample bank manifests and audio, and the drum-machine aliases | whenever sounds load                      |
+| `raw.githubusercontent.com` | The dirt-samples bank                                         | whenever sounds load                      |
+| `felixroos.github.io`       | The GM soundfonts                                             | when a `gm_` preset renders               |
+| `openrouter.ai`             | The AI composer's chat and model lists                        | only when the composer is used with a key |
+
+Transcription, tab reading and instrument rendering run in same-origin web workers, so
+`worker-src 'self'` must be allowed too, plus `blob:` if the host's bundler inlines workers.
 
 ## Licence
 

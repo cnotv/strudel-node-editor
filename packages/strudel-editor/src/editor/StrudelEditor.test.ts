@@ -1,9 +1,17 @@
 import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
+import { nextTick } from 'vue'
 import { createPinia, setActivePinia } from 'pinia'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import StrudelEditor from './StrudelEditor.vue'
-import { ELECTRO_TUNES, STRUDEL_EXAMPLES, STRUDEL_SAVED_CODE_STORAGE_KEY } from './config'
+import ExportTab from './tabs/ExportTab.vue'
+import PatternLibrary from './tabs/PatternLibrary.vue'
+import {
+  ELECTRO_TUNES,
+  STRUDEL_EXAMPLES,
+  STRUDEL_SAVED_CODE_STORAGE_KEY,
+  STRUDEL_SAVED_PATTERNS_STORAGE_KEY
+} from './config'
 import type { StrudelCodeMirrorOptions } from './types'
 
 const defaultSongCode = ELECTRO_TUNES.find(({ id }) => id === 'uptown-strut')?.code ?? ''
@@ -701,5 +709,55 @@ describe('StrudelEditor view', () => {
     // Assert
     expect(inCodeMode).toBe(false)
     expect(inFlowMode).toBe(true)
+  })
+})
+
+describe('host events', () => {
+  it('emits the code as it changes', async () => {
+    // Arrange
+    const wrapper = await mountEditorView()
+
+    // Act
+    wrapper.find<HTMLTextAreaElement>('.fake-strudel-code').setValue('s("sd")')
+    await nextTick()
+
+    // Assert
+    expect(wrapper.emitted('update:code')?.[0]).toEqual(['s("sd")'])
+  })
+
+  it('emits the saved songs after a save', async () => {
+    // Arrange
+    const wrapper = await mountEditorView()
+    await router.replace('/?tab=export')
+    await vi.waitFor(() => {
+      expect(wrapper.findComponent(ExportTab).exists()).toBe(true)
+    })
+
+    // Act
+    wrapper.findComponent(ExportTab).vm.$emit('save', 'Night Drive')
+
+    // Assert
+    expect(wrapper.emitted('saved')?.[0]).toEqual([
+      [{ id: 'saved-night-drive', label: 'Night Drive', code: readEditorCode(wrapper) }]
+    ])
+  })
+
+  it('emits the saved songs after a delete', async () => {
+    // Arrange
+    localStorage.setItem(
+      STRUDEL_SAVED_PATTERNS_STORAGE_KEY,
+      JSON.stringify([{ name: 'Night Drive', code: 's("bd")' }])
+    )
+    const wrapper = await mountEditorView()
+    await router.replace('/?tab=import')
+    await vi.waitFor(() => {
+      expect(wrapper.findComponent(PatternLibrary).exists()).toBe(true)
+    })
+
+    // Act
+    wrapper.findComponent(PatternLibrary).vm.$emit('delete', 'saved-night-drive')
+
+    // Assert
+    expect(wrapper.emitted('saved')?.[0]).toEqual([[]])
   })
 })

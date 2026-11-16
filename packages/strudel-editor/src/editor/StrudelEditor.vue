@@ -49,7 +49,7 @@ import { useStrudelHints } from './hints/useStrudelHints'
 import { readStrudelNoteBars } from './noteBars'
 import { useStrudelSounds } from './useStrudelSounds'
 import { previewStrudelSound } from './strudelPlayback'
-import type { StrudelEditorMode, StrudelSoundEntry, StrudelTabId } from './types'
+import type { StrudelEditorMode, StrudelExample, StrudelSoundEntry, StrudelTabId } from './types'
 import FlowTab from './tabs/FlowTab.vue'
 import InstrumentsTab from './tabs/InstrumentsTab.vue'
 import ComposeTab from './tabs/ComposeTab.vue'
@@ -68,6 +68,13 @@ import StrudelTimeline from './timeline/StrudelTimeline.vue'
 const StrudelFlowEditor = defineAsyncComponent(() =>
   import('@webgamekit/strudel-flow').then((module) => module.StrudelFlowEditor)
 )
+
+// The host side of the editor: the code as it changes, and the saved songs after a save or a
+// delete, so an app listing songs never polls the storage key.
+const emit = defineEmits<{
+  'update:code': [code: string]
+  saved: [savedSongs: StrudelExample[]]
+}>()
 
 const {
   patternCode,
@@ -116,6 +123,8 @@ const {
   playingCode,
   playingSourceOffsets
 } = useStrudelEditor()
+
+watch(patternCode, (code) => emit('update:code', code))
 
 const {
   nodes: flowNodes,
@@ -316,6 +325,16 @@ const onPatternSelected = (patternId: string): void => {
     editorMode.value = 'code'
     void playLoadedPattern()
   }
+}
+
+const onSavePattern = (name: string): void => {
+  savePattern(name)
+  emit('saved', savedPatterns.value)
+}
+
+const onDeleteSavedPattern = (savedPatternId: string): void => {
+  deleteSavedPattern(savedPatternId)
+  emit('saved', savedPatterns.value)
 }
 
 onMounted(loadAddress)
@@ -535,7 +554,7 @@ onBeforeUnmount(() => {
             :songs="electroTunes"
             :current-code="patternCode"
             @select="onPatternSelected"
-            @delete="deleteSavedPattern"
+            @delete="onDeleteSavedPattern"
           />
           <ImportTab
             :status="transcriptionStatus"
@@ -572,7 +591,7 @@ onBeforeUnmount(() => {
           :repetition-cycles="repetitionCycles"
           @export="exportPattern"
           @measure-repetition="measureRepetition"
-          @save="savePattern"
+          @save="onSavePattern"
         />
         <ConsoleTab
           v-else-if="activeTab === 'console'"

@@ -12,6 +12,7 @@ import {
   Boxes,
   Cable,
   CircleHelp,
+  BookMarked,
   BookOpen,
   Code,
   Github,
@@ -32,6 +33,7 @@ import {
   FLOW_SYNC_DELAY_MS,
   STRUDEL_BEATS_PER_CYCLE,
   STRUDEL_DOCUMENTATION_URL,
+  STRUDEL_OFFICIAL_DOCUMENTATION_URL,
   STRUDEL_LICENSE_NOTE,
   STRUDEL_REPOSITORY_URL
 } from './config'
@@ -589,6 +591,10 @@ onBeforeUnmount(() => {
         <a :href="STRUDEL_DOCUMENTATION_URL" target="_blank" rel="noopener noreferrer">
           <BookOpen aria-hidden="true" />
           Docs
+        </a>
+        <a :href="STRUDEL_OFFICIAL_DOCUMENTATION_URL" target="_blank" rel="noopener noreferrer">
+          <BookMarked aria-hidden="true" />
+          Strudel
         </a>
       </nav>
     </aside>

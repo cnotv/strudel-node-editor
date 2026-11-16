@@ -1070,6 +1070,8 @@ export const DEFAULT_STRUDEL_EXAMPLE_ID = 'uptown-strut'
 export const STRUDEL_REPOSITORY_URL = 'https://github.com/cnotv/strudel-node-editor'
 /** The embedding guide, linked beside the repository. */
 export const STRUDEL_DOCUMENTATION_URL = 'https://cnotv.github.io/strudel-node-editor/'
+/** Strudel's own reference, linked beside this editor's guide. */
+export const STRUDEL_OFFICIAL_DOCUMENTATION_URL = 'https://strudel.cc/learn/getting-started/'
 /** Where the code on screen is kept between visits. */
 export const STRUDEL_SAVED_CODE_STORAGE_KEY = 'strudel-editor-code'
 /** Where the patterns saved under a name are kept. */

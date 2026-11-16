@@ -52,3 +52,17 @@ export type OpenRouterRequestOptions = {
   body: Record<string, unknown>
   fetchImplementation?: typeof fetch
 }
+
+/** The reasoning controls OpenRouter lists for a model. */
+export type OpenRouterReasoning = {
+  mandatory: boolean
+  defaultEnabled: boolean
+  supportedEfforts: string[]
+}
+
+/** A model the Settings dropdown offers, with what its reasoning needs. */
+export type OpenRouterModelOption = {
+  value: string
+  label: string
+  reasoning?: OpenRouterReasoning
+}

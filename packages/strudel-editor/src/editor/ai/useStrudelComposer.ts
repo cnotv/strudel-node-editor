@@ -6,6 +6,7 @@ import {
   STRUDEL_AI_STORAGE_KEY_AUTO_APPLY,
   STRUDEL_AI_STORAGE_KEY_DESIGN_INSTRUMENTS
 } from './config'
+import { ensureOpenRouterModels } from './openRouterModels'
 import { askStrudelComposer } from './strudelComposer'
 import { useAiSettings } from './useAiSettings'
 import type {
@@ -93,6 +94,7 @@ export const useStrudelComposer = defineStore('strudelComposer', () => {
     busyAction.value = action
     errorMessage.value = ''
     try {
+      await ensureOpenRouterModels(settings.composeModel)
       answer.value = await askStrudelComposer({
         action,
         request: requestText.trim(),

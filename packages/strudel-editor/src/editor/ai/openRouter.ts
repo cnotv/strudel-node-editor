@@ -2,26 +2,24 @@ import { isRecordModule } from '../strudelModules'
 import {
   STRUDEL_AI_ERRORS,
   STRUDEL_AI_MAX_TOKENS,
-  STRUDEL_AI_MODEL_OPTIONS,
   STRUDEL_AI_OPENROUTER_URL,
   STRUDEL_AI_STATUS_ERRORS
 } from './config'
+import { readReasoningEffortForModel } from './openRouterModels'
 import type { OpenRouterRequestOptions } from './types'
 
 /**
- * The model a dropdown should show. A model saved before the list changed falls back to the
- * default so the dropdown never shows a blank choice.
+ * The model a dropdown should show. The full list loads at runtime, so any saved id is kept;
+ * Settings replaces one that the list no longer offers.
  * @param storedModel - the model id kept in local storage, if any
- * @param defaultModel - the model to use when the stored one is missing or no longer listed
- * @returns a model id from the dropdown's options
+ * @param defaultModel - the model to use when nothing is stored
+ * @returns the stored model, or the default
  */
-export const readKnownOpenRouterModel = (
+export const readStoredOpenRouterModel = (
   storedModel: string | null,
   defaultModel: string
 ): string =>
-  storedModel !== null && STRUDEL_AI_MODEL_OPTIONS.some(({ value }) => value === storedModel)
-    ? storedModel
-    : defaultModel
+  storedModel !== null && storedModel.trim().length > 0 ? storedModel.trim() : defaultModel
 
 /**
  * The response format that makes the model answer with an object matching the schema.
@@ -37,11 +35,13 @@ export const buildStrictJsonFormat = (
   json_schema: { name, strict: true, schema }
 })
 
+const readFirstChoice = (responseBody: unknown): unknown =>
+  isRecordModule(responseBody) && Array.isArray(responseBody.choices)
+    ? responseBody.choices[0]
+    : undefined
+
 const readMessageContent = (responseBody: unknown): string => {
-  const firstChoice =
-    isRecordModule(responseBody) && Array.isArray(responseBody.choices)
-      ? responseBody.choices[0]
-      : undefined
+  const firstChoice = readFirstChoice(responseBody)
   const message = isRecordModule(firstChoice) ? firstChoice.message : undefined
   const content = isRecordModule(message) ? message.content : undefined
   if (typeof content !== 'string') {
@@ -68,10 +68,16 @@ const parseJsonObject = (text: string): Record<string, unknown> => {
  * Reads the JSON object a chat completion answered with.
  * @param responseBody - the parsed OpenRouter response
  * @returns the object in the first choice's message
- * @throws {Error} a readable error when there is no message or it is not a JSON object
+ * @throws {Error} a readable error when the model ran out of tokens before answering, when there
+ * is no message or when it is not a JSON object
  */
-export const readOpenRouterJsonAnswer = (responseBody: unknown): Record<string, unknown> =>
-  parseJsonObject(readMessageContent(responseBody))
+export const readOpenRouterJsonAnswer = (responseBody: unknown): Record<string, unknown> => {
+  const firstChoice = readFirstChoice(responseBody)
+  if (isRecordModule(firstChoice) && firstChoice.finish_reason === 'length') {
+    throw new Error(STRUDEL_AI_ERRORS.truncated)
+  }
+  return parseJsonObject(readMessageContent(responseBody))
+}
 
 const readStatusMessage = (status: number): string => {
   const errorKey = STRUDEL_AI_STATUS_ERRORS[status]
@@ -105,10 +111,15 @@ export const askOpenRouter = async ({
   if (apiKey.trim().length === 0) {
     throw new Error(STRUDEL_AI_ERRORS.noKey)
   }
+  const reasoningEffort = readReasoningEffortForModel(body.model)
   const response = await fetchImplementation(STRUDEL_AI_OPENROUTER_URL, {
     method: 'POST',
     headers: { Authorization: `Bearer ${apiKey.trim()}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ max_tokens: STRUDEL_AI_MAX_TOKENS, ...body })
+    body: JSON.stringify({
+      max_tokens: STRUDEL_AI_MAX_TOKENS,
+      ...(reasoningEffort === undefined ? {} : { reasoning: { effort: reasoningEffort } }),
+      ...body
+    })
   }).catch(() => {
     throw new Error(STRUDEL_AI_ERRORS.network)
   })

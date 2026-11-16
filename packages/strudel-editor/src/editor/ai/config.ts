@@ -1,8 +1,13 @@
 import type { StrudelComposerActionDefinition } from './types'
 
 export const STRUDEL_AI_OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions'
+export const STRUDEL_AI_OPENROUTER_MODELS_URL = 'https://openrouter.ai/api/v1/models'
 
-/** Without a cap OpenRouter reserves the model's full output limit and can refuse for credit. */
+/**
+ * The whole completion budget, thinking and answer together. OpenRouter reserves it against the
+ * player's credit, so it stays small enough for a low balance; the reasoning choices below leave
+ * about 2,500 tokens of it for the song.
+ */
 export const STRUDEL_AI_MAX_TOKENS = 3500
 
 // The key and sound model keep the names the Instruments tab first stored them under, so a key
@@ -19,8 +24,11 @@ export const STRUDEL_COMPOSER_MAX_INSTRUMENTS = 4
 export const STRUDEL_AI_DEFAULT_SOUND_MODEL = 'anthropic/claude-haiku-5.5'
 export const STRUDEL_AI_DEFAULT_COMPOSE_MODEL = 'anthropic/claude-sonnet-5.5'
 
-/** OpenRouter models that support strict JSON schema answers, checked against its model list. */
-export const STRUDEL_AI_MODEL_OPTIONS = [
+/**
+ * The models shown until the full OpenRouter list loads, and used as the fallback when it cannot
+ * be reached. They all support strict JSON schema answers.
+ */
+export const STRUDEL_AI_FALLBACK_MODEL_OPTIONS = [
   { value: 'anthropic/claude-haiku-5.5', label: 'Claude Haiku 5.5' },
   { value: 'anthropic/claude-sonnet-5.5', label: 'Claude Sonnet 5.5' },
   { value: 'google/gemini-3.8-flash', label: 'Gemini 3.8 Flash' },
@@ -29,6 +37,16 @@ export const STRUDEL_AI_MODEL_OPTIONS = [
   { value: 'qwen/qwen3.8-flash', label: 'Qwen3.8 Flash' }
 ]
 
+/**
+ * The reasoning efforts known before the full model list loads. Every other model is worked out
+ * from the metadata OpenRouter returns with it: `none` when thinking can be turned off, the
+ * smallest allowed effort when it is mandatory. The map holds only those exceptions.
+ */
+export const STRUDEL_AI_REASONING_EFFORT_BY_MODEL: Record<string, string> = {
+  'anthropic/claude-sonnet-5.5': 'low',
+  'google/gemini-3.8-flash': 'low'
+}
+
 export const STRUDEL_AI_ERRORS = {
   noKey: 'Add your OpenRouter key in the Settings tab first.',
   unauthorised: 'OpenRouter did not accept the key. Check it and try again.',
@@ -36,6 +54,8 @@ export const STRUDEL_AI_ERRORS = {
   rateLimited: 'OpenRouter is rate limiting this key. Wait a moment and try again.',
   network: 'Could not reach OpenRouter. Check the connection and try again.',
   badAnswer: 'The model did not return a usable answer. Try again or pick another model.',
+  truncated:
+    'The model ran out of room before it finished. Try again, ask for a shorter piece, or pick another model.',
   noCode: 'The model returned no code. Try again or describe the music differently.',
   other: 'OpenRouter returned an error',
   reason: 'OpenRouter says:'

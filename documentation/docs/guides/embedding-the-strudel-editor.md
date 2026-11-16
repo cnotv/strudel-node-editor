@@ -80,6 +80,10 @@ set `--strudel-editor-height` on the editor or any ancestor:
 
 ## Reading and writing the editor's state
 
+The exports below come from the package root, except the light helpers, which come from
+`@webgamekit/strudel-editor/helpers` so a host can list songs and read addresses without
+loading the whole editor.
+
 | Export                                       | Use                                                                                                  |
 | -------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
 | `StrudelCodeEditor`                          | Only the CodeMirror editor, with `v-model:code` and `evaluate`, `stop` and `ready` events.           |
@@ -93,6 +97,37 @@ set `--strudel-editor-height` on the editor or any ancestor:
 Because the editor writes its tab and pattern into the route query, a host that does not want
 them should clear them when it closes the editor, as the Sound panel does with
 `writeStrudelAddress`.
+
+## Listing songs and saved songs
+
+The Pattern library inside the editor lists the songs that ship with it and the songs the player
+saved under a name. A host can list both, and save and delete like the editor does, from the
+helpers entry:
+
+```ts
+import {
+  STRUDEL_SONGS,
+  deleteStrudelSavedSong,
+  readStrudelSavedSongs,
+  saveStrudelSavedSong,
+  writeStrudelAddress
+} from '@webgamekit/strudel-editor/helpers'
+```
+
+`STRUDEL_SONGS` and `readStrudelSavedSongs()` both return `{ id, label, code }[]`, so one picker
+lists them together. Every id is an address: navigating the editor's route to `?pattern=<id>`
+opens that song, as the editor itself does when a listed song is clicked.
+
+```ts
+const openSong = (songId: string): void => {
+  void router.push({ query: writeStrudelAddress(route.query, { patternId: songId }) })
+}
+```
+
+`saveStrudelSavedSong(name, code)` stores code under a name, replacing a save with the same
+name, and `deleteStrudelSavedSong(id)` removes one. Both write the same `localStorage` the
+editor reads, so a save made in either place shows up in the other once the editor opens; an
+editor that is already mounted keeps the list it read when it opened.
 
 ## What it fetches and stores
 

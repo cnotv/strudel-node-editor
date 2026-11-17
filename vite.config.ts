@@ -10,12 +10,18 @@ const packages = ['strudel-flow', 'strudel-editor']
 // rejects any Host header it does not list.
 const allowedHosts = ['.cnotv.xyz']
 
-const packageAliases = Object.fromEntries(
-  packages.map((package_) => [
-    `@webgamekit/${package_}`,
-    fileURLToPath(new URL(`./packages/${package_}/src/index.ts`, import.meta.url))
-  ])
-)
+// The subpath alias comes first: the package alias above would match its prefix and point
+// `@webgamekit/strudel-editor/helpers` at index.ts/helpers instead of the helpers entry.
+const packageAliases = [
+  {
+    find: '@webgamekit/strudel-editor/helpers',
+    replacement: fileURLToPath(new URL('./packages/strudel-editor/src/helpers.ts', import.meta.url))
+  },
+  ...packages.map((package_) => ({
+    find: `@webgamekit/${package_}`,
+    replacement: fileURLToPath(new URL(`./packages/${package_}/src/index.ts`, import.meta.url))
+  }))
+]
 
 // The device orientation and fullscreen APIs only work in a secure context, so reaching the
 // dev server from a phone over the LAN needs HTTPS. Opt in with VITE_HTTPS=1 (pnpm dev:mobile)
@@ -29,7 +35,7 @@ export default defineConfig({
   resolve: {
     alias: [
       { find: '@', replacement: fileURLToPath(new URL('./src', import.meta.url)) },
-      ...Object.entries(packageAliases).map(([find, replacement]) => ({ find, replacement })),
+      ...packageAliases,
       // @strudel/midi's source reaches superdough through a monorepo-only relative path.
       {
         find: /^\.\.\/superdough\/helpers\.mjs$/,

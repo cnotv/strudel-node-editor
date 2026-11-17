@@ -398,6 +398,14 @@ const readMiniNotationHead = (head: Call): StrudelFlowNodeData | null => {
   if (head.name === 'note') {
     return { kind: 'notes', pattern: readStringLiteral(head.argument), notation: 'auto' }
   }
+  if (head.name === 'n') {
+    return {
+      kind: 'notes',
+      pattern: readStringLiteral(head.argument),
+      notation: 'text',
+      head: 'n'
+    }
+  }
   const chordSymbols =
     head.name === CHORD_HEAD ? readStrudelFlowChordSymbols(readStringLiteral(head.argument)) : null
   if (chordSymbols !== null) {

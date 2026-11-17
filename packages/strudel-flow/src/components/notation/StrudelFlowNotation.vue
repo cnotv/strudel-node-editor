@@ -28,13 +28,17 @@ const beatsPerCycle = computed(
   () => context?.value.beatsPerCycle ?? STRUDEL_FLOW_DEFAULT_BEATS_PER_CYCLE
 )
 const sound = computed(() => context?.value.soundOf(nodeId) ?? '')
-const CHORD_SYMBOL_VIEWS = new Set<string>(['names', 'text'])
-
-// Chord symbols name chords rather than pitches, so only names and the mini notation show them.
-const isChordLine = computed(() => props.data.head === 'chord')
+// Chord symbols name chords and scale degrees are not pitches yet, so each shows only the views
+// that can say what it holds.
+const VIEWS_OF_HEAD: Record<string, { views: Set<string>; fallback: string }> = {
+  chord: { views: new Set(['names', 'text']), fallback: 'names' },
+  n: { views: new Set(['text']), fallback: 'text' }
+}
+const restriction = computed(() => VIEWS_OF_HEAD[props.data.head ?? ''])
 const view = computed(() => {
   const resolved = resolveStrudelFlowNotation(props.data.notation, sound.value)
-  return isChordLine.value && !CHORD_SYMBOL_VIEWS.has(resolved) ? 'names' : resolved
+  const limit = restriction.value
+  return limit !== undefined && !limit.views.has(resolved) ? limit.fallback : resolved
 })
 
 const labelOf = (value: string): string =>
@@ -42,7 +46,7 @@ const labelOf = (value: string): string =>
 
 const options = computed(() =>
   STRUDEL_FLOW_NOTATION_OPTIONS.filter(
-    (option) => !isChordLine.value || CHORD_SYMBOL_VIEWS.has(option.value)
+    (option) => restriction.value === undefined || restriction.value.views.has(option.value)
   ).map((option) =>
     option.value === 'auto'
       ? { ...option, label: `Auto: ${labelOf(pickStrudelFlowNotation(sound.value))}` }

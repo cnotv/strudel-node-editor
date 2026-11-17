@@ -69,10 +69,10 @@ const StrudelFlowEditor = defineAsyncComponent(() =>
   import('@webgamekit/strudel-flow').then((module) => module.StrudelFlowEditor)
 )
 
-// The host side of the editor: the code as it changes, and the saved songs after a save or a
-// delete, so an app listing songs never polls the storage key.
+// The host side of the editor: `v-model:code` for the code, and the saved songs after a save or
+// a delete, so an app listing songs never polls the storage key.
+const hostCode = defineModel<string>('code')
 const emit = defineEmits<{
-  'update:code': [code: string]
   saved: [savedSongs: StrudelExample[]]
 }>()
 
@@ -124,7 +124,21 @@ const {
   playingSourceOffsets
 } = useStrudelEditor()
 
-watch(patternCode, (code) => emit('update:code', code))
+// A host-given code replaces the stored one; either way the host hears the code on screen.
+watch(
+  hostCode,
+  (code) => {
+    if (code !== undefined && code !== patternCode.value) patternCode.value = code
+  },
+  { immediate: true }
+)
+watch(
+  patternCode,
+  (code) => {
+    hostCode.value = code
+  },
+  { immediate: true }
+)
 
 const {
   nodes: flowNodes,

@@ -88,13 +88,11 @@ set `--strudel-editor-height` on the editor or any ancestor:
 | `saved`       | the saved songs, newest first | after a save or a delete in the editor            |
 
 ```vue
-<StrudelEditor @update:code="onCode" @saved="onSavedSongs" />
+<StrudelEditor v-model:code="code" @saved="onSavedSongs" />
 ```
 
-`update:code` is the live code, and it is output only: `StrudelEditor` takes no `code` prop, so
-`v-model:code` does nothing here. It fires on a change, not for the code the editor starts with,
-so a host that mirrors the code reads `STRUDEL_SAVED_CODE_STORAGE_KEY` once when it mounts.
-`STRUDEL_SAVED_CODE_STORAGE_KEY` is the same code persisted on
+`v-model:code` is the live code: the editor emits it once when it opens, then on every
+change, and shows a code the host sets. `STRUDEL_SAVED_CODE_STORAGE_KEY` is the same code persisted on
 every change, for a host that prefers to read storage after the editor closes. `saved` carries
 the whole saved list, so a host's list refreshes without reading storage at all.
 

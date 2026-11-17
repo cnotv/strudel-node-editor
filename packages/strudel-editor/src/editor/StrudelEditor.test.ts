@@ -713,7 +713,7 @@ describe('StrudelEditor view', () => {
 })
 
 describe('host events', () => {
-  it('emits the code as it changes', async () => {
+  it('emits the code it starts with, then each change', async () => {
     // Arrange
     const wrapper = await mountEditorView()
 
@@ -722,7 +722,25 @@ describe('host events', () => {
     await nextTick()
 
     // Assert
-    expect(wrapper.emitted('update:code')?.[0]).toEqual(['s("sd")'])
+    expect(wrapper.emitted('update:code')?.[0]).toEqual([defaultSongCode])
+    expect(wrapper.emitted('update:code')?.at(-1)).toEqual(['s("sd")'])
+  })
+
+  it('shows the code a host passes in v-model:code', async () => {
+    // Arrange
+    const wrapper = mount(StrudelEditor, {
+      props: { code: 's("hh")' },
+      global: { plugins: [router] }
+    })
+    await vi.waitFor(() => {
+      expect(wrapper.find('.fake-strudel-code').exists()).toBe(true)
+    })
+
+    // Act
+    await wrapper.setProps({ code: 's("cp")' })
+
+    // Assert
+    expect(readEditorCode(wrapper)).toBe('s("cp")')
   })
 
   it('emits the saved songs after a save', async () => {

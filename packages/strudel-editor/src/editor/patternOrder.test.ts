@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { movePatternAfter, movePatternBefore, sortPatternsByStoredOrder } from './patternOrder'
+import {
+  movePatternAfter,
+  movePatternBefore,
+  readStoredPatternOrder,
+  sortPatternsByStoredOrder
+} from './patternOrder'
 import type { StrudelExample } from './types'
 
 const PATTERNS: StrudelExample[] = [
@@ -32,12 +37,14 @@ describe('patternOrder', () => {
   it.each([
     ['before', movePatternBefore, ['bravo', 'alpha', 'charlie']],
     ['after', movePatternAfter, ['alpha', 'charlie', 'bravo']]
-  ] as const)('moves a pattern %s another', (_placement, move, expectedIds) => {
+  ] as const)('moves a pattern %s another', (placement, move, expectedIds) => {
     // Arrange
     const patternIds = PATTERNS.map((pattern) => pattern.id)
+    const draggedPatternId = 'bravo'
+    const targetPatternId = placement === 'before' ? 'alpha' : 'charlie'
 
     // Act
-    const movedIds = move(patternIds, 'alpha', 'bravo')
+    const movedIds = move(patternIds, draggedPatternId, targetPatternId)
 
     // Assert
     expect(movedIds).toEqual(expectedIds)
@@ -52,5 +59,18 @@ describe('patternOrder', () => {
 
     // Assert
     expect(movedIds).toEqual(patternIds)
+  })
+
+  it.each([
+    [null, []],
+    ['not json', []],
+    ['{"order":["alpha"]}', []],
+    ['["charlie", 3, "alpha"]', ['charlie', 'alpha']]
+  ])('reads %o as the stored order %o', (storedText, expectedIds) => {
+    // Arrange / Act
+    const storedIds = readStoredPatternOrder(storedText)
+
+    // Assert
+    expect(storedIds).toEqual(expectedIds)
   })
 })

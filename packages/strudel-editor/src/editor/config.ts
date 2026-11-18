@@ -1076,6 +1076,8 @@ export const STRUDEL_OFFICIAL_DOCUMENTATION_URL = 'https://strudel.cc/learn/gett
 export const STRUDEL_SAVED_CODE_STORAGE_KEY = 'strudel-editor-code'
 /** Where the patterns saved under a name are kept. */
 export const STRUDEL_SAVED_PATTERNS_STORAGE_KEY = 'strudel-editor-saved-patterns'
+/** Where the order the player dragged the songs into is kept. */
+export const STRUDEL_SONG_ORDER_STORAGE_KEY = 'strudel-editor-song-order'
 /** The query key naming the pattern on screen, as in `?pattern=caverave`. */
 export const STRUDEL_PATTERN_QUERY_KEY = 'pattern'
 /** The query key naming the open drawer tab, as in `?tab=export`. */

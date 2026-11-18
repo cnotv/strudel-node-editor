@@ -9,6 +9,7 @@ import {
   watch
 } from 'vue'
 import {
+  AudioLines,
   Boxes,
   Cable,
   CircleHelp,
@@ -22,6 +23,7 @@ import {
   Settings,
   Sparkles,
   Terminal,
+  Upload,
   Volume2,
   Workflow,
   X
@@ -420,6 +422,18 @@ const visibleTools = computed(() =>
   toolbarTools.filter((tool) => tool.id !== 'flow' || editorMode.value === 'flow')
 )
 
+type ImportPanelId = 'music' | 'sounds' | 'import'
+
+const importPanel = ref<ImportPanelId>('music')
+const importPatternPanel = computed<'music' | 'sounds'>(() =>
+  importPanel.value === 'sounds' ? 'sounds' : 'music'
+)
+const importPanels = [
+  { id: 'music', label: 'Music', icon: Music },
+  { id: 'sounds', label: 'Sounds', icon: AudioLines },
+  { id: 'import', label: 'Import', icon: Upload }
+] as const satisfies { id: ImportPanelId; label: string; icon: unknown }[]
+
 const drawerTitle = computed(() => tabList.find((tab) => tab.id === activeTab.value)?.label ?? '')
 
 const codeEditor = ref<InstanceType<typeof StrudelCodeEditor> | null>(null)
@@ -551,6 +565,25 @@ onBeforeUnmount(() => {
           <X aria-hidden="true" />
         </IconButton>
       </header>
+      <nav
+        v-if="activeTab === 'import'"
+        class="strudel-editor__drawer-tabs"
+        aria-label="Import sections"
+      >
+        <IconButton
+          v-for="panel in importPanels"
+          :key="panel.id"
+          size="md"
+          variant="ghost"
+          :active="importPanel === panel.id"
+          :title="panel.label"
+          :aria-label="panel.label"
+          :aria-pressed="importPanel === panel.id"
+          @click="importPanel = panel.id"
+        >
+          <component :is="panel.icon" aria-hidden="true" />
+        </IconButton>
+      </nav>
       <div class="strudel-editor__drawer-content">
         <HintsTab
           v-if="activeTab === 'hints'"
@@ -563,6 +596,9 @@ onBeforeUnmount(() => {
         />
         <template v-else-if="activeTab === 'import'">
           <PatternLibrary
+            v-if="importPanel !== 'import'"
+            :key="importPanel"
+            :panel="importPatternPanel"
             :saved-patterns="savedPatterns"
             :examples="examples"
             :songs="electroTunes"
@@ -571,6 +607,7 @@ onBeforeUnmount(() => {
             @delete="onDeleteSavedPattern"
           />
           <ImportTab
+            v-else
             :status="transcriptionStatus"
             :progress="transcriptionProgress"
             :transcriptions="importedTranscriptions"
@@ -751,8 +788,6 @@ onBeforeUnmount(() => {
   min-width: 0;
   min-height: 0;
   margin-top: var(--spacing-4);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
   overflow: hidden;
 }
 
@@ -761,8 +796,13 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: space-between;
   padding: var(--spacing-2) var(--spacing-3);
-  border-bottom: 1px solid var(--color-border);
   background: var(--color-secondary);
+}
+
+.strudel-editor__drawer-tabs {
+  display: flex;
+  gap: var(--spacing-1);
+  padding: var(--spacing-2) var(--spacing-2) 0;
 }
 
 .strudel-editor__drawer-title {
@@ -775,7 +815,6 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-3);
-  padding: var(--spacing-4);
   overflow-y: auto;
 }
 
@@ -784,14 +823,12 @@ onBeforeUnmount(() => {
   padding: var(--spacing-2) var(--spacing-3);
   font-size: var(--font-size-sm);
   color: var(--color-muted-foreground);
-  border-top: 1px solid var(--color-border);
 }
 
 .strudel-editor__links {
   display: flex;
   gap: var(--spacing-4);
   padding: var(--spacing-2) var(--spacing-3);
-  border-top: 1px solid var(--color-border);
   font-size: var(--font-size-sm);
 }
 

@@ -15,6 +15,7 @@ import {
 } from './strudelOfflineRender'
 import { findLoopBars, findPatternRepetition } from './patternRepetition'
 import { isRecordModule, requireCallable, requireRecordModule, toCallable } from './strudelModules'
+import { createRenderQueue } from './renderQueue'
 import { useInstruments } from './instruments/useInstruments'
 import { loadStrudelSoundLibrary } from './strudelSoundLibrary'
 import type {
@@ -24,6 +25,7 @@ import type {
   StrudelExportOptions,
   StrudelPlayback,
   StrudelPlaybackHooks,
+  StrudelLiveSong,
   StrudelPlaybackPosition,
   StrudelRenderResult,
   StrudelScheduledHap,
@@ -310,6 +312,35 @@ const renderWavBytes = async (
 }
 
 /**
+ * Evaluates a pattern and writes its notes as a MIDI file, returning it rather than downloading it.
+ * @param evaluate - evaluates the code and gives the pattern
+ * @param readCyclesPerSecond - the tempo the code set, read once it has been evaluated
+ * @param exportOptions - the cycle range
+ * @returns the file, or the reason it could not be made
+ */
+const renderMidiBytes = async (
+  evaluate: () => Promise<unknown>,
+  readCyclesPerSecond: () => number,
+  exportOptions: StrudelExportOptions
+): Promise<StrudelRenderResult> => {
+  try {
+    const pattern = await evaluate()
+    const cyclesPerSecond = readCyclesPerSecond()
+    const { buildPatternMidi } = await import('./patternMidi')
+    const bytes = buildPatternMidi(readScheduledHaps(pattern, exportOptions, cyclesPerSecond), {
+      beginCycle: exportOptions.startCycle,
+      cyclesPerSecond
+    })
+    return {
+      success: true,
+      file: bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength)
+    }
+  } catch (error) {
+    return { success: false, errorMessage: describeError(error) }
+  }
+}
+
+/**
  * Loads the Strudel engine on demand, starts audio, loads the default sample kit and
  * returns a playback handle around one REPL (read-eval-print loop) instance. Evaluations
  * report their sliders and widgets, and every frame its playing notes, to the hooks.
@@ -456,6 +487,12 @@ export const loadDefaultStrudelPlayback = async (
             readCyclesPerSecond(replScheduler),
             exportOptions
           )
+      ),
+    renderToMidiBytes: (patternCode, exportOptions) =>
+      renderMidiBytes(
+        () => evaluateForExport(patternCode),
+        () => readCyclesPerSecond(replScheduler),
+        exportOptions
       ),
     renderToWav: exportAs('wav', (pattern, cyclesPerSecond, exportOptions) =>
       renderStrudelPatternToWav(engine.audioModule, pattern, cyclesPerSecond, exportOptions)
@@ -606,6 +643,54 @@ export const renderStrudelCodeToWav = async (patternCode: string): Promise<Array
   }
   return result.file
 }
+
+const runSongWorkInTurn = createRenderQueue()
+
+// The engine keeps the tempo the last song set, so a song that sets none starts from Strudel's
+// own; a song that sets one still overrides it further down.
+const fromDefaultTempo = (songCode: string): string => `setcps(${DEFAULT_CPS})\n${songCode}`
+
+/**
+ * Writes a whole song's notes to MIDI without playing a sound, so a game can chart it. It renders
+ * notes only, never audio, which takes a fraction of a second where a recording took minutes.
+ * @param songCode - Strudel code for the song
+ * @returns the MIDI file of one full play of the song, and the tempo the song set
+ * @throws {Error} when the code does not evaluate
+ */
+export const renderStrudelCodeToNotes = (
+  songCode: string
+): Promise<{ midi: ArrayBuffer; cyclesPerSecond: number }> =>
+  runSongWorkInTurn(async () => {
+    const patternCode = fromDefaultTempo(songCode)
+    await prepareInstrumentsForCode(patternCode)
+    const playback = await loadSilentPlayback()
+    const cycles = (await playback.measureRepetition(patternCode)) ?? STRUDEL_MAX_SONG_CYCLES
+    const midi = await playback.renderToMidiBytes(patternCode, {
+      ...EXPORT_DEFAULT_OPTIONS,
+      format: 'midi',
+      endCycle: cycles
+    })
+    if (!midi.success || midi.file === undefined) {
+      throw new Error(midi.errorMessage ?? 'The code did not render.')
+    }
+    return { midi: midi.file, cyclesPerSecond: playback.readPosition().cyclesPerSecond }
+  })
+
+/**
+ * Starts a song playing live, the way the editor's Play does, and reports how far in it is.
+ * @param songCode - Strudel code that sets its own tempo
+ * @returns where the song is, or null until it plays, and a function that stops it
+ * @throws {Error} when the code does not evaluate
+ */
+export const playStrudelSong = (songCode: string): Promise<StrudelLiveSong> =>
+  runSongWorkInTurn(async () => {
+    const patternCode = fromDefaultTempo(songCode)
+    await prepareInstrumentsForCode(patternCode)
+    const playback = await loadSilentPlayback()
+    const result = await playback.evaluateCode(patternCode)
+    if (!result.success) throw new Error(result.errorMessage ?? 'The song did not play.')
+    return { readPosition: playback.readPosition, stop: playback.stopPlayback }
+  })
 
 /**
  * Plays a rendered WAV once on the page's audio and hands back a way to stop it. One buffer,

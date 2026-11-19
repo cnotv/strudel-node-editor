@@ -7,5 +7,7 @@ export {
   readStrudelSavedSongs,
   saveStrudelSavedSong
 } from './editor/savedSongs'
+export { playStrudelSong, renderStrudelCodeToNotes } from './editor/strudelPlayback'
 export { useStrudelSounds } from './editor/useStrudelSounds'
 export type { StrudelEditorMode, StrudelExample } from './editor/types'
+export type { StrudelLiveSong } from './editor/types'

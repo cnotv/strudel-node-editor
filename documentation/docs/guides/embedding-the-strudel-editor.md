@@ -98,19 +98,24 @@ the whole saved list, so a host's list refreshes without reading storage at all.
 
 ## Reading and writing the editor's state
 
-The exports below come from the package root, except the light helpers, which come from
-`@webgamekit/strudel-editor/helpers` so a host can list songs and read addresses without
-loading the whole editor.
+Every export is listed here. The package root holds what mounts or plays the editor; the light
+helpers come from `@webgamekit/strudel-editor/helpers`, so a host can list songs, read addresses
+and chart a song without loading the whole editor.
 
-| Export                                       | Use                                                                                                        |
-| -------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `StrudelCodeEditor`                          | Only the CodeMirror editor, with `v-model:code` and `evaluate`, `stop` and `ready` events.                 |
-| `STRUDEL_SAVED_CODE_STORAGE_KEY`             | The `localStorage` key holding the code on screen, written on every change, so a host can seed or read it. |
-| `readStrudelAddress`, `writeStrudelAddress`  | Read or clear `tab`, `pattern` and `mode` on a route query, so a host can keep its own query intact.       |
-| `readStrudelNoteBars`                        | The note bars of a pattern's code, for drawing a timeline.                                                 |
-| `useStrudelSounds`                           | The sound names Strudel has loaded.                                                                        |
-| `loadDefaultStrudelPlayback`                 | A playback with no UI, for playing or rendering code in the host.                                          |
-| Types `StrudelEditorMode`, `StrudelPlayback` | The shapes the above return.                                                                               |
+| Entry                                | Export                                                                    | Use                                                                                                        |
+| ------------------------------------ | ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `@webgamekit/strudel-editor`         | `StrudelEditor`                                                           | The whole editor, with `v-model:code`, the `actions` slot and the `saved` event.                           |
+|                                      | `StrudelCodeEditor`                                                       | Only the CodeMirror editor, with `v-model:code` and `evaluate`, `stop` and `ready` events.                 |
+|                                      | `loadDefaultStrudelPlayback`                                              | A playback with no UI, for playing or rendering code in the host.                                          |
+|                                      | Types `StrudelPlayback`, `StrudelEditorMode`, `StrudelExample`            | The playback handle, the editor's `code` or `flow` mode, and a song as `{ id, label, code }`.              |
+|                                      | `style.css`, `tokens.css`                                                 | The component styles and the default design tokens.                                                        |
+| `@webgamekit/strudel-editor/helpers` | `STRUDEL_SONGS`                                                           | The songs that ship with the editor, as `StrudelExample[]`.                                                |
+|                                      | `readStrudelSavedSongs`, `saveStrudelSavedSong`, `deleteStrudelSavedSong` | The songs the player saved under a name.                                                                   |
+|                                      | `STRUDEL_SAVED_CODE_STORAGE_KEY`                                          | The `localStorage` key holding the code on screen, written on every change, so a host can seed or read it. |
+|                                      | `readStrudelAddress`, `writeStrudelAddress`                               | Read or clear `tab`, `pattern` and `mode` on a route query, so a host can keep its own query intact.       |
+|                                      | `readStrudelNoteBars`                                                     | The note bars of a pattern's code, for drawing a timeline.                                                 |
+|                                      | `useStrudelSounds`                                                        | The sound names Strudel has loaded.                                                                        |
+|                                      | `playStrudelSong`, `renderStrudelCodeToNotes`, type `StrudelLiveSong`     | Play a song live, or render its notes to MIDI, with no editor mounted. See the next section.               |
 
 Because the editor writes its tab and pattern into the route query, a host that does not want
 them should clear them when it closes the editor, as the Sound panel does with
@@ -146,6 +151,42 @@ const openSong = (songId: string): void => {
 name, and `deleteStrudelSavedSong(id)` removes one. Both write the same `localStorage` the
 editor reads, so a save made in either place shows up in the other once the editor opens; an
 editor that is already mounted keeps the list it read when it opened.
+
+## Playing a song and reading its notes
+
+A game that keeps time with a song needs it playing, and needs to know where its notes fall. Both
+come from the helpers entry and work without mounting the editor.
+
+```ts
+import { playStrudelSong, renderStrudelCodeToNotes } from '@webgamekit/strudel-editor/helpers'
+
+const { midi, cyclesPerSecond } = await renderStrudelCodeToNotes(songCode)
+const song = await playStrudelSong(songCode)
+const { cycle } = song.readPosition()
+await song.stop()
+```
+
+| Function                         | Returns                                          | Notes                                                                                                        |
+| -------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| `renderStrudelCodeToNotes(code)` | `{ midi: ArrayBuffer, cyclesPerSecond: number }` | Renders notes only, never audio, so it takes a fraction of a second. Throws when the code does not evaluate. |
+| `playStrudelSong(code)`          | `StrudelLiveSong`: `readPosition()` and `stop()` | `readPosition()` gives `{ cycle, cyclesPerSecond }`. Throws when the code does not evaluate.                 |
+
+Both queue behind each other, because Strudel renders swap the single audio context the engine
+plays on. A song that sets no tempo starts from 0.5 cycles per second.
+
+### The MIDI file
+
+`midi` is a standard MIDI file of one full play of the song, from cycle 0 to the cycle the whole
+song repeats at, or 64 cycles when it never does.
+
+- One cycle is one bar of four beats, so the tempo is `cyclesPerSecond * 60 * 4` beats per minute.
+- Each sound gets its own track, named after it. Events with a `note` or `freq` become notes;
+  known drum samples (`bd`, `sd`, `hh` and the rest) go to a `drums` track on channel 10 with
+  their General MIDI keys; anything else is skipped.
+- Velocity is the event's `velocity` (0.8 when absent) times its `gain`, between 0 and 1.
+
+[How Strudel notes are mapped to MIDI](./strudel-note-mapping.md) holds the full key table and
+the timing rules.
 
 ## What it fetches and stores
 

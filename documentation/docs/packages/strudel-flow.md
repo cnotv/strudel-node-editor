@@ -127,4 +127,17 @@ The node set, the controls, the radial menu, the tempo bar and the visual langua
 
 ## Export
 
-The package's barrel (`src/index.ts`) re-exports the types, the compiler, the connection rules, storage parsing, the default patch, the state hook and every Vue component. It is private to this repo and bundled by the application, so consumers import it through the workspace alias `@webgamekit/strudel-flow`.
+`@webgamekit/strudel-flow` is published to npm and its barrel (`src/index.ts`) re-exports everything below, so a host such as a game can embed the flow editor on its own, without the code editor.
+
+| Export                                                     | Use                                                                                 |
+| ---------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `StrudelFlowEditor`, the node and control components       | The canvas, its nodes and their controls.                                           |
+| `useStrudelFlow`                                           | The patch state, compiler and storage hook.                                         |
+| `parseStrudelFlowCode`, `appendStrudelFlowBlocks`          | Code to graph, and appending `$:` blocks to a program.                              |
+| `STRUDEL_FLOW_NODE_DEFINITIONS`                            | Every node kind with its category, label and defaults.                              |
+| `STRUDEL_FLOW_EDITOR_MODE_OPTIONS`                         | The `code` and `flow` options a host's mode switch lists.                           |
+| `STRUDEL_FLOW_OPEN_STRINGS`                                | The MIDI note of each open string of a `bass` and a `guitar`, highest string first. |
+| `STRUDEL_FLOW_REFERENCE`                                   | The credit links to Strudel Flow by xyflow.                                         |
+| Types `StrudelFlowNodeKind`, `StrudelFlowNodeCategory`     | A node's kind, and its category: Instruments, Effects or Sounds.                    |
+| Types `StrudelFlowNoteEvent`, `StrudelFlowNoteBar`         | A note with its start and length in beats, and the notes of one bar.                |
+| Types `StrudelFlowTabInstrument`, `StrudelFlowSampleGroup` | `bass` or `guitar`, and the host's sample or voice list.                            |

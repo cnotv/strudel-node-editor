@@ -30,7 +30,7 @@ flow tab:
 - **patterns**: your saved patterns, then the examples, then the songs:
   original songs, one for each hint style, and a second stoner rock and grunge song. Those songs are
   Lift Off (trance), Wire Fence (breakbeat), Neon Drive
-  (synthwave), Dust and Diesel and Sun Bleached (stoner rock), Rust and Rain and Paper Skies (grunge), Hollow Chambers (death metal), Winter Court (classical),
+  (synthwave), Dust and Diesel and Sun Bleached (stoner rock), Rust and Rain and Paper Skies (grunge),
   Uptown Strut (funk), Blue Hour and Late Fusion (jazz), and Acid Doom (psytrance doom). They are written
   as `$:` layers with a `.mask` holding one number a bar, so each layer can be read, muted or
   rearranged on its own, and the hints tab finds nothing missing in them. Each is a link that puts

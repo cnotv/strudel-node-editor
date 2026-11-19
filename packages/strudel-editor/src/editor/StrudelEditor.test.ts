@@ -328,8 +328,6 @@ describe('StrudelEditor view', () => {
       'Sun Bleached (stoner rock)',
       'Rust and Rain (grunge)',
       'Paper Skies (grunge)',
-      'Hollow Chambers (death metal)',
-      'Winter Court (classical)',
       'Uptown Strut (funk)',
       'Blue Hour (jazz)',
       'Acid Doom (psytrance doom)',

@@ -275,8 +275,7 @@ describe('the added styles', () => {
 
 const INSTRUMENT_SONGS = [
   { id: 'sun-bleached', styleId: 'stoner-rock', bpm: 96, bars: 36 },
-  { id: 'paper-skies', styleId: 'grunge', bpm: 112, bars: 40 },
-  { id: 'hollow-chambers', styleId: 'death-metal', bpm: 200, bars: 40 }
+  { id: 'paper-skies', styleId: 'grunge', bpm: 112, bars: 40 }
 ] as const
 
 describe('the songs that use the instrument presets', () => {
@@ -349,19 +348,4 @@ describe('the songs that use the instrument presets', () => {
       expect(code).toContain('arrange(')
     }
   )
-
-  it('cuts every drum event at fast tempos, so a blast beat does not smear', () => {
-    // Arrange
-    const code = findSong('hollow-chambers')
-    const kickAndSnareLines = code
-      .split('\n')
-      .filter((line) => /blastkit_(?:kick|snare)\b/.test(line))
-
-    // Act
-    const allClipped = kickAndSnareLines.every((line) => line.includes('.clip(1)'))
-
-    // Assert
-    expect(kickAndSnareLines.length).toBeGreaterThanOrEqual(2)
-    expect(allClipped).toBe(true)
-  })
 })

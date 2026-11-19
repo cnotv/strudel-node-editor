@@ -109,7 +109,12 @@ const router = createRouter({
   routes: [{ path: '/', component: { template: '<div />' } }]
 })
 
+// A wrapper left mounted keeps reacting to the shared router, so a later test that opens flow
+// mode would open it in every earlier wrapper too, each on a full song.
+const mountedWrappers: { unmount: () => void }[] = []
+
 const clearSavedState = async (): Promise<void> => {
+  mountedWrappers.splice(0).forEach((wrapper) => wrapper.unmount())
   await router.replace('/')
   localStorage.clear()
 }
@@ -119,6 +124,7 @@ const readEditorCode = (wrapper: Awaited<ReturnType<typeof mountEditorView>>): s
 
 const mountEditorView = async () => {
   const wrapper = mount(StrudelEditor, { global: { plugins: [router] } })
+  mountedWrappers.push(wrapper)
   // The editor module loads through a dynamic import, which outlasts a promise flush.
   await vi.waitFor(() => {
     expect(wrapper.find('.fake-strudel-code').exists()).toBe(true)
@@ -725,6 +731,7 @@ describe('host events', () => {
       props: { code: 's("hh")' },
       global: { plugins: [router] }
     })
+    mountedWrappers.push(wrapper)
     await vi.waitFor(() => {
       expect(wrapper.find('.fake-strudel-code').exists()).toBe(true)
     })

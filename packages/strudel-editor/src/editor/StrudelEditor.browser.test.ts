@@ -216,9 +216,9 @@ describe('StrudelEditor audible playback', () => {
     const wrapper = mount(StrudelEditor, { attachTo: document.body })
 
     try {
-      // Act: switch to patterns tab and click Caverave, which plays it
+      // Act: switch to patterns tab and click Lift Off, which plays it
       await page.getByRole('button', { name: 'Import', exact: true }).click()
-      await page.getByRole('link', { name: 'Caverave' }).click()
+      await page.getByRole('link', { name: 'Lift Off (trance)' }).click()
       await vi.waitFor(
         () => {
           expect(bufferStartCount).toBeGreaterThan(0)
@@ -820,7 +820,7 @@ describe('StrudelEditor audible playback', () => {
         expect(codeEditor?.getBoundingClientRect().bottom).toBeLessThan(navigationClearance)
 
         // Act
-        await page.getByRole('link', { name: 'Caverave' }).click()
+        await page.getByRole('link', { name: 'Lift Off (trance)' }).click()
 
         // Assert
         await vi.waitFor(() => {
@@ -828,7 +828,7 @@ describe('StrudelEditor audible playback', () => {
           expect(editorTop).toBeGreaterThanOrEqual(navigationClearance)
           expect(editorTop).toBeLessThan(window.innerHeight)
         })
-        expect(readEditorCode()).toContain('"Caverave"')
+        expect(readEditorCode()).toContain('Lift Off')
       } finally {
         wrapper.unmount()
       }

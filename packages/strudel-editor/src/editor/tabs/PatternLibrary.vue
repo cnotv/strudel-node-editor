@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { GripVertical, Save, X } from 'lucide-vue-next'
+import { Save, X } from 'lucide-vue-next'
 import { RouterLink, useRoute } from 'vue-router'
 import IconButton from '../../components/IconButton.vue'
 import { Input } from '../../components/ui/input'
@@ -189,7 +189,6 @@ const onPatternClick = (event: MouseEvent, patternId: string): void => {
           :key="pattern.id"
           class="strudel-patterns__item"
           :class="{
-            'strudel-patterns__item--draggable': group.draggable,
             'strudel-patterns__item--dragging': draggedPatternId === pattern.id,
             'strudel-patterns__item--drop-target':
               dropTargetPatternId === pattern.id && draggedPatternId !== pattern.id
@@ -201,14 +200,6 @@ const onPatternClick = (event: MouseEvent, patternId: string): void => {
           @drop.prevent="onDrop(pattern.id)"
           @dragend="onDragEnd"
         >
-          <span
-            v-if="group.draggable"
-            class="strudel-patterns__grip"
-            title="Drag to reorder"
-            aria-hidden="true"
-          >
-            <GripVertical />
-          </span>
           <Save v-if="group.saved" class="strudel-patterns__saved-icon" aria-hidden="true" />
           <RouterLink
             class="strudel-patterns__link"
@@ -296,28 +287,20 @@ const onPatternClick = (event: MouseEvent, patternId: string): void => {
   border-radius: var(--radius-md);
 }
 
-.strudel-patterns__item--draggable {
-  cursor: grab;
-}
-
 .strudel-patterns__item--dragging {
   opacity: var(--opacity-muted);
 }
 
 .strudel-patterns__item--drop-target {
+  border-radius: 0;
   box-shadow: inset 0 var(--spacing-px) 0 var(--color-ring);
 }
 
-.strudel-patterns__grip,
 .strudel-patterns__saved-icon {
   flex-shrink: 0;
   width: var(--font-size-sm);
   height: var(--font-size-sm);
   color: var(--color-muted-foreground);
-}
-
-.strudel-patterns__grip {
-  margin-left: var(--spacing-1);
 }
 
 .strudel-patterns__link {

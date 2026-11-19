@@ -309,24 +309,13 @@ describe('StrudelEditor view', () => {
     expect(wrapper.find('.strudel-import').exists()).toBe(true)
   })
 
-  it('keeps the five songs and adds one for each style', () => {
+  it('lists the songs', () => {
     // Arrange / Act
     const labels = ELECTRO_TUNES.map((song) => song.label)
 
     // Assert
     expect(labels).toEqual([
-      'Caverave',
-      'Dinofunk',
-      'Megalovania riff (Toby Fox)',
-      'Breakfast in America (Supertramp)',
-      'Come as You Are riff (Nirvana)',
-      'Concrete Hours (techno)',
-      'Second Floor (house)',
-      'Long Way Down (drum and bass)',
-      'Corner Store (hip hop)',
-      'Tideline (ambient)',
       'Lift Off (trance)',
-      'Harbour Steps (dub)',
       'Wire Fence (breakbeat)',
       'Neon Drive (synthwave)',
       'Dust and Diesel (stoner rock)',

@@ -216,11 +216,9 @@ describe('StrudelEditor audible playback', () => {
     const wrapper = mount(StrudelEditor, { attachTo: document.body })
 
     try {
-      // Act: switch to patterns tab and click Caverave, which plays it
+      // Act: switch to patterns tab and click Lift Off, which plays it
       await page.getByRole('button', { name: 'Import', exact: true }).click()
-      await page.getByRole('button', { name: /^Examples/ }).click()
-      await page.getByRole('button', { name: /^Songs/ }).click()
-      await page.getByRole('link', { name: 'Caverave' }).click()
+      await page.getByRole('link', { name: 'Lift Off (trance)' }).click()
       await vi.waitFor(
         () => {
           expect(bufferStartCount).toBeGreaterThan(0)
@@ -771,8 +769,10 @@ describe('StrudelEditor audible playback', () => {
           { timeout: 15000 }
         )
         await page.getByRole('button', { name: 'Import', exact: true }).click()
-        await page.getByRole('button', { name: /^Examples/ }).click()
-        await page.getByRole('button', { name: /^Songs/ }).click()
+        await page
+          .locator('.strudel-editor__drawer-tabs')
+          .getByRole('button', { name: 'Sounds', exact: true })
+          .click()
 
         // Act
         await page.getByRole('link', { name: 'Scope', exact: true }).click()
@@ -810,8 +810,6 @@ describe('StrudelEditor audible playback', () => {
           { timeout: 15000 }
         )
         await page.getByRole('button', { name: 'Import', exact: true }).click()
-        await page.getByRole('button', { name: /^Examples/ }).click()
-        await page.getByRole('button', { name: /^Songs/ }).click()
         const editorView = document.querySelector('.strudel-editor')
         editorView?.scrollTo({ top: editorView.scrollHeight })
         // The fixed navigation covers the view's top padding, so code scrolled into it is hidden.
@@ -822,7 +820,7 @@ describe('StrudelEditor audible playback', () => {
         expect(codeEditor?.getBoundingClientRect().bottom).toBeLessThan(navigationClearance)
 
         // Act
-        await page.getByRole('link', { name: 'Caverave' }).click()
+        await page.getByRole('link', { name: 'Lift Off (trance)' }).click()
 
         // Assert
         await vi.waitFor(() => {
@@ -830,7 +828,7 @@ describe('StrudelEditor audible playback', () => {
           expect(editorTop).toBeGreaterThanOrEqual(navigationClearance)
           expect(editorTop).toBeLessThan(window.innerHeight)
         })
-        expect(readEditorCode()).toContain('"Caverave"')
+        expect(readEditorCode()).toContain('Lift Off')
       } finally {
         wrapper.unmount()
       }

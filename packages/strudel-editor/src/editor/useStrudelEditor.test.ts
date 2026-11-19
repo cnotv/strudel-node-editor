@@ -1118,7 +1118,7 @@ describe('useStrudelEditor', () => {
 
     // Assert
     expect(tuneCount).toBe(ELECTRO_TUNES.length)
-    expect(electroTunes.map((tune) => tune.id)).toContain('caverave')
+    expect(electroTunes.map((tune) => tune.id)).toContain('lift-off')
     expect(electroTunes.map((tune) => tune.label)).toEqual(ELECTRO_TUNES.map((tune) => tune.label))
   })
 

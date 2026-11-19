@@ -1,18 +1,31 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { X } from 'lucide-vue-next'
+import { Save, X } from 'lucide-vue-next'
 import { RouterLink, useRoute } from 'vue-router'
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger
-} from '../../components/ui/accordion'
 import IconButton from '../../components/IconButton.vue'
+import { Input } from '../../components/ui/input'
+import { STRUDEL_SONG_ORDER_STORAGE_KEY } from '../config'
+import {
+  movePatternAfter,
+  movePatternBefore,
+  readStoredPatternOrder,
+  sortPatternsByStoredOrder
+} from '../patternOrder'
 import { writeStrudelAddress } from '../strudelAddress'
+import { readStorage, writeStorage } from '../../utils/storage'
 import type { StrudelExample } from '../types'
 
+interface PatternGroup {
+  id: string
+  title: string
+  patterns: StrudelExample[]
+  deletable: boolean
+  saved: boolean
+  draggable: boolean
+}
+
 const props = defineProps<{
+  panel: 'music' | 'sounds'
   savedPatterns: StrudelExample[]
   examples: StrudelExample[]
   songs: StrudelExample[]
@@ -27,34 +40,120 @@ const emit = defineEmits<{
 const route = useRoute()
 
 const searchQuery = ref('')
+const songOrder = ref<string[]>(readStoredPatternOrder(readStorage(STRUDEL_SONG_ORDER_STORAGE_KEY)))
+const draggedPatternId = ref<string | null>(null)
+const dropTargetPatternId = ref<string | null>(null)
+
+const isSearching = computed(() => searchQuery.value.trim().length > 0)
+
 const matchesSearch = (pattern: StrudelExample, query: string): boolean =>
   query.length === 0 ||
   pattern.label.toLowerCase().includes(query) ||
   pattern.code.toLowerCase().includes(query)
 
-const patternGroups = computed(() => {
+const orderedSongs = computed(() => sortPatternsByStoredOrder(props.songs, songOrder.value))
+
+const patternGroups = computed<PatternGroup[]>(() => {
   const query = searchQuery.value.trim().toLowerCase()
-  return [
-    {
-      id: 'saved',
-      title: 'Saved',
-      deletable: true,
-      patterns: props.savedPatterns.filter((savedPattern) => matchesSearch(savedPattern, query))
-    },
-    {
-      id: 'examples',
-      title: 'Examples',
-      deletable: false,
-      patterns: props.examples.filter((example) => matchesSearch(example, query))
-    },
-    {
-      id: 'songs',
-      title: 'Songs',
-      deletable: false,
-      patterns: props.songs.filter((song) => matchesSearch(song, query))
-    }
-  ].filter((group) => group.patterns.length > 0)
+  const groups: PatternGroup[] =
+    props.panel === 'music'
+      ? [
+          {
+            id: 'saved',
+            title: 'Saved',
+            patterns: props.savedPatterns,
+            deletable: true,
+            saved: true,
+            draggable: false
+          },
+          {
+            id: 'songs',
+            title: 'Songs',
+            patterns: orderedSongs.value,
+            deletable: false,
+            saved: false,
+            draggable: true
+          }
+        ]
+      : [
+          {
+            id: 'examples',
+            title: 'Examples',
+            patterns: props.examples,
+            deletable: false,
+            saved: false,
+            draggable: false
+          }
+        ]
+  return groups
+    .map((group) => ({
+      ...group,
+      patterns: group.patterns.filter((pattern) => matchesSearch(pattern, query))
+    }))
+    .filter((group) => group.patterns.length > 0)
 })
+
+const storeSongOrder = (nextSongIds: string[]): void => {
+  songOrder.value = nextSongIds
+  writeStorage(STRUDEL_SONG_ORDER_STORAGE_KEY, JSON.stringify(nextSongIds))
+}
+
+const onDragStart = (event: DragEvent, patternId: string): void => {
+  draggedPatternId.value = patternId
+  if (event.dataTransfer !== null) {
+    event.dataTransfer.effectAllowed = 'move'
+    event.dataTransfer.setData('text/plain', patternId)
+  }
+}
+
+const onDragOver = (event: DragEvent, patternId: string): void => {
+  if (draggedPatternId.value === null || draggedPatternId.value === patternId) {
+    return
+  }
+  event.preventDefault()
+  if (event.dataTransfer !== null) {
+    event.dataTransfer.dropEffect = 'move'
+  }
+  dropTargetPatternId.value = patternId
+}
+
+const onDrop = (patternId: string): void => {
+  if (draggedPatternId.value !== null && draggedPatternId.value !== patternId) {
+    storeSongOrder(
+      movePatternBefore(
+        orderedSongs.value.map((song) => song.id),
+        draggedPatternId.value,
+        patternId
+      )
+    )
+  }
+  onDragEnd()
+}
+
+const onDragEnd = (): void => {
+  draggedPatternId.value = null
+  dropTargetPatternId.value = null
+}
+
+const onPatternKeydown = (event: KeyboardEvent, patternId: string, patternIds: string[]): void => {
+  if (isSearching.value || !event.altKey) {
+    return
+  }
+  const patternIndex = patternIds.indexOf(patternId)
+  const isMovingUp = event.key === 'ArrowUp'
+  const isMovingDown = event.key === 'ArrowDown'
+  if (patternIndex < 0 || (!isMovingUp && !isMovingDown)) {
+    return
+  }
+  const nextPatternIds = isMovingUp
+    ? movePatternBefore(patternIds, patternId, patternIds[patternIndex - 1])
+    : movePatternAfter(patternIds, patternId, patternIds[patternIndex + 1])
+  if (nextPatternIds === patternIds) {
+    return
+  }
+  event.preventDefault()
+  storeSongOrder(nextPatternIds)
+}
 
 // The link's own navigation sets the address; loading here as well reloads a pattern already
 // in the address, which would otherwise not change. A modified or middle
@@ -70,47 +169,77 @@ const onPatternClick = (event: MouseEvent, patternId: string): void => {
 
 <template>
   <div class="strudel-patterns">
-    <input
-      v-model="searchQuery"
+    <Input
+      :model-value="searchQuery"
       class="strudel-patterns__search"
-      type="search"
-      placeholder="Search patterns..."
-      aria-label="Search patterns"
+      :placeholder="panel === 'music' ? 'Search music...' : 'Search examples...'"
+      :aria-label="panel === 'music' ? 'Search music' : 'Search examples'"
+      @update:model-value="searchQuery = String($event)"
     />
-    <Accordion type="multiple">
-      <AccordionItem v-for="group in patternGroups" :key="group.id" :value="group.id">
-        <AccordionTrigger>{{ group.title }} ({{ group.patterns.length }})</AccordionTrigger>
-        <AccordionContent>
-          <ul class="strudel-patterns__list">
-            <li
-              v-for="pattern in group.patterns"
-              :key="pattern.id"
-              class="strudel-patterns__item"
-              :class="{ 'strudel-patterns__item--deletable': group.deletable }"
-            >
-              <RouterLink
-                class="strudel-patterns__link"
-                :to="{ query: writeStrudelAddress(route.query, { patternId: pattern.id }) }"
-                :aria-current="pattern.code === currentCode ? 'true' : undefined"
-                @click="onPatternClick($event, pattern.id)"
-              >
-                {{ pattern.label }}
-              </RouterLink>
-              <IconButton
-                v-if="group.deletable"
-                size="sm"
-                :title="`Delete ${pattern.label}`"
-                :aria-label="`Delete ${pattern.label}`"
-                @click="emit('delete', pattern.id)"
-              >
-                <X aria-hidden="true" />
-              </IconButton>
-            </li>
-          </ul>
-        </AccordionContent>
-      </AccordionItem>
-    </Accordion>
-    <p v-if="patternGroups.length === 0" class="strudel-patterns__empty">No patterns found</p>
+    <section
+      v-for="group in patternGroups"
+      :key="group.id"
+      class="strudel-patterns__group"
+      :aria-label="group.title"
+    >
+      <h3 class="strudel-patterns__group-title">{{ group.title }} ({{ group.patterns.length }})</h3>
+      <ul class="strudel-patterns__list">
+        <li
+          v-for="pattern in group.patterns"
+          :key="pattern.id"
+          class="strudel-patterns__item"
+          :class="{
+            'strudel-patterns__item--dragging': draggedPatternId === pattern.id,
+            'strudel-patterns__item--drop-target':
+              dropTargetPatternId === pattern.id && draggedPatternId !== pattern.id
+          }"
+          :draggable="group.draggable && !isSearching"
+          @dragstart="onDragStart($event, pattern.id)"
+          @dragover="onDragOver($event, pattern.id)"
+          @dragleave="dropTargetPatternId = null"
+          @drop.prevent="onDrop(pattern.id)"
+          @dragend="onDragEnd"
+        >
+          <Save v-if="group.saved" class="strudel-patterns__saved-icon" aria-hidden="true" />
+          <RouterLink
+            class="strudel-patterns__link"
+            :to="{ query: writeStrudelAddress(route.query, { patternId: pattern.id }) }"
+            :aria-current="pattern.code === currentCode ? 'true' : undefined"
+            :aria-keyshortcuts="
+              group.draggable && !isSearching ? 'Alt+ArrowUp Alt+ArrowDown' : undefined
+            "
+            :title="
+              group.draggable && !isSearching
+                ? 'Drag to reorder. Alt+Arrow keys move it.'
+                : undefined
+            "
+            @click="onPatternClick($event, pattern.id)"
+            @keydown="
+              group.draggable &&
+              onPatternKeydown(
+                $event,
+                pattern.id,
+                group.patterns.map((groupPattern) => groupPattern.id)
+              )
+            "
+          >
+            {{ pattern.label }}
+          </RouterLink>
+          <IconButton
+            v-if="group.deletable"
+            size="sm"
+            :title="`Delete ${pattern.label}`"
+            :aria-label="`Delete ${pattern.label}`"
+            @click="emit('delete', pattern.id)"
+          >
+            <X aria-hidden="true" />
+          </IconButton>
+        </li>
+      </ul>
+    </section>
+    <p v-if="patternGroups.length === 0" class="strudel-patterns__empty">
+      {{ isSearching ? 'No patterns found' : 'Nothing here yet' }}
+    </p>
   </div>
 </template>
 
@@ -118,19 +247,27 @@ const onPatternClick = (event: MouseEvent, patternId: string): void => {
 .strudel-patterns {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-3);
-  padding: 0;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2) var(--spacing-3) var(--spacing-4);
 }
 
 .strudel-patterns__search {
-  width: 100%;
-  padding: var(--spacing-2) var(--spacing-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-background);
-  color: var(--color-foreground);
-  font-size: var(--font-size-md);
-  box-sizing: border-box;
+  height: var(--btn-sm-height);
+  font-size: var(--font-size-sm);
+}
+
+.strudel-patterns__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-px);
+}
+
+.strudel-patterns__group-title {
+  margin: var(--spacing-1) var(--spacing-2) 0;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-muted-foreground);
+  text-transform: uppercase;
 }
 
 .strudel-patterns__list {
@@ -139,24 +276,45 @@ const onPatternClick = (event: MouseEvent, patternId: string): void => {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-1);
+  gap: var(--spacing-px);
 }
 
-.strudel-patterns__item--deletable {
+.strudel-patterns__item {
   display: flex;
   align-items: center;
   gap: var(--spacing-1);
+  min-width: 0;
+  border-radius: var(--radius-md);
+}
+
+.strudel-patterns__item--dragging {
+  opacity: var(--opacity-muted);
+}
+
+.strudel-patterns__item--drop-target {
+  border-radius: 0;
+  box-shadow: inset 0 var(--spacing-px) 0 var(--color-ring);
+}
+
+.strudel-patterns__saved-icon {
+  flex-shrink: 0;
+  width: var(--font-size-sm);
+  height: var(--font-size-sm);
+  color: var(--color-muted-foreground);
 }
 
 .strudel-patterns__link {
   display: block;
   flex: 1;
   min-width: 0;
-  padding: var(--spacing-2) var(--spacing-3);
+  overflow: hidden;
+  padding: var(--spacing-1) var(--spacing-2);
   border-radius: var(--radius-md);
   color: var(--color-foreground);
-  font-size: var(--font-size-md);
+  font-size: var(--font-size-sm);
   text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   transition: background-color 0.15s;
 }
 

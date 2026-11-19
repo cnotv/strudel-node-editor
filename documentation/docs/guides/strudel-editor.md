@@ -27,17 +27,14 @@ flow tab:
 
 - **hints**: what the pattern is missing for its style (below)
 - **welcome**: intro and about
-- **patterns**: your saved patterns, then the examples, then the songs: the electro tunes
-  Caverave and Dinofunk, three songs typed in from guitar tabs (the Megalovania riff, Breakfast
-  in America by Supertramp and the Come as You Are riff by Nirvana, played on the General MIDI
-  guitars), and one original song for each hint style, and a second stoner rock and grunge song. Those songs are Concrete Hours
-  (techno), Second Floor (house), Long Way Down (drum and bass), Corner Store (hip hop),
-  Tideline (ambient), Lift Off (trance), Harbour Steps (dub), Wire Fence (breakbeat), Neon Drive
-  (synthwave), Dust and Diesel and Sun Bleached (stoner rock), Rust and Rain and Paper Skies (grunge), Hollow Chambers (death metal), Winter Court (classical),
+- **patterns**: your saved patterns, then the examples, then the songs:
+  original songs, one for each hint style, and a second stoner rock and grunge song. Those songs are
+  Lift Off (trance), Wire Fence (breakbeat), Neon Drive
+  (synthwave), Dust and Diesel and Sun Bleached (stoner rock), Rust and Rain and Paper Skies (grunge),
   Uptown Strut (funk), Blue Hour and Late Fusion (jazz), and Acid Doom (psytrance doom). They are written
   as `$:` layers with a `.mask` holding one number a bar, so each layer can be read, muted or
   rearranged on its own, and the hints tab finds nothing missing in them. Each is a link that puts
-  it in the address, so `/tools/StrudelEditor?pattern=caverave` opens on Caverave, Back returns
+  it in the address, so `/tools/StrudelEditor?pattern=lift-off` opens on Lift Off, Back returns
   to the pattern before, and a pattern can open in a new tab. The name field at the top saves the code in the editor under
   that name, in local storage; a save is linked like the rest, as `?pattern=saved-<name>`, saving under
   a name already used replaces it, and its cross deletes it. How each style is written is in
@@ -60,11 +57,11 @@ flow tab:
 ![The sounds tab grouped by drum machine: under Roland TR909 and Sakata DPM48, sounds named Bass drum, Clap, Closed hi-hat and the rest, each with its code name and variation count](/img/strudel-editor/sounds-tab.webp)
 
 The open tab is in the address too, so `/tools/StrudelEditor?tab=midi` opens on the midi tab
-and `?tab=flow` opens the flow canvas. The two combine: `?pattern=caverave&tab=export` opens
-Caverave with the export tab ready, which is how `scripts/strudel-export.mjs` and the render API
+and `?tab=flow` opens the flow canvas. The two combine: `?pattern=lift-off&tab=export` opens
+Lift Off with the export tab ready, which is how `scripts/strudel-export.mjs` and the render API
 reach it. Opening and closing a tab from the toolbar replaces the address rather than adding to Back,
 which steps through the patterns picked. The editor mode is there as well: flow is `?mode=flow`,
-and code, the default, has no key, so `?pattern=dust-and-diesel&mode=flow` opens that pattern on the canvas. Links from before the query, such as `#caverave` or
+and code, the default, has no key, so `?pattern=dust-and-diesel&mode=flow` opens that pattern on the canvas. Links from before the query, such as `#lift-off` or
 `#export`, still open what they named and are rewritten to the query form.
 
 Audio starts on the first Play press or the first click on a pattern, since browsers only allow

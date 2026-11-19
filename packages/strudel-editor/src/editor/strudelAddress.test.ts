@@ -6,13 +6,13 @@ import type { StrudelAddress } from './types'
 describe('readStrudelAddress', () => {
   it.each<[string, LocationQuery, StrudelAddress]>([
     ['nothing', {}, { patternId: undefined, tabName: undefined }],
-    ['a pattern', { pattern: 'caverave' }, { patternId: 'caverave', tabName: undefined }],
+    ['a pattern', { pattern: 'lift-off' }, { patternId: 'lift-off', tabName: undefined }],
     ['a tab', { tab: 'export' }, { patternId: undefined, tabName: 'export' }],
     ['a mode', { mode: 'flow' }, { patternId: undefined, tabName: undefined, modeName: 'flow' }],
     [
       'a pattern and a tab',
-      { pattern: 'caverave', tab: 'export' },
-      { patternId: 'caverave', tabName: 'export' }
+      { pattern: 'lift-off', tab: 'export' },
+      { patternId: 'lift-off', tabName: 'export' }
     ],
     [
       'the first of a repeated key',
@@ -90,7 +90,7 @@ describe('readLegacyStrudelAnchor', () => {
   it.each<[string, string, StrudelAddress | null]>([
     ['no anchor', '', null],
     ['a tab', '#export', { tabName: 'export' }],
-    ['a pattern', '#caverave', { patternId: 'caverave' }],
+    ['a pattern', '#lift-off', { patternId: 'lift-off' }],
     ['an encoded pattern', '#saved-night%20drive', { patternId: 'saved-night drive' }]
   ])('reads %s', (_case, hash, expectedAddress) => {
     // Arrange

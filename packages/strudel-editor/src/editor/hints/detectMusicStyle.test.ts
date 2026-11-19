@@ -68,25 +68,26 @@ describe('detectMusicStyle', () => {
     expect(detection).toBeNull()
   })
 
-  it.each([
-    { name: 'a bassline at a house tempo', patternId: 'come-as-you-are-riff' },
-    { name: 'a melody at a house tempo', patternId: 'megalovania-riff' },
-    { name: 'a melody and bass at an ambient tempo', patternId: 'breakfast-in-america' },
-    { name: 'chords at a house tempo', patternId: 'pitch-wheel' },
-    { name: 'a tempo outside every style', patternId: 'dinofunk' }
-  ])('guesses no style from $name', ({ patternId }) => {
-    // Arrange
-    const patterns = [...STRUDEL_EXAMPLES, ...ELECTRO_TUNES]
-    const facts = readStrudelCodeFacts(
-      patterns.find((pattern) => pattern.id === patternId)?.code ?? ''
-    )
+  it.each([{ name: 'chords at a house tempo', patternId: 'pitch-wheel' }])(
+    'guesses no style from $name',
+    ({ patternId }) => {
+      // Arrange
+      const patterns = [...STRUDEL_EXAMPLES, ...ELECTRO_TUNES]
+      const facts = readStrudelCodeFacts(
+        patterns.find((pattern) => pattern.id === patternId)?.code ?? ''
+      )
 
-    // Act
-    const detection = detectMusicStyle({ styles: STRUDEL_MUSIC_STYLES, pickedStyleId: null, facts })
+      // Act
+      const detection = detectMusicStyle({
+        styles: STRUDEL_MUSIC_STYLES,
+        pickedStyleId: null,
+        facts
+      })
 
-    // Assert
-    expect(detection).toBeNull()
-  })
+      // Assert
+      expect(detection).toBeNull()
+    }
+  )
 
   it.each(STRUDEL_MUSIC_STYLES.map((style) => ({ styleId: style.id, style })))(
     'guesses $styleId from every instrument it is built with, at its tempo',

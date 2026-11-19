@@ -109,7 +109,12 @@ const router = createRouter({
   routes: [{ path: '/', component: { template: '<div />' } }]
 })
 
+// A wrapper left mounted keeps reacting to the shared router, so a later test that opens flow
+// mode would open it in every earlier wrapper too, each on a full song.
+const mountedWrappers: { unmount: () => void }[] = []
+
 const clearSavedState = async (): Promise<void> => {
+  mountedWrappers.splice(0).forEach((wrapper) => wrapper.unmount())
   await router.replace('/')
   localStorage.clear()
 }
@@ -119,6 +124,7 @@ const readEditorCode = (wrapper: Awaited<ReturnType<typeof mountEditorView>>): s
 
 const mountEditorView = async () => {
   const wrapper = mount(StrudelEditor, { global: { plugins: [router] } })
+  mountedWrappers.push(wrapper)
   // The editor module loads through a dynamic import, which outlasts a promise flush.
   await vi.waitFor(() => {
     expect(wrapper.find('.fake-strudel-code').exists()).toBe(true)
@@ -276,58 +282,52 @@ describe('StrudelEditor view', () => {
     expect(wrapper.find('.strudel-editor__drawer').exists()).toBe(false)
   })
 
-  it('lists examples and songs as collapsible groups in the import drawer', async () => {
+  it('splits the import drawer into music, sounds and import sub-tabs', async () => {
     // Arrange
     const wrapper = await mountEditorView()
 
     // Act
     await openDrawer(wrapper, 'Import')
-    const triggers = wrapper.findAll('.strudel-patterns button[aria-expanded]')
-    await Promise.all(triggers.map((trigger) => trigger.trigger('click')))
+    const subTabLabels = wrapper
+      .findAll('.strudel-editor__drawer-tabs button')
+      .map((button) => button.attributes('aria-label'))
+    const musicGroups = wrapper
+      .findAll('.strudel-patterns__group-title')
+      .map((title) => title.text())
+    const musicLinks = wrapper.findAll('.strudel-patterns__link')
+    await wrapper.find('.strudel-editor__drawer-tabs button[aria-label="Sounds"]').trigger('click')
+    const soundGroups = wrapper
+      .findAll('.strudel-patterns__group-title')
+      .map((title) => title.text())
+    const soundLinks = wrapper.findAll('.strudel-patterns__link')
+    await wrapper.find('.strudel-editor__drawer-tabs button[aria-label="Import"]').trigger('click')
 
     // Assert
-    expect(triggers.map((trigger) => trigger.text())).toEqual([
-      `Examples (${STRUDEL_EXAMPLES.length})`,
-      `Songs (${ELECTRO_TUNES.length})`
-    ])
-    expect(
-      wrapper
-        .findAll('.strudel-patterns__link')
-        .map((link) => [link.text(), link.attributes('href')])
-    ).toEqual(
-      [...STRUDEL_EXAMPLES, ...ELECTRO_TUNES].map((pattern) => [
-        pattern.label,
-        `/?pattern=${pattern.id}`
-      ])
+    expect(subTabLabels).toEqual(['Music', 'Sounds', 'Import'])
+    expect(musicGroups).toEqual([`Songs (${ELECTRO_TUNES.length})`])
+    expect(musicLinks.map((link) => [link.text(), link.attributes('href')])).toEqual(
+      ELECTRO_TUNES.map((song) => [song.label, `/?pattern=${song.id}`])
     )
+    expect(soundGroups).toEqual([`Examples (${STRUDEL_EXAMPLES.length})`])
+    expect(soundLinks.map((link) => [link.text(), link.attributes('href')])).toEqual(
+      STRUDEL_EXAMPLES.map((example) => [example.label, `/?pattern=${example.id}`])
+    )
+    expect(wrapper.find('.strudel-import').exists()).toBe(true)
   })
 
-  it('keeps the five songs and adds one for each style', () => {
+  it('lists the songs', () => {
     // Arrange / Act
     const labels = ELECTRO_TUNES.map((song) => song.label)
 
     // Assert
     expect(labels).toEqual([
-      'Caverave',
-      'Dinofunk',
-      'Megalovania riff (Toby Fox)',
-      'Breakfast in America (Supertramp)',
-      'Come as You Are riff (Nirvana)',
-      'Concrete Hours (techno)',
-      'Second Floor (house)',
-      'Long Way Down (drum and bass)',
-      'Corner Store (hip hop)',
-      'Tideline (ambient)',
       'Lift Off (trance)',
-      'Harbour Steps (dub)',
       'Wire Fence (breakbeat)',
       'Neon Drive (synthwave)',
       'Dust and Diesel (stoner rock)',
       'Sun Bleached (stoner rock)',
       'Rust and Rain (grunge)',
       'Paper Skies (grunge)',
-      'Hollow Chambers (death metal)',
-      'Winter Court (classical)',
       'Uptown Strut (funk)',
       'Blue Hour (jazz)',
       'Acid Doom (psytrance doom)',
@@ -349,14 +349,13 @@ describe('StrudelEditor view', () => {
     await wrapper.find('.strudel-export input').setValue('My beat')
     await saveButton?.trigger('click')
     await openDrawer(wrapper, 'Import')
-    const savedTrigger = wrapper.find('.strudel-patterns button[aria-expanded]')
-    await savedTrigger.trigger('click')
     const savedLink = wrapper.find('.strudel-patterns__link')
+    const savedIcon = wrapper.find('.strudel-patterns__saved-icon')
     await wrapper.find('button[aria-label="Delete My beat"]').trigger('click')
 
     // Assert
     expect(disabledWithoutName).toBe(true)
-    expect(savedTrigger.text()).toBe('Saved (1)')
+    expect(savedIcon.exists()).toBe(true)
     expect([savedLink.text(), savedLink.attributes('href')]).toEqual([
       'My beat',
       '/?pattern=saved-my-beat'
@@ -385,8 +384,6 @@ describe('StrudelEditor view', () => {
     mockEvaluateCode.mockClear()
     const wrapper = await mountEditorView()
     await openDrawer(wrapper, 'Import')
-    const triggers = wrapper.findAll('.strudel-patterns button[aria-expanded]')
-    await Promise.all(triggers.map((trigger) => trigger.trigger('click')))
     const songLink = wrapper
       .findAll('.strudel-patterns__link')
       .find((link) => link.attributes('href') === `/?pattern=${ELECTRO_TUNES[1].id}`)
@@ -677,7 +674,7 @@ describe('StrudelEditor view', () => {
     // Act
     await openDrawer(wrapper, 'Import')
     const flowStayedOpen = wrapper.find('.strudel-flow-editor-stub').exists()
-    await wrapper.find('.strudel-patterns button[aria-expanded]').trigger('click')
+    await wrapper.find('.strudel-editor__drawer-tabs button[aria-label="Sounds"]').trigger('click')
     await wrapper.find('.strudel-patterns__link').trigger('click')
 
     // Assert
@@ -732,6 +729,7 @@ describe('host events', () => {
       props: { code: 's("hh")' },
       global: { plugins: [router] }
     })
+    mountedWrappers.push(wrapper)
     await vi.waitFor(() => {
       expect(wrapper.find('.fake-strudel-code').exists()).toBe(true)
     })

@@ -5,7 +5,9 @@ import * as rootEntry from './index'
 const HELPER_EXPORTS = [
   'STRUDEL_SAVED_CODE_STORAGE_KEY',
   'readStrudelAddress',
+  'playStrudelSong',
   'readStrudelNoteBars',
+  'renderStrudelCodeToNotes',
   'useStrudelSounds',
   'writeStrudelAddress'
 ]

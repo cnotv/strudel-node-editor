@@ -60,6 +60,12 @@ export type StrudelPlaybackPosition = {
   cyclesPerSecond: number
 }
 
+/** A song playing live through the engine, for a game that keeps time with it. */
+export type StrudelLiveSong = {
+  readPosition: () => StrudelPlaybackPosition
+  stop: () => Promise<void>
+}
+
 export type StrudelPlayback = {
   evaluateCode: (patternCode: string) => Promise<StrudelEvaluationResult>
   stopPlayback: () => Promise<void>
@@ -75,6 +81,11 @@ export type StrudelPlayback = {
   ) => Promise<StrudelEvaluationResult>
   /** Renders the cycles offline and returns the WAV file instead of downloading it. */
   renderToWavBytes: (
+    patternCode: string,
+    exportOptions: StrudelExportOptions
+  ) => Promise<StrudelRenderResult>
+  /** Renders the cycles to a MIDI file and returns it instead of downloading it. */
+  renderToMidiBytes: (
     patternCode: string,
     exportOptions: StrudelExportOptions
   ) => Promise<StrudelRenderResult>

@@ -762,6 +762,55 @@ describe('useStrudelEditor', () => {
     expect(editorStatus.value).toBe('idle')
   })
 
+  it('reports loading from Play until the pattern is evaluated, and not after', async () => {
+    // Arrange
+    const finishers: Array<() => void> = []
+    const slowPlayback: StrudelPlayback = {
+      ...buildSuccessfulPlayback(),
+      evaluateCode: vi.fn(
+        () =>
+          new Promise<{ success: boolean }>((resolve) =>
+            finishers.push(() => resolve({ success: true }))
+          )
+      )
+    }
+    const { playPattern, isLoading } = useStrudelEditor({
+      initialExamples: buildExampleList(),
+      playbackLoader: async () => slowPlayback
+    })
+    const loadingBeforePlay = isLoading.value
+
+    // Act
+    const playing = playPattern()
+    await vi.waitFor(() => expect(finishers.length).toBe(1))
+    const loadingWhileWaiting = isLoading.value
+    finishers[0]()
+    await playing
+
+    // Assert
+    expect(loadingBeforePlay).toBe(false)
+    expect(loadingWhileWaiting).toBe(true)
+    expect(isLoading.value).toBe(false)
+  })
+
+  it('stops reporting loading when the pattern fails to evaluate', async () => {
+    // Arrange
+    const failingPlayback: StrudelPlayback = {
+      ...buildSuccessfulPlayback(),
+      evaluateCode: vi.fn(async () => ({ success: false, errorMessage: 'bad code' }))
+    }
+    const { playPattern, isLoading } = useStrudelEditor({
+      initialExamples: buildExampleList(),
+      playbackLoader: async () => failingPlayback
+    })
+
+    // Act
+    await playPattern()
+
+    // Assert
+    expect(isLoading.value).toBe(false)
+  })
+
   it('keeps the current code when the example id is unknown', () => {
     // Arrange
     const { selectExample, patternCode } = useStrudelEditor({

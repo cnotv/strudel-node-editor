@@ -94,6 +94,49 @@ describe('useInstruments', () => {
     expect(store.statusByName.stoner).toBeUndefined()
   })
 
+  it('renders different presets at the same time, so a song waits for its slowest preset only', async () => {
+    // Arrange
+    const store = useInstruments()
+    const finishers: Array<() => void> = []
+    mockRegister.mockImplementation(() => new Promise<void>((resolve) => finishers.push(resolve)))
+
+    // Act
+    const rendering = store.ensureRenderedForCode('s("blastkit_kick")\ns("stoner_chord")')
+    await vi.waitFor(() => expect(mockRegister.mock.calls.length).toBeGreaterThan(0))
+    const startedBeforeAnyFinished = renderedNames()
+    finishers.forEach((finish) => finish())
+    await vi.waitFor(() => expect(finishers.length).toBe(2))
+    finishers.forEach((finish) => finish())
+    await rendering
+
+    // Assert
+    expect(startedBeforeAnyFinished.sort()).toEqual(['blastkit', 'stoner'])
+  })
+
+  it('renders the same preset one after another, so two quick edits never register out of order', async () => {
+    // Arrange
+    const store = useInstruments()
+    const finishers: Array<() => void> = []
+    mockRegister.mockImplementation(() => new Promise<void>((resolve) => finishers.push(resolve)))
+
+    // Act
+    store.selectPreset('blastkit')
+    const first = store.ensureRendered('blastkit')
+    store.setKnob('punch', 0.1)
+    const second = store.ensureRendered('blastkit')
+    await vi.waitFor(() => expect(finishers.length).toBe(1))
+    const startedWhileFirstRuns = mockRegister.mock.calls.length
+    finishers[0]()
+    await first
+    await vi.waitFor(() => expect(finishers.length).toBe(2))
+    finishers[1]()
+    await second
+
+    // Assert
+    expect(startedWhileFirstRuns).toBe(1)
+    expect(renderedNames()).toEqual(['blastkit', 'blastkit'])
+  })
+
   it('records a failed render without throwing, and retries it next time', async () => {
     // Arrange
     const store = useInstruments()

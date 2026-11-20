@@ -16,6 +16,9 @@ const isExternal = (moduleId: string): boolean =>
   )
 
 export default defineConfig({
+  // A library build must not assume the host serves it from its root: "./" makes the worker
+  // and asset urls relative to the file that names them.
+  base: './',
   plugins: [vue()],
   resolve: {
     alias: [

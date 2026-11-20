@@ -69,6 +69,8 @@ type StrudelEditorState = StrudelTranscriptionState & {
   selectedExampleId: Ref<string>
   patternCode: Ref<string>
   editorStatus: Ref<StrudelEditorStatus>
+  /** True from Play until the pattern sounds, while the engine and the instrument presets load. */
+  isLoading: Ref<boolean>
   /** True while a pattern plays and the code on screen has changed since it started. */
   hasUnplayedChanges: ComputedRef<boolean>
   /** The code last evaluated, which the source offsets of the playing notes refer to. */
@@ -156,6 +158,30 @@ const resolveStartingExamples = (editorOptions?: StrudelEditorOptions) => {
   return { exampleList, defaultExample }
 }
 
+// The code from the last visit, so a refresh or a closed tab loses nothing.
+const usePersistedPatternCode = (fallbackCode: string): Ref<string> => {
+  const patternCode = ref(readStorage(STRUDEL_SAVED_CODE_STORAGE_KEY) ?? fallbackCode)
+  watch(patternCode, (code) => writeStorage(STRUDEL_SAVED_CODE_STORAGE_KEY, code))
+  return patternCode
+}
+
+const setterFor =
+  <Value>(target: Ref<Value>) =>
+  (nextValue: Value): void => {
+    target.value = nextValue
+  }
+
+const withLoadingFlag =
+  (isLoading: Ref<boolean>, work: () => Promise<void>): (() => Promise<void>) =>
+  async () => {
+    isLoading.value = true
+    try {
+      await work()
+    } finally {
+      isLoading.value = false
+    }
+  }
+
 const prepareInstrumentsOrLog = (
   code: string,
   appendLog: (message: string, level: 'error') => void
@@ -177,10 +203,9 @@ export const useStrudelEditor = (
   const playbackLoader = editorOptions?.playbackLoader ?? loadDefaultStrudelPlayback
 
   const selectedExampleId = ref(defaultExample?.id ?? '')
-  // The code from the last visit, so a refresh or a closed tab loses nothing.
-  const patternCode = ref(readStorage(STRUDEL_SAVED_CODE_STORAGE_KEY) ?? defaultExample?.code ?? '')
-  watch(patternCode, (code) => writeStorage(STRUDEL_SAVED_CODE_STORAGE_KEY, code))
+  const patternCode = usePersistedPatternCode(defaultExample?.code ?? '')
   const editorStatus = ref<StrudelEditorStatus>('idle')
+  const isLoading = ref(false)
   const errorMessage = ref('')
   const playbackReference = ref<StrudelPlayback | null>(null)
   const activeTab = ref<StrudelTabId | null>(null)
@@ -207,7 +232,7 @@ export const useStrudelEditor = (
     appendLog(message, 'error')
   }
 
-  const playPattern = async (): Promise<void> => {
+  const playPattern = withLoadingFlag(isLoading, async (): Promise<void> => {
     errorMessage.value = ''
     appendLog('Playing pattern...')
     const evaluatedCode = patternCode.value
@@ -229,7 +254,7 @@ export const useStrudelEditor = (
     } catch (error) {
       reportError(error instanceof Error ? error.message : 'Pattern failed to evaluate')
     }
-  }
+  })
 
   const stopPattern = async (): Promise<void> => {
     try {
@@ -286,9 +311,7 @@ export const useStrudelEditor = (
     )
   }
 
-  const updatePatternCode = (nextCode: string): void => {
-    patternCode.value = nextCode
-  }
+  const updatePatternCode = setterFor(patternCode)
 
   const transcription = useStrudelTranscription({
     runner: editorOptions?.transcriptionRunner ?? runTranscription,
@@ -300,18 +323,15 @@ export const useStrudelEditor = (
     appendLog
   })
 
-  const setActiveTab = (tabId: StrudelTabId | null): void => {
-    activeTab.value = tabId
-  }
+  const setActiveTab = setterFor(activeTab)
 
-  const attachEditor = (nextEditorHandle: StrudelEditorHandle | null): void => {
-    editorHandle.value = nextEditorHandle
-  }
+  const attachEditor = setterFor(editorHandle)
 
   return {
     selectedExampleId,
     patternCode,
     editorStatus,
+    isLoading,
     hasUnplayedChanges,
     playingCode,
     playingSourceOffsets,

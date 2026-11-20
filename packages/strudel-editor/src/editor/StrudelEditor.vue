@@ -81,6 +81,7 @@ const emit = defineEmits<{
 const {
   patternCode,
   editorStatus,
+  isLoading,
   errorMessage,
   examples,
   electroTunes,
@@ -544,6 +545,7 @@ onBeforeUnmount(() => {
         :steps-per-cycle="editorMode === 'flow' ? flowBeatsPerCycle : STRUDEL_BEATS_PER_CYCLE"
         :loop-enabled="loopEnabled"
         :is-playing="editorStatus === 'playing'"
+        :is-loading="isLoading"
         @seek="seekToCycle"
         @play="onPlayRequested"
         @pause="onPauseRequested"

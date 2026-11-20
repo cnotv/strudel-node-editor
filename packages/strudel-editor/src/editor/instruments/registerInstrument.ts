@@ -18,8 +18,9 @@ const blobUrlsByPreset: Record<string, string[]> = {}
 export const renderInstrumentFiles = async (
   preset: InstrumentPreset
 ): Promise<InstrumentWavFile[]> => {
-  const { default: InstrumentWorker } = await import('./instrumentRender.worker?worker')
-  const worker = new InstrumentWorker()
+  const worker = new Worker(new URL('./instrumentRender.worker.ts', import.meta.url), {
+    type: 'module'
+  })
   return new Promise((resolve, reject) => {
     worker.addEventListener('message', (event: MessageEvent<InstrumentWorkerMessage>) => {
       worker.terminate()
@@ -31,7 +32,7 @@ export const renderInstrumentFiles = async (
     })
     worker.addEventListener('error', (event) => {
       worker.terminate()
-      reject(new Error(event.message))
+      reject(new Error(event.message || 'the worker script could not be loaded'))
     })
     worker.postMessage({ preset })
   })

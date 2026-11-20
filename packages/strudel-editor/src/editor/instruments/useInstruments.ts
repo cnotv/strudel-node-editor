@@ -119,6 +119,8 @@ export const useInstruments = defineStore('instruments', () => {
    * @throws {Error} naming each referenced preset that failed to render, with the reason
    */
   const ensureRenderedForCode = async (code: string): Promise<void> => {
+    // The store outlives the editor that saves presets, so the list it scans may be out of date.
+    library.reloadStored()
     const referencedNames = findReferencedInstrumentPresets(code, presets.value).map(
       ({ name }) => name
     )

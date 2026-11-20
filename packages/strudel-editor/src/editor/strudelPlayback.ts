@@ -1,3 +1,5 @@
+import { createPinia, getActivePinia } from 'pinia'
+import type { Pinia } from 'pinia'
 import {
   DEFAULT_CPS,
   EXPORT_DEFAULT_OPTIONS,
@@ -138,21 +140,29 @@ const unlockPageAudioContext = (): AudioContext | null => {
   return audioContext
 }
 
+// Used when the host app has no active Pinia, or a second copy of it, so the presets still render.
+const ownPinia: { instance: Pinia | null } = { instance: null }
+
+const readInstrumentStore = (): ReturnType<typeof useInstruments> => {
+  const activePinia = getActivePinia()
+  if (activePinia !== undefined) {
+    return useInstruments(activePinia)
+  }
+  ownPinia.instance ??= createPinia()
+  return useInstruments(ownPinia.instance)
+}
+
 /**
  * Renders the instrument presets the code names. Play waits for them, so the editor also calls
  * this as soon as code loads or changes: rendering a preset takes seconds, and done at Play it
- * held back both the sound and the timeline. A failure is recorded on the preset and leaves the
- * rest of the pattern playing.
+ * held back both the sound and the timeline. It uses the host's active Pinia, or one of its own
+ * when there is none, so a host never has to set one up for the presets to sound.
  * @param patternCode - Strudel code about to be played, exported or shown
- * @returns once every named preset is rendered or has failed
+ * @returns once every named preset is rendered
+ * @throws {Error} naming each preset that could not be rendered, so a silent sound has a reason
  */
-export const prepareInstrumentsForCode = async (patternCode: string): Promise<void> => {
-  try {
-    await useInstruments().ensureRenderedForCode(patternCode)
-  } catch {
-    // Without an active store there are no presets to wait for.
-  }
-}
+export const prepareInstrumentsForCode = (patternCode: string): Promise<void> =>
+  readInstrumentStore().ensureRenderedForCode(patternCode)
 
 const toUnknownList = (value: unknown): unknown[] => (Array.isArray(value) ? value : [])
 

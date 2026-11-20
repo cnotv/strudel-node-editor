@@ -115,12 +115,20 @@ export const useInstruments = defineStore('instruments', () => {
    * Renders every preset the code plays and waits for them, so a pattern never starts before
    * its sounds exist. Presets the code does not name are left alone.
    * @param code - Strudel code about to be played or exported
-   * @returns once every referenced preset is rendered or has failed
+   * @returns once every referenced preset is rendered
+   * @throws {Error} naming each referenced preset that failed to render, with the reason
    */
   const ensureRenderedForCode = async (code: string): Promise<void> => {
-    await Promise.all(
-      findReferencedInstrumentPresets(code, presets.value).map(({ name }) => ensureRendered(name))
+    const referencedNames = findReferencedInstrumentPresets(code, presets.value).map(
+      ({ name }) => name
     )
+    await Promise.all(referencedNames.map(ensureRendered))
+    const failures = referencedNames
+      .filter((name) => statusByName.value[name] === 'error')
+      .map((name) => `"${name}" (${errorByName.value[name]})`)
+    if (failures.length > 0) {
+      throw new Error(`Instrument presets could not be rendered: ${failures.join(', ')}`)
+    }
   }
 
   // Only the selected preset is re-rendered as it is edited; any other waits until code plays it.

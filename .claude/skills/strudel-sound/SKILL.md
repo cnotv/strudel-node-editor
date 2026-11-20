@@ -103,7 +103,8 @@ draws a spectrogram and a waveform. A sound change attaches the two PNGs and the
 pull request, the way a visual change attaches a screenshot: the spectrogram image is the proof,
 embedded in the PR body (commit the PNGs under `documentation/static/img/sound-check/` and link
 them by their raw GitHub URL), and a reviewer who sees it blank or flat knows the sound is wrong
-without pressing play.
+without pressing play. [`guides/sound-check.md`](../../../documentation/docs/guides/sound-check.md)
+teaches a person to read the two images and the report.
 
 ```sh
 node scripts/strudel-check.mjs <name>.strudel --out-dir <dir> --url http://localhost:<port> \

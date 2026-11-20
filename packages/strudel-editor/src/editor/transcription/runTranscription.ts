@@ -29,7 +29,7 @@ const resultFromWorker = (
     })
     worker.addEventListener('error', (event) => {
       worker.terminate()
-      reject(new Error(event.message))
+      reject(new Error(event.message || 'the worker script could not be loaded'))
     })
   })
 
@@ -43,8 +43,7 @@ const resultFromWorker = (
 export const runTranscriptionInWorker: TranscriptionRunner = async (audioFile, onProgress) => {
   onProgress({ stage: 'decoding', fraction: 0 })
   const samples = await decodeAudioFile(audioFile)
-  const { default: TranscriptionWorker } = await import('./transcribe.worker?worker')
-  const worker = new TranscriptionWorker()
+  const worker = new Worker(new URL('./transcribe.worker.ts', import.meta.url), { type: 'module' })
   const outcome = resultFromWorker(worker, onProgress)
   worker.postMessage({ samples, sampleRate: TRANSCRIPTION_SAMPLE_RATE }, [samples.buffer])
   return outcome
@@ -74,8 +73,7 @@ export const runTabTranscription: TranscriptionRunner = async (imageFile, onProg
     ...(await decodeImageFile(imageFile)),
     openStrings: STRUDEL_FLOW_OPEN_STRINGS
   }
-  const { default: TabWorker } = await import('./tab/readTab.worker?worker')
-  const worker = new TabWorker()
+  const worker = new Worker(new URL('./tab/readTab.worker.ts', import.meta.url), { type: 'module' })
   const outcome = resultFromWorker(worker, onProgress)
   worker.postMessage(request, [request.pixels.buffer])
   return outcome

@@ -156,6 +156,14 @@ const resolveStartingExamples = (editorOptions?: StrudelEditorOptions) => {
   return { exampleList, defaultExample }
 }
 
+const prepareInstrumentsOrLog = (
+  code: string,
+  appendLog: (message: string, level: 'error') => void
+): Promise<void> =>
+  prepareInstrumentsForCode(code).catch((error: unknown) =>
+    appendLog(error instanceof Error ? error.message : String(error), 'error')
+  )
+
 /**
  * Editor state: the selected example, the code, playback, the console log, the active tab
  * and audio transcription.
@@ -172,12 +180,12 @@ export const useStrudelEditor = (
   // The code from the last visit, so a refresh or a closed tab loses nothing.
   const patternCode = ref(readStorage(STRUDEL_SAVED_CODE_STORAGE_KEY) ?? defaultExample?.code ?? '')
   watch(patternCode, (code) => writeStorage(STRUDEL_SAVED_CODE_STORAGE_KEY, code))
-  watch(patternCode, (code) => void prepareInstrumentsForCode(code), { immediate: true })
   const editorStatus = ref<StrudelEditorStatus>('idle')
   const errorMessage = ref('')
   const playbackReference = ref<StrudelPlayback | null>(null)
   const activeTab = ref<StrudelTabId | null>(null)
   const { logEntries, appendLog, clearLogEntries } = useStrudelLog()
+  watch(patternCode, (code) => void prepareInstrumentsOrLog(code, appendLog), { immediate: true })
   const playingCode = ref('')
   const playingSourceOffsets = ref<number[][]>([])
   const hasUnplayedChanges = computed(

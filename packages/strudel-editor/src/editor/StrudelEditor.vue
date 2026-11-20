@@ -524,13 +524,6 @@ onBeforeUnmount(() => {
           @update:beats-per-cycle="setFlowBeatsPerCycle"
         />
       </div>
-      <p v-if="editorMode === 'code'" class="strudel-editor__hint">
-        Ctrl+Enter plays the code, Ctrl+. stops it.
-      </p>
-      <p v-else class="strudel-editor__hint">
-        Drag a node by its header to arrange it; drag from an output dot into an effect input to
-        route it. Ctrl+. stops playback.
-      </p>
       <p v-if="flowErrorMessage !== null" class="strudel-editor__error" role="alert">
         {{ flowErrorMessage }}
       </p>
@@ -716,9 +709,14 @@ onBeforeUnmount(() => {
 
 /*
  * On a phone the editor fills the screen; an open drawer stacks below it, and only then does
- * the editor give up height so the drawer can be scrolled to.
+ * the editor give up height so the drawer can be scrolled to. The tool row moves to the bottom
+ * with it, within thumb reach.
  */
 @media (width <= 900px) {
+  .strudel-editor__code-header {
+    order: 1;
+  }
+
   .strudel-editor {
     grid-template-rows: minmax(0, 1fr);
   }
@@ -731,12 +729,6 @@ onBeforeUnmount(() => {
       'drawer';
     overflow-y: auto;
   }
-}
-
-.strudel-editor__hint {
-  margin: 0;
-  font-size: var(--font-size-sm);
-  color: var(--color-muted-foreground);
 }
 
 .strudel-editor__error {

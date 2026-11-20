@@ -57,12 +57,13 @@ export const useInstruments = defineStore('instruments', () => {
   const assistantExplanation = ref('')
   const assistantError = ref('')
 
-  // Renders queue one behind another, so two quick changes never register out of order.
+  // Each preset's renders queue one behind another, so two quick changes never register out of
+  // order, while different presets render in parallel workers and a song waits for its slowest only.
   const renderState: {
-    latest: Promise<void>
+    latestByName: Map<string, Promise<void>>
     timer: ReturnType<typeof setTimeout> | undefined
     renderedKeys: Map<string, string>
-  } = { latest: Promise.resolve(), timer: undefined, renderedKeys: new Map() }
+  } = { latestByName: new Map(), timer: undefined, renderedKeys: new Map() }
 
   const setStatus = (name: string, status: InstrumentRenderStatus, message = ''): void => {
     statusByName.value = { ...statusByName.value, [name]: status }
@@ -107,8 +108,11 @@ export const useInstruments = defineStore('instruments', () => {
     }
     const snapshot = { ...preset, knobs: { ...preset.knobs } }
     const key = JSON.stringify([snapshot.kind, snapshot.knobs])
-    renderState.latest = renderState.latest.then(() => renderPreset(snapshot, key))
-    return renderState.latest
+    const queued = (renderState.latestByName.get(name) ?? Promise.resolve()).then(() =>
+      renderPreset(snapshot, key)
+    )
+    renderState.latestByName.set(name, queued)
+    return queued
   }
 
   /**

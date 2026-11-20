@@ -36,6 +36,31 @@ const mountTimelineOnWideTrack = () => {
 }
 
 describe('StrudelTimeline', () => {
+  it('shows a spinner and disables Play while sounds load', () => {
+    // Arrange
+    const wrapper = mountTimeline({ isLoading: true })
+
+    // Act
+    const playButton = wrapper.get('[aria-label="Loading sounds"]')
+
+    // Assert
+    expect(playButton.attributes('disabled')).toBeDefined()
+    expect(playButton.find('.strudel-timeline__spinner').exists()).toBe(true)
+    expect(playButton.attributes('aria-busy')).toBe('true')
+  })
+
+  it('shows the Play icon, enabled, when nothing is loading', () => {
+    // Arrange
+    const wrapper = mountTimeline({ isLoading: false })
+
+    // Act
+    const playButton = wrapper.get('[aria-label="Play from here"]')
+
+    // Assert
+    expect(playButton.attributes('disabled')).toBeUndefined()
+    expect(wrapper.find('.strudel-timeline__spinner').exists()).toBe(false)
+  })
+
   it('asks to stop when the Stop button is pressed', async () => {
     // Arrange
     const wrapper = mountTimeline()

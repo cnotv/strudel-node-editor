@@ -1,6 +1,15 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { Disc3, Footprints, Pause, Play, Repeat, Square, Timer } from 'lucide-vue-next'
+import {
+  Disc3,
+  Footprints,
+  LoaderCircle,
+  Pause,
+  Play,
+  Repeat,
+  Square,
+  Timer
+} from 'lucide-vue-next'
 import IconButton from '../../components/IconButton.vue'
 import { Slider } from '../../components/ui/slider'
 import { Toggle } from '../../components/ui/toggle'
@@ -15,6 +24,8 @@ const props = defineProps<{
   stepsPerCycle: number
   loopEnabled: boolean
   isPlaying: boolean
+  /** True while the sounds load after Play, so the button shows progress instead of a dead click. */
+  isLoading?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -53,7 +64,12 @@ onBeforeUnmount(() => resizeObserver?.disconnect())
 
 watch(() => props.timelineBars, readHiddenEnds, { flush: 'post' })
 
-const playPauseLabel = computed(() => (props.isPlaying ? 'Pause' : 'Play from here'))
+const playPauseLabel = computed(() => {
+  if (props.isLoading) {
+    return 'Loading sounds'
+  }
+  return props.isPlaying ? 'Pause' : 'Play from here'
+})
 const loopLabel = computed(() => (props.loopEnabled ? 'Loop on' : 'Loop off'))
 
 const onPlayPausePressed = (): void => {
@@ -100,9 +116,12 @@ const timeReadout = computed(() => `${(props.playheadCycle / props.cyclesPerSeco
         variant="ghost"
         :title="playPauseLabel"
         :aria-label="playPauseLabel"
+        :disabled="isLoading"
+        :aria-busy="isLoading ? 'true' : undefined"
         @click="onPlayPausePressed"
       >
-        <Pause v-if="isPlaying" aria-hidden="true" />
+        <LoaderCircle v-if="isLoading" class="strudel-timeline__spinner" aria-hidden="true" />
+        <Pause v-else-if="isPlaying" aria-hidden="true" />
         <Play v-else aria-hidden="true" />
       </IconButton>
       <IconButton
@@ -185,6 +204,22 @@ const timeReadout = computed(() => `${(props.playheadCycle / props.cyclesPerSeco
   flex-wrap: wrap;
   align-items: center;
   gap: var(--spacing-2);
+}
+
+.strudel-timeline__spinner {
+  animation: strudel-timeline-spin 1s linear infinite;
+}
+
+@keyframes strudel-timeline-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .strudel-timeline__spinner {
+    animation-duration: 3s;
+  }
 }
 
 .strudel-timeline__readout {

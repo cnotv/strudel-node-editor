@@ -104,14 +104,13 @@ is never added to generative-art.
 - **Render export:** `node scripts/strudel-export.mjs --url <site>` drives `/?tab=export`
 - **Deploy:** a push to `main` builds `ghcr.io/cnotv/strudel-node-editor` and runs it on the Hetzner host, port 3004; the render function deploys on Netlify
 - **Errors:** Sentry, from the `VITE_SENTRY_DSN` secret; no analytics
-- **PR media:** `media-capture` screenshot and one GIF of `/`, in the body before ready
+- **PR media:** `media-capture` screenshot and one GIF of `/`, in the body before ready; a sound change adds the `scripts/strudel-check.mjs` spectrogram, waveform and report
 - **Scoped rules and local skills:** `.claude/rules/` and `.claude/skills/`, indexed below
 
 ### Done checklist
 
 - [ ] A change to a node or instrument has a test in `packages/strudel-flow` or `packages/strudel-editor/src/editor`
-- [ ] A sound change was checked muted, never through the speakers
-- [ ] Every artifact the issue named exists, not just the ones forced by a deletion
+- [ ] A sound change was checked muted, never through the speakers, with `scripts/strudel-check.mjs`; its spectrogram and report are in the PR body- [ ] Every artifact the issue named exists, not just the ones forced by a deletion
 
 ## Scoped rules
 

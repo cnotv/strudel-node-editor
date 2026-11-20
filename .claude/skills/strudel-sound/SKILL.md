@@ -98,8 +98,27 @@ game sound, with the peak under -1 dBFS.
 
 ## 3. Check the file without listening
 
-Read it back instead. For a WAV, the length, and a peak well above zero in the part that
-should sound:
+The sound's screenshot is one command: it renders muted, measures the WAV and the MIDI, and
+draws a spectrogram and a waveform. A sound change attaches the two PNGs and the numbers to its
+pull request, the way a visual change attaches a screenshot: the spectrogram image is the proof,
+embedded in the PR body (commit the PNGs under `documentation/static/img/sound-check/` and link
+them by their raw GitHub URL), and a reviewer who sees it blank or flat knows the sound is wrong
+without pressing play. [`guides/sound-check.md`](../../../documentation/docs/guides/sound-check.md)
+teaches a person to read the two images and the report.
+
+```sh
+node scripts/strudel-check.mjs <name>.strudel --out-dir <dir> --url http://localhost:<port> \
+  [--once | --cycles <count>] [--min-peak 0.1] [--max-clipped 0] [--max-silence 0.5] \
+  [--duration <seconds>] [--tracks bd,sawtooth]
+```
+
+It writes `<name>.wav`, `.mid`, `.spectrogram.png`, `.waveform.png` and `.report.json`, prints
+the report, and exits non-zero when an expectation fails. A drum track is named `drums` in the
+MIDI, so expect that, not the sample name. Read the spectrogram: a tone shows as a bright
+line, a hit as a vertical stripe, and an empty bar as black.
+
+For one measurement by hand, read it back instead. For a WAV, the length, and a peak well above
+zero in the part that should sound:
 
 ```sh
 node --input-type=module -e "

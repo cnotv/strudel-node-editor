@@ -59,6 +59,20 @@ export const createPresetLibrary = (onSelect: (name: string) => void) => {
   )
 
   /**
+   * Picks up presets and tweaks saved since this library was created, by another copy of the
+   * editor or another store in the same page. The selection stays where it is.
+   */
+  const reloadStored = (): void => {
+    const latest = readStoredInstruments(readStored(INSTRUMENT_STORAGE_KEY))
+    if (JSON.stringify(latest.userPresets) !== JSON.stringify(userPresets.value)) {
+      userPresets.value = latest.userPresets
+    }
+    if (JSON.stringify(latest.tweaks) !== JSON.stringify(tweaks.value)) {
+      tweaks.value = latest.tweaks
+    }
+  }
+
+  /**
    * Whether a name would be accepted for a new or renamed preset.
    * @param name - the wanted name
    * @param ownName - the preset's current name when renaming, which does not count as taken
@@ -167,6 +181,7 @@ export const createPresetLibrary = (onSelect: (name: string) => void) => {
     selectedPreset,
     isSelectedBuiltIn,
     foreignSoundNames,
+    reloadStored,
     checkName,
     selectPreset,
     setKnob,

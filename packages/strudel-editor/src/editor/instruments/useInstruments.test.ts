@@ -162,6 +162,21 @@ describe('useInstruments', () => {
       expect(reloaded.presets.find(({ name }) => name === 'stoner')?.knobs.drive).toBe(0.2)
     })
 
+    it('renders a preset saved after the store was created when code names it', async () => {
+      // Arrange
+      const host = useInstruments()
+      await host.refreshForeignSoundNames()
+      const editor = useInstruments(createPinia())
+      editor.createPreset('latecomer', 'organ')
+      await Promise.resolve()
+
+      // Act
+      await host.ensureRenderedForCode('note("c3").s("latecomer_note")')
+
+      // Assert
+      expect(host.statusByName.latecomer).toBe('ready')
+    })
+
     it('creates a preset of a kind with that kind knobs, selecting it', async () => {
       // Arrange
       const store = useInstruments()

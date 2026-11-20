@@ -8,6 +8,11 @@ import {
   saveStrudelSavedSong
 } from './helpers'
 
+// A function declaration, because the engine calls Drawer with `new`, which an arrow cannot take.
+function createFakeDrawer() {
+  return { setDrawTime: vi.fn(), invalidate: vi.fn(), start: vi.fn(), stop: vi.fn() }
+}
+
 const { mockRegister, engine } = vi.hoisted(() => ({
   mockRegister: vi.fn(),
   engine: {
@@ -47,9 +52,7 @@ vi.mock('@strudel/tonal', () => ({}))
 vi.mock('@strudel/midi/midi.mjs', () => ({}))
 vi.mock('@strudel/codemirror', () => ({ slider: vi.fn(), sliderWithID: vi.fn() }))
 vi.mock('@strudel/draw', () => ({
-  Drawer: vi.fn(() => {
-    return { setDrawTime: vi.fn(), invalidate: vi.fn(), start: vi.fn(), stop: vi.fn() }
-  }),
+  Drawer: vi.fn(createFakeDrawer),
   cleanupDraw: vi.fn()
 }))
 

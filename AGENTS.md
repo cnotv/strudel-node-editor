@@ -110,7 +110,8 @@ is never added to generative-art.
 ### Done checklist
 
 - [ ] A change to a node or instrument has a test in `packages/strudel-flow` or `packages/strudel-editor/src/editor`
-- [ ] A sound change was checked muted, never through the speakers, with `scripts/strudel-check.mjs`; its spectrogram and report are in the PR body- [ ] Every artifact the issue named exists, not just the ones forced by a deletion
+- [ ] A sound change was checked muted, never through the speakers, with `scripts/strudel-check.mjs`; its spectrogram image, as proof, and report are in the PR body
+- [ ] Every artifact the issue named exists, not just the ones forced by a deletion
 
 ## Scoped rules
 

@@ -104,6 +104,7 @@ is never added to generative-art.
 - **Render export:** `node scripts/strudel-export.mjs --url <site>` drives `/?tab=export`
 - **Deploy:** a push to `main` builds `ghcr.io/cnotv/strudel-node-editor` and runs it on the Hetzner host, port 3004; the render function deploys on Netlify
 - **Errors:** Sentry, from the `VITE_SENTRY_DSN` secret; no analytics
+- **Sound is on by default, off for agents:** the editor remembers its volume in `localStorage` under `strudel-editor-volume` (0 to 1, audible on a first visit). Anything an agent, script or test runs against the page sets it to `0` before the page loads (Playwright `addInitScript`, or `localStorage.setItem` then reload in a browser pane) so nothing plays through the speakers; `src/test-setup.ts` does this for unit tests. Raise it only when a human asks to hear it
 - **PR media:** `media-capture` screenshot and one GIF of `/`, in the body before ready; a sound change adds the `scripts/strudel-check.mjs` spectrogram, waveform and report
 - **Scoped rules and local skills:** `.claude/rules/` and `.claude/skills/`, indexed below
 

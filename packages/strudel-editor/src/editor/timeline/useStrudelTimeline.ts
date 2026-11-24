@@ -1,7 +1,7 @@
 import { computed, onScopeDispose, ref, watch } from 'vue'
 import type { ComputedRef, Ref } from 'vue'
 import { DEFAULT_CPS, STRUDEL_MAX_SONG_CYCLES } from '../config'
-import type { StrudelEditorStatus, StrudelPlayback } from '../types'
+import type { StrudelEditorStatus, StrudelPlayback, StrudelTimelineLane } from '../types'
 
 type StrudelTimelineHooks = {
   editorStatus: Ref<StrudelEditorStatus>
@@ -25,6 +25,8 @@ type StrudelTimelineState = {
   loopBars: Ref<number | null>
   /** False until a pattern has played, since only an evaluated pattern can be measured. */
   loopMeasured: Ref<boolean>
+  /** Each instrument's notes over the song, for the enhanced timeline. */
+  lanes: Ref<StrudelTimelineLane[]>
   /** How many cycles the song lasts: the loop, or the song limit when there is none. */
   timelineBars: ComputedRef<number>
   seekToCycle: (cycle: number) => void
@@ -55,6 +57,7 @@ export const useStrudelTimeline = (hooks: StrudelTimelineHooks): StrudelTimeline
   const loopEnabled = ref(true)
   const loopBars = ref<number | null>(null)
   const loopMeasured = ref(false)
+  const lanes = ref<StrudelTimelineLane[]>([])
   const timelineBars = computed(() => loopBars.value ?? STRUDEL_MAX_SONG_CYCLES)
   let frameHandle: number | null = null
   let songEndReported = false
@@ -126,6 +129,7 @@ export const useStrudelTimeline = (hooks: StrudelTimelineHooks): StrudelTimeline
     }
     loopBars.value = playback.measureLoop()
     loopMeasured.value = true
+    lanes.value = playback.measureLanes(timelineBars.value)
     cyclesPerSecond.value = playback.readPosition().cyclesPerSecond
   }
 
@@ -144,6 +148,7 @@ export const useStrudelTimeline = (hooks: StrudelTimelineHooks): StrudelTimeline
     loopEnabled,
     loopBars,
     loopMeasured,
+    lanes,
     timelineBars,
     seekToCycle,
     rewind,

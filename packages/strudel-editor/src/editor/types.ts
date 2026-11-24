@@ -72,8 +72,12 @@ export type StrudelPlayback = {
   readPosition: () => StrudelPlaybackPosition
   /** Plays on from this cycle, or starts there on the next Play when stopped. */
   seekToCycle: (cycle: number) => void
+  /** Sets how loud the live output is, from 0 to 1; it starts at 1. */
+  setVolume: (volume: number) => void
   /** Bars the last played pattern takes to repeat as a whole, or null when it does not within `STRUDEL_MAX_SONG_CYCLES`. */
   measureLoop: () => number | null
+  /** The last played pattern's notes over its first cycles, one lane per instrument. */
+  measureLanes: (cycleCount: number) => StrudelTimelineLane[]
   /** Renders the cycles offline and downloads them as a WAV file. */
   renderToWav: (
     patternCode: string,
@@ -101,11 +105,27 @@ export type StrudelPlayback = {
   ) => Promise<StrudelEvaluationResult>
 }
 
+/** One instrument's row on the timeline: when each of its notes starts and how long it lasts, in cycles. */
+export type StrudelTimelineLane = {
+  name: string
+  notes: { beginCycle: number; durationCycles: number; sourceRanges: StrudelSourceRange[] }[]
+  /** The spans of code behind the lane's first note. */
+  sourceRanges: StrudelSourceRange[]
+}
+
+/** A span of the code, from the first character to the one after the last. */
+export type StrudelSourceRange = { from: number; to: number }
+
+/** How the timeline follows the playhead: it stays put, keeps the playhead in view, or scrolls under a centred one. */
+export type StrudelTimelineProgression = 'static' | 'follow' | 'centered'
+
 /** One event of a pattern that starts inside the exported cycles, read off Strudel's hap. */
 export type StrudelScheduledHap = {
   value: unknown
   beginCycle: number
   durationCycles: number
+  /** Every span of code the event came from, empty when Strudel recorded no location. */
+  sourceRanges: StrudelSourceRange[]
 }
 
 /** What the transpiler found in the evaluated code, in Strudel's own untyped shapes. */

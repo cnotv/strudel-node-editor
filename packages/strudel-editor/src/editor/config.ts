@@ -721,6 +721,8 @@ export const STRUDEL_DOCUMENTATION_URL = 'https://cnotv.github.io/strudel-node-e
 /** Strudel's own reference, linked beside this editor's guide. */
 export const STRUDEL_OFFICIAL_DOCUMENTATION_URL = 'https://strudel.cc/learn/getting-started/'
 /** Where the code on screen is kept between visits. */
+/** Where the volume is remembered; an agent or script that drives the page writes "0" here first, so nothing plays aloud. */
+export const STRUDEL_VOLUME_STORAGE_KEY = 'strudel-editor-volume'
 export const STRUDEL_SAVED_CODE_STORAGE_KEY = 'strudel-editor-code'
 /** Where the patterns saved under a name are kept. */
 export const STRUDEL_SAVED_PATTERNS_STORAGE_KEY = 'strudel-editor-saved-patterns'
@@ -885,6 +887,18 @@ export const STRUDEL_EXPORT_MEASURE_DELAY_MS = 600
 export const STRUDEL_TIMELINE_MIN_CYCLE_WIDTH = 48
 /** The furthest a touch on the timeline may wander, in pixels, and still count as a tap that seeks. */
 export const STRUDEL_TIMELINE_TAP_SLOP = 8
+/** How close the playhead may get to the edge, in pixels, before the following timeline scrolls it back to the middle. */
+export const STRUDEL_TIMELINE_FOLLOW_MARGIN = 24
+/** The three ways the timeline follows playback, in the order the switch shows them. */
+export const STRUDEL_TIMELINE_PROGRESSION_OPTIONS = [
+  { value: 'static', label: 'Fixed' },
+  { value: 'follow', label: 'Follow' },
+  { value: 'centered', label: 'Centre' }
+] as const
+/** The volume a first visit starts at, and the one the sound button restores after a mute. */
+export const STRUDEL_TIMELINE_DEFAULT_VOLUME = 0.8
+/** Below this the speaker icon shows one wave, above it two. */
+export const STRUDEL_TIMELINE_LOW_VOLUME = 0.5
 /** The finest point the timeline seeks to: a sixteenth of a bar. */
 export const STRUDEL_TIMELINE_SEEK_STEP = 0.0625
 export const EXPORT_FORMAT_OPTIONS = [

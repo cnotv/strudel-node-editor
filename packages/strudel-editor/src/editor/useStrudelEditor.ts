@@ -7,6 +7,7 @@ import {
   ELECTRO_TUNES,
   STRUDEL_EXAMPLES,
   STRUDEL_SAVED_CODE_STORAGE_KEY,
+  STRUDEL_VOLUME_STORAGE_KEY,
   STRUDEL_TABS
 } from './config'
 import { useSavedPatterns } from './useSavedPatterns'
@@ -34,6 +35,7 @@ import {
 } from './strudelPlayback'
 import { runTranscription } from './transcription/runTranscription'
 import { useStrudelTranscription } from './transcription/useStrudelTranscription'
+import { readStoredVolume } from './storedVolume'
 import { useStrudelTimeline } from './timeline/useStrudelTimeline'
 
 /**
@@ -71,6 +73,8 @@ type StrudelEditorState = StrudelTranscriptionState & {
   editorStatus: Ref<StrudelEditorStatus>
   /** True from Play until the pattern sounds, while the engine and the instrument presets load. */
   isLoading: Ref<boolean>
+  /** How loud the live output is, from 0 to 1; silent until the player raises it. */
+  volume: Ref<number>
   /** True while a pattern plays and the code on screen has changed since it started. */
   hasUnplayedChanges: ComputedRef<boolean>
   /** The code last evaluated, which the source offsets of the playing notes refer to. */
@@ -206,6 +210,8 @@ export const useStrudelEditor = (
   const patternCode = usePersistedPatternCode(defaultExample?.code ?? '')
   const editorStatus = ref<StrudelEditorStatus>('idle')
   const isLoading = ref(false)
+  const volume = ref(readStoredVolume())
+  watch(volume, (level) => writeStorage(STRUDEL_VOLUME_STORAGE_KEY, String(level)))
   const errorMessage = ref('')
   const playbackReference = ref<StrudelPlayback | null>(null)
   const activeTab = ref<StrudelTabId | null>(null)
@@ -219,6 +225,8 @@ export const useStrudelEditor = (
   const editorHandle = shallowRef<StrudelEditorHandle | null>(null)
 
   const playbackHooks = createPlaybackHooks(editorHandle, playingSourceOffsets)
+
+  watch(volume, (level) => playbackReference.value?.setVolume(level))
 
   const timeline = useStrudelTimeline({
     editorStatus,
@@ -238,6 +246,7 @@ export const useStrudelEditor = (
     const evaluatedCode = patternCode.value
     try {
       const playback = await loadCachedPlayback(playbackReference, playbackLoader, playbackHooks)
+      playback.setVolume(volume.value)
       timeline.applyStartCycle()
       const evaluationResult = await playback.evaluateCode(evaluatedCode)
       if (evaluationResult.success) {
@@ -332,6 +341,7 @@ export const useStrudelEditor = (
     patternCode,
     editorStatus,
     isLoading,
+    volume,
     hasUnplayedChanges,
     playingCode,
     playingSourceOffsets,

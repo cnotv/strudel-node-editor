@@ -15,6 +15,8 @@ import {
   readScheduledHaps,
   renderStrudelPatternToWav
 } from './strudelOfflineRender'
+import { createVolumeControl } from './playbackVolume'
+import { groupHapsIntoLanes } from './timeline/timelineLanes'
 import { findLoopBars, findPatternRepetition } from './patternRepetition'
 import { isRecordModule, requireCallable, requireRecordModule, toCallable } from './strudelModules'
 import { createRenderQueue } from './renderQueue'
@@ -116,6 +118,20 @@ const playSilentSound = (audioContext: AudioContext): void => {
   source.connect(audioContext.destination)
   source.start(0)
 }
+
+const readHapsFromStart = (
+  pattern: unknown,
+  cycleCount: number,
+  cyclesPerSecond: number
+): StrudelScheduledHap[] =>
+  readScheduledHaps(
+    pattern,
+    { ...EXPORT_DEFAULT_OPTIONS, startCycle: 0, endCycle: cycleCount },
+    cyclesPerSecond
+  )
+
+const readAudioController = (audioModule: Record<string, unknown>): unknown =>
+  toCallable(audioModule.getSuperdoughAudioController)?.call(audioModule)
 
 // One context for the page, as superdough keeps one: browsers cap how many can be open, so a
 // new one per visit to the editor would eventually play nothing.
@@ -376,6 +392,7 @@ export const loadDefaultStrudelPlayback = async (
   let replScheduler: unknown = null
   let latestEvaluationError: unknown = null
   let latestPattern: unknown = null
+  const volumeControl = createVolumeControl(() => readAudioController(engine.audioModule))
   const callbacks: ReplCallbacks = {
     beforeEval: cleanupVisuals,
     // The REPL reports a failed evaluation here and never rejects, so a typo would
@@ -430,11 +447,7 @@ export const loadDefaultStrudelPlayback = async (
   }
 
   const readOpeningHaps = (pattern: unknown, cycleCount: number): StrudelScheduledHap[] =>
-    readScheduledHaps(
-      pattern,
-      { ...EXPORT_DEFAULT_OPTIONS, startCycle: 0, endCycle: cycleCount },
-      readCyclesPerSecond(replScheduler)
-    )
+    readHapsFromStart(pattern, cycleCount, readCyclesPerSecond(replScheduler))
 
   const exportAs =
     (
@@ -465,6 +478,7 @@ export const loadDefaultStrudelPlayback = async (
       void resumeAudioContext(audioContext)
       await prepareInstrumentsForCode(patternCode)
       latestEvaluationError = null
+      volumeControl.attach()
       await evaluateFunction(patternCode)
       return latestEvaluationError === null
         ? { success: true }
@@ -474,6 +488,7 @@ export const loadDefaultStrudelPlayback = async (
       await stopFunction()
     },
     readPosition: () => readSchedulerPosition(replScheduler),
+    setVolume: volumeControl.setVolume,
     seekToCycle: (cycle: number) => seekScheduler(replScheduler, cycle),
     measureLoop: (): number | null =>
       latestPattern === null
@@ -482,6 +497,8 @@ export const loadDefaultStrudelPlayback = async (
             readOpeningHaps(latestPattern, STRUDEL_MAX_SONG_CYCLES * 2),
             STRUDEL_MAX_SONG_CYCLES
           ),
+    measureLanes: (cycleCount: number) =>
+      latestPattern === null ? [] : groupHapsIntoLanes(readOpeningHaps(latestPattern, cycleCount)),
     measureRepetition: async (patternCode: string): Promise<number | null> =>
       findPatternRepetition(
         readOpeningHaps(await evaluateForExport(patternCode), STRUDEL_MAX_SONG_CYCLES * 2),

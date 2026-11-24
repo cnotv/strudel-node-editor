@@ -76,7 +76,9 @@ vi.mock('./strudelPlayback', async (importOriginal) => ({
     stopPlayback: async () => undefined,
     readPosition: () => ({ cycle: 0, cyclesPerSecond: 0.5 }),
     seekToCycle: () => undefined,
-    measureLoop: () => 1
+    measureLoop: () => 1,
+    measureLanes: () => [],
+    setVolume: () => undefined
   })
 }))
 
@@ -178,7 +180,7 @@ describe('StrudelEditor view', () => {
   })
 
   it.each([
-    ['an example menu over the code', '.strudel-editor__code [role="combobox"]'],
+    ['an example menu over the code', '.strudel-editor__code > [role="combobox"]'],
     ['a status line', '.strudel-editor__status'],
     ['an error while nothing has failed', '.strudel-editor__error']
   ])('shows no %s', async (_part, selector) => {

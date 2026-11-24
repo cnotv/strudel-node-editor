@@ -12,8 +12,8 @@ const props = defineProps<{
   class?: string
   /** Names the thumb for assistive technology, since the thumb is what takes focus. */
   label?: string
-  /** `playhead` draws a thin line with a line for a thumb, for scrubbing through time. */
-  variant?: 'default' | 'playhead'
+  /** `playhead` draws a thin line with a line for a thumb, for scrubbing through time; `volume` is a slim vertical bar with a small dot, as a player's. */
+  variant?: 'default' | 'playhead' | 'volume'
 }>()
 
 const emit = defineEmits<{
@@ -29,7 +29,13 @@ const emit = defineEmits<{
     :max="max ?? 100"
     :step="step ?? 1"
     :disabled="disabled"
-    :class="cn('slider', { 'slider--playhead': variant === 'playhead' }, props.class)"
+    :class="
+      cn(
+        'slider',
+        { 'slider--playhead': variant === 'playhead', 'slider--volume': variant === 'volume' },
+        props.class
+      )
+    "
     @update:model-value="emit('update:modelValue', $event)"
   >
     <SliderTrack class="slider__track">
@@ -95,11 +101,13 @@ const emit = defineEmits<{
 /* The whole row takes clicks, not only the thin line, and a touch may pan the row sideways
    unless it lands on the playhead, whose wider invisible grip keeps it for dragging. */
 .slider--playhead {
+  z-index: 1;
   height: var(--spacing-5);
   touch-action: pan-x;
 }
 
 .slider--playhead .slider__track {
+  opacity: var(--slider-playhead-line-opacity, 1);
   height: 2px;
   border-radius: 0;
 }
@@ -112,6 +120,45 @@ const emit = defineEmits<{
   background-color: var(--color-playhead);
   position: relative;
   touch-action: none;
+}
+
+/* A host may set --slider-playhead-extent so the line runs on below the row, as the timeline
+   does over its instrument lanes. */
+.slider--playhead .slider__thumb::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 2px;
+  height: var(--slider-playhead-extent, 0);
+  background: inherit;
+  pointer-events: none;
+}
+
+.slider--volume {
+  width: var(--spacing-3);
+  height: 4.5rem;
+  justify-content: center;
+}
+
+.slider--volume .slider__track {
+  flex-grow: 0;
+  width: 2px;
+  height: 100%;
+  border-radius: var(--radius-full);
+  background-color: var(--color-muted-foreground);
+}
+
+.slider--volume .slider__range {
+  width: 100%;
+  background-color: var(--color-foreground);
+}
+
+.slider--volume .slider__thumb {
+  width: var(--spacing-3);
+  height: var(--spacing-3);
+  border: none;
+  background-color: var(--color-foreground);
 }
 
 .slider--playhead .slider__thumb::before {

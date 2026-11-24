@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
+import { nextTick } from 'vue'
 import { mount } from '@vue/test-utils'
+import { Select } from '../../components/ui/select'
 import { STRUDEL_TIMELINE_MIN_CYCLE_WIDTH } from '../config'
 import StrudelTimeline from './StrudelTimeline.vue'
 
@@ -12,6 +14,8 @@ const mountTimeline = (props: Partial<InstanceType<typeof StrudelTimeline>['$pro
       stepsPerCycle: 4,
       loopEnabled: true,
       isPlaying: false,
+      lanesMeasured: true,
+      volume: 0,
       ...props
     }
   })
@@ -30,8 +34,8 @@ const mountTimelineOnWideTrack = () => {
   track.getBoundingClientRect = () => new DOMRect(0, 0, 800, 20)
   return {
     wrapper,
-    sliderLine: wrapper.get('.slider__track').element,
-    playhead: wrapper.get('[role="slider"]').element
+    sliderLine: wrapper.get('.strudel-timeline__track .slider__track').element,
+    playhead: wrapper.get('.strudel-timeline__track [role="slider"]').element
   }
 }
 
@@ -105,7 +109,9 @@ describe('StrudelTimeline', () => {
 
   it('lays the whole song out on one slider that ends on its last cycle', () => {
     // Act
-    const sliders = mountTimeline({ timelineBars: 64 }).findAll('[role="slider"]')
+    const sliders = mountTimeline({ timelineBars: 64 }).findAll(
+      '.strudel-timeline__track [role="slider"]'
+    )
 
     // Assert
     expect(sliders).toHaveLength(1)
@@ -186,7 +192,7 @@ describe('StrudelTimeline', () => {
 
   it('declares the playhead slider horizontal', () => {
     // Act
-    const slider = mountTimeline().get('[role="slider"]')
+    const slider = mountTimeline().get('.strudel-timeline__track [role="slider"]')
 
     // Assert
     expect(slider.attributes('aria-orientation')).toBe('horizontal')
@@ -200,5 +206,126 @@ describe('StrudelTimeline', () => {
 
     // Assert
     expect(trackWidth).toContain(`${64 * STRUDEL_TIMELINE_MIN_CYCLE_WIDTH}px`)
+  })
+
+  it('draws a lane per instrument only once the lanes toggle is on', async () => {
+    // Arrange
+    const lanes = [
+      {
+        name: 'bd',
+        notes: [{ beginCycle: 0, durationCycles: 0.25, sourceRanges: [{ from: 5, to: 7 }] }],
+        sourceRanges: [{ from: 5, to: 7 }]
+      },
+      {
+        name: 'hh',
+        notes: [{ beginCycle: 1, durationCycles: 0.25, sourceRanges: [] }],
+        sourceRanges: []
+      }
+    ]
+    const wrapper = mountTimeline({ lanes })
+    const beforeToggle = wrapper.findAll('.strudel-timeline__lane').length
+
+    // Act
+    await wrapper.get('[aria-label="Show instrument cycles"]').trigger('click')
+
+    // Assert
+    expect(beforeToggle).toBe(0)
+    expect(wrapper.findAll('.strudel-timeline__lane')).toHaveLength(2)
+    expect(wrapper.get('.strudel-timeline__note').attributes('style')).toContain('left: 0%')
+  })
+
+  it('selects the code of a note, and of an instrument, when they are clicked', async () => {
+    // Arrange
+    const lane = {
+      name: 'bd',
+      notes: [{ beginCycle: 0, durationCycles: 0.25, sourceRanges: [{ from: 5, to: 7 }] }],
+      sourceRanges: [{ from: 5, to: 7 }]
+    }
+    const wrapper = mountTimeline({ lanes: [lane] })
+    await wrapper.get('[aria-label="Show instrument cycles"]').trigger('click')
+
+    // Act
+    await wrapper.get('.strudel-timeline__note').trigger('click')
+    await wrapper.get('.strudel-timeline__lane-name').trigger('click')
+
+    // Assert
+    expect(wrapper.emitted('selectNote')).toEqual([[[{ from: 5, to: 7 }], 'bd']])
+    expect(wrapper.emitted('selectLane')).toEqual([[[{ from: 5, to: 7 }], 'bd']])
+  })
+
+  it('seeks to the centred cycle when the centred timeline is scrolled', async () => {
+    // Arrange
+    const wrapper = mountTimeline({ playheadCycle: 0, timelineBars: 8 })
+    wrapper.getComponent(Select).vm.$emit('update:modelValue', 'centered')
+    await nextTick()
+    const scroller = wrapper.get('.strudel-timeline__scroller').element as HTMLElement
+    Object.defineProperty(wrapper.get('.strudel-timeline__track').element, 'offsetWidth', {
+      value: 800
+    })
+    // The track has scrolled 400px left of the scroller's edge, with no padding before it.
+    ;(wrapper.get('.strudel-timeline__track').element as HTMLElement).getBoundingClientRect = () =>
+      new DOMRect(-400, 0, 800, 20)
+    scroller.scrollLeft = 400
+
+    // Act
+    await wrapper.get('.strudel-timeline__scroller').trigger('scroll')
+
+    // Assert
+    expect(wrapper.emitted('seek')?.at(-1)).toEqual([4])
+  })
+
+  it('starts reading the pattern when the lanes are turned on before it was read', async () => {
+    // Arrange
+    const wrapper = mountTimeline({ lanesMeasured: false })
+
+    // Act
+    await wrapper.get('[aria-label="Show instrument cycles"]').trigger('click')
+
+    // Assert
+    expect(wrapper.emitted('play')).toHaveLength(1)
+  })
+
+  it.each([
+    ['the pattern was already read', { lanesMeasured: true }],
+    ['it is already playing', { lanesMeasured: false, isPlaying: true }],
+    ['it is already loading', { lanesMeasured: false, isLoading: true }]
+  ])('does not start again when %s', async (_, props) => {
+    // Arrange
+    const wrapper = mountTimeline(props)
+
+    // Act
+    await wrapper.get('[aria-label="Show instrument cycles"]').trigger('click')
+
+    // Assert
+    expect(wrapper.emitted('play')).toBeUndefined()
+  })
+
+  it('shows a loader in place of the lanes while the pattern loads', async () => {
+    // Arrange
+    const wrapper = mountTimeline({ isLoading: true, lanesMeasured: true })
+
+    // Act
+    await wrapper.get('[aria-label="Show instrument cycles"]').trigger('click')
+
+    // Assert
+    expect(wrapper.get('[role="status"]').text()).toContain('Reading the pattern')
+  })
+
+  it('numbers every cycle above the timeline once the lanes are on', async () => {
+    // Arrange
+    const wrapper = mountTimeline({ timelineBars: 4 })
+    const beforeToggle = wrapper.find('.strudel-timeline__ruler').exists()
+
+    // Act
+    await wrapper.get('[aria-label="Show instrument cycles"]').trigger('click')
+
+    // Assert
+    expect(beforeToggle).toBe(false)
+    expect(wrapper.findAll('.strudel-timeline__ruler li').map((item) => item.text())).toEqual([
+      '1',
+      '2',
+      '3',
+      '4'
+    ])
   })
 })

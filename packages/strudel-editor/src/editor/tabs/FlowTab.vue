@@ -5,7 +5,7 @@ import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
 import { STRUDEL_FLOW_REFERENCE } from '@webgamekit/strudel-flow'
 import type { StrudelFlowNodeData, StrudelFlowNodeKind } from '@webgamekit/strudel-flow'
-import { STRUDEL_API_WORKSHOP_NAMES } from '../strudelApiGroups'
+import { STRUDEL_API_START_NAMES } from '../strudelApiGroups'
 import {
   STRUDEL_API_ENTRIES,
   createStrudelApiFunctionData,
@@ -24,7 +24,7 @@ type FunctionShortcut = { name: string; entry: StrudelApiEntry }
 
 const searchQuery = ref('')
 
-const workshopEntries: FunctionShortcut[] = STRUDEL_API_WORKSHOP_NAMES.flatMap((name) => {
+const startEntries: FunctionShortcut[] = STRUDEL_API_START_NAMES.flatMap((name) => {
   const entry = findStrudelApiEntry(name)
   return entry === null ? [] : [{ name, entry }]
 })
@@ -73,11 +73,13 @@ const addFunction = (entry: StrudelApiEntry): void => {
       @update:model-value="setSearchQuery"
     />
 
-    <section class="strudel-flow-tab__workshop" aria-labelledby="strudel-flow-workshop">
-      <h4 id="strudel-flow-workshop" class="strudel-flow-tab__group-title">Start here</h4>
-      <p class="strudel-flow-tab__group-hint">The functions the Strudel workshop teaches first.</p>
-      <ul class="strudel-flow-tab__workshop-list">
-        <li v-for="shortcut in workshopEntries" :key="shortcut.name">
+    <section class="strudel-flow-tab__start" aria-labelledby="strudel-flow-start">
+      <h4 id="strudel-flow-start" class="strudel-flow-tab__group-title">Start here</h4>
+      <p class="strudel-flow-tab__group-hint">
+        The functions that start a pattern, like the instruments.
+      </p>
+      <ul class="strudel-flow-tab__start-list">
+        <li v-for="shortcut in startEntries" :key="shortcut.name">
           <Button
             size="sm"
             variant="secondary"
@@ -260,14 +262,14 @@ const addFunction = (entry: StrudelApiEntry): void => {
   list-style: none;
 }
 
-.strudel-flow-tab__workshop,
+.strudel-flow-tab__start,
 .strudel-flow-tab__function {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-2);
 }
 
-.strudel-flow-tab__workshop-list {
+.strudel-flow-tab__start-list {
   display: flex;
   flex-wrap: wrap;
   gap: var(--spacing-1);

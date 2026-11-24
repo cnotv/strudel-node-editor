@@ -556,26 +556,16 @@ export const STRUDEL_API_HIDDEN_NAMES: string[] = [
   'wordfall'
 ]
 
-/** The functions the Strudel workshop teaches first, listed above the groups. */
-export const STRUDEL_API_WORKSHOP_NAMES: string[] = [
+/** The functions that start a pattern, like the instrument nodes, listed above the groups. */
+export const STRUDEL_API_START_NAMES: string[] = [
   's',
-  'note',
-  'stack',
   'sound',
-  'fast',
-  'slow',
-  'gain',
-  'room',
-  'lpf',
-  'hpf',
-  'delay',
-  'mask',
-  'struct',
-  'euclid',
-  'sometimes',
-  'rev',
-  'jux',
-  'scale',
+  'note',
+  'n',
   'chord',
-  'voicing'
+  'stack',
+  'arrange',
+  'cat',
+  'seq',
+  'silence'
 ]

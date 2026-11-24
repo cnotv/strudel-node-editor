@@ -122,7 +122,7 @@ describe('FlowTab', () => {
 
     // Act
     await wrapper
-      .find('.strudel-flow-tab__workshop-list button[aria-label="Add s function"]')
+      .find('.strudel-flow-tab__start-list button[aria-label="Add s function"]')
       .trigger('click')
 
     // Assert

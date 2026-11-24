@@ -19,7 +19,6 @@ import {
 } from 'lucide-vue-next'
 import IconButton from '../../components/IconButton.vue'
 import { Slider } from '../../components/ui/slider'
-import { PopoverContent, PopoverPortal, PopoverRoot, PopoverTrigger } from 'radix-vue'
 import { Select } from '../../components/ui/select'
 import { Toggle } from '../../components/ui/toggle'
 import {
@@ -272,35 +271,29 @@ const timeReadout = computed(() => `${(props.playheadCycle / props.cyclesPerSeco
       >
         <Repeat aria-hidden="true" />
       </Toggle>
-      <PopoverRoot>
-        <PopoverTrigger as-child>
-          <IconButton size="sm" variant="ghost" :title="volumeLabel" :aria-label="volumeLabel">
-            <component :is="volumeIcon" aria-hidden="true" />
-          </IconButton>
-        </PopoverTrigger>
-        <PopoverPortal>
-          <PopoverContent class="strudel-timeline__volume" side="top" :side-offset="4">
-            <Toggle
-              size="sm"
-              :model-value="isMuted"
-              title="Mute"
-              aria-label="Mute"
-              @update:model-value="onMutePressed"
-            >
-              <VolumeX aria-hidden="true" />
-            </Toggle>
-            <Slider
-              :model-value="[volume]"
-              :min="0"
-              :max="1"
-              :step="0.05"
-              label="Volume"
-              class="strudel-timeline__volume-slider"
-              @update:model-value="onVolumeMoved"
-            />
-          </PopoverContent>
-        </PopoverPortal>
-      </PopoverRoot>
+      <div class="strudel-timeline__sound">
+        <div class="strudel-timeline__volume">
+          <Slider
+            :model-value="[volume]"
+            :min="0"
+            :max="1"
+            :step="0.05"
+            label="Volume"
+            orientation="vertical"
+            variant="volume"
+            @update:model-value="onVolumeMoved"
+          />
+        </div>
+        <IconButton
+          size="sm"
+          variant="ghost"
+          :title="volumeLabel"
+          :aria-label="volumeLabel"
+          @click="onMutePressed"
+        >
+          <component :is="volumeIcon" aria-hidden="true" />
+        </IconButton>
+      </div>
       <Toggle
         v-model="showLanes"
         size="sm"
@@ -371,6 +364,15 @@ const timeReadout = computed(() => `${(props.playheadCycle / props.cyclesPerSeco
           @pointerup.capture="touchSeek.onPointerUp"
           @pointercancel.capture="touchSeek.onPointerCancel"
         >
+          <ol v-if="showLanes" class="strudel-timeline__ruler" aria-hidden="true">
+            <li
+              v-for="cycleNumber in timelineBars"
+              :key="cycleNumber"
+              :style="{ left: `${((cycleNumber - 1) / timelineBars) * 100}%` }"
+            >
+              {{ cycleNumber }}
+            </li>
+          </ol>
           <Slider
             :model-value="[playheadCycle]"
             :min="0"
@@ -381,15 +383,6 @@ const timeReadout = computed(() => `${(props.playheadCycle / props.cyclesPerSeco
             variant="playhead"
             @update:model-value="onSliderMoved"
           />
-          <ol v-if="showLanes" class="strudel-timeline__ruler" aria-hidden="true">
-            <li
-              v-for="cycleNumber in timelineBars"
-              :key="cycleNumber"
-              :style="{ left: `${((cycleNumber - 1) / timelineBars) * 100}%` }"
-            >
-              {{ cycleNumber }}
-            </li>
-          </ol>
           <p v-if="showLanes && isLoading" class="strudel-timeline__lanes-loading" role="status">
             <LoaderCircle class="strudel-timeline__spinner" aria-hidden="true" />
             Reading the pattern
@@ -506,8 +499,34 @@ const timeReadout = computed(() => `${(props.playheadCycle / props.cyclesPerSeco
   min-height: var(--spacing-5);
 }
 
-.strudel-timeline__volume-slider {
-  width: 7rem;
+/* The panel grows out of the button, sharing its background, as a player's volume does. */
+.strudel-timeline__sound {
+  position: relative;
+  border-radius: var(--radius-md);
+}
+
+.strudel-timeline__sound:hover,
+.strudel-timeline__sound:focus-within {
+  background: var(--panel-item-bg-hover);
+}
+
+.strudel-timeline__volume {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  z-index: 100;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding-block: var(--spacing-2);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  background: var(--panel-item-bg-hover);
+}
+
+.strudel-timeline__sound:hover .strudel-timeline__volume,
+.strudel-timeline__sound:focus-within .strudel-timeline__volume {
+  display: flex;
 }
 
 .strudel-timeline__ruler {
@@ -524,7 +543,12 @@ const timeReadout = computed(() => `${(props.playheadCycle / props.cyclesPerSeco
 
 .strudel-timeline__ruler li {
   position: absolute;
-  padding-left: 2px;
+  transform: translateX(-50%);
+}
+
+/* Centring the first number on the left edge would cut half of it off. */
+.strudel-timeline__ruler li:first-child {
+  transform: none;
 }
 
 /* The marks start under the numbers, so the ruler reads as a scale above the line. */
@@ -668,19 +692,5 @@ const timeReadout = computed(() => `${(props.playheadCycle / props.cyclesPerSeco
     0 0,
     0 50%;
   background-repeat: no-repeat;
-}
-</style>
-
-<style>
-.strudel-timeline__volume {
-  z-index: 100;
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  padding: var(--spacing-2);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background-color: var(--color-background);
-  box-shadow: var(--shadow-lg);
 }
 </style>

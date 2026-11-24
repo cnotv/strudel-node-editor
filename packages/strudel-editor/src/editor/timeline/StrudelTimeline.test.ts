@@ -34,8 +34,8 @@ const mountTimelineOnWideTrack = () => {
   track.getBoundingClientRect = () => new DOMRect(0, 0, 800, 20)
   return {
     wrapper,
-    sliderLine: wrapper.get('.slider__track').element,
-    playhead: wrapper.get('[role="slider"]').element
+    sliderLine: wrapper.get('.strudel-timeline__track .slider__track').element,
+    playhead: wrapper.get('.strudel-timeline__track [role="slider"]').element
   }
 }
 
@@ -109,7 +109,9 @@ describe('StrudelTimeline', () => {
 
   it('lays the whole song out on one slider that ends on its last cycle', () => {
     // Act
-    const sliders = mountTimeline({ timelineBars: 64 }).findAll('[role="slider"]')
+    const sliders = mountTimeline({ timelineBars: 64 }).findAll(
+      '.strudel-timeline__track [role="slider"]'
+    )
 
     // Assert
     expect(sliders).toHaveLength(1)
@@ -190,7 +192,7 @@ describe('StrudelTimeline', () => {
 
   it('declares the playhead slider horizontal', () => {
     // Act
-    const slider = mountTimeline().get('[role="slider"]')
+    const slider = mountTimeline().get('.strudel-timeline__track [role="slider"]')
 
     // Assert
     expect(slider.attributes('aria-orientation')).toBe('horizontal')

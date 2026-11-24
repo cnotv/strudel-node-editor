@@ -172,6 +172,9 @@ describe('StrudelEditor view', () => {
     expect(playButtonsBefore).toHaveLength(0)
     expect(drawerBefore).toBe(false)
     expect(wrapper.find('.strudel-editor__license').text()).toContain('AGPL-3.0')
+    expect(wrapper.find('.strudel-editor__license a').attributes('href')).toBe(
+      'https://codeberg.org/uzu/strudel'
+    )
   })
 
   it.each([

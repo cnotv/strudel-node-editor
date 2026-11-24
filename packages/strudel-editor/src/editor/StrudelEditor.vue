@@ -36,7 +36,8 @@ import {
   STRUDEL_BEATS_PER_CYCLE,
   STRUDEL_DOCUMENTATION_URL,
   STRUDEL_OFFICIAL_DOCUMENTATION_URL,
-  STRUDEL_LICENSE_NOTE,
+  STRUDEL_ENGINE_URL,
+  STRUDEL_LICENSE,
   STRUDEL_REPOSITORY_URL
 } from './config'
 import {
@@ -661,7 +662,10 @@ onBeforeUnmount(() => {
         <FlowTab v-else-if="activeTab === 'flow'" @add-node="onFlowAddNode" @reset="onFlowReset" />
         <SettingsTab v-else />
       </div>
-      <p class="strudel-editor__license">{{ STRUDEL_LICENSE_NOTE }}</p>
+      <p class="strudel-editor__license">
+        {{ STRUDEL_LICENSE }}
+        <a :href="STRUDEL_ENGINE_URL" target="_blank" rel="noopener noreferrer">codeberg.org</a>
+      </p>
       <nav class="strudel-editor__links" aria-label="Project links">
         <a :href="STRUDEL_REPOSITORY_URL" target="_blank" rel="noopener noreferrer">
           <Github aria-hidden="true" />
@@ -831,6 +835,11 @@ onBeforeUnmount(() => {
   padding: var(--spacing-2) var(--spacing-3);
   font-size: var(--font-size-sm);
   color: var(--color-muted-foreground);
+}
+
+.strudel-editor__license a {
+  color: inherit;
+  text-decoration: underline;
 }
 
 .strudel-editor__links {

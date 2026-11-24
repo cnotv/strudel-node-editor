@@ -5,7 +5,8 @@ import {
   STRUDEL_SAMPLE_BANKS,
   DEFAULT_STRUDEL_EXAMPLE_ID,
   STRUDEL_EXAMPLES,
-  STRUDEL_LICENSE_NOTE,
+  STRUDEL_ENGINE_URL,
+  STRUDEL_LICENSE,
   STRUDEL_MUSIC_STYLES
 } from './config'
 
@@ -87,15 +88,10 @@ describe('StrudelEditor config', () => {
     expect(bassLine).toBeDefined()
   })
 
-  it('carries the AGPL isolation note for the deployed build', () => {
-    // Arrange
-    const licenseNote = STRUDEL_LICENSE_NOTE
-
-    // Act
-    const mentionsLicense = licenseNote.includes('AGPL-3.0')
-
+  it('names the AGPL license and links the Strudel engine source', () => {
     // Assert
-    expect(mentionsLicense).toBe(true)
+    expect(STRUDEL_LICENSE).toContain('AGPL-3.0')
+    expect(STRUDEL_ENGINE_URL).toBe('https://codeberg.org/uzu/strudel')
   })
 
   it('registers dirt-samples last, so the names it shares stay the kit the examples play', () => {

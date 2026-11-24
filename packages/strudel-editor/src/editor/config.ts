@@ -17,8 +17,9 @@ import type {
  * The Strudel audio engine stays under AGPL-3.0-or-later while this repo is MIT.
  * Depending on it here means a deployed build of this view carries that obligation.
  */
-export const STRUDEL_LICENSE_NOTE =
-  'Strudel engine (AGPL-3.0-or-later) isolated to this view. See https://codeberg.org/uzu/strudel'
+export const STRUDEL_LICENSE = 'AGPL-3.0-or-later'
+
+export const STRUDEL_ENGINE_URL = 'https://codeberg.org/uzu/strudel'
 
 export const STRUDEL_EXAMPLES: StrudelExample[] = [
   {

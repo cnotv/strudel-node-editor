@@ -107,6 +107,7 @@ const emit = defineEmits<{
 }
 
 .slider--playhead .slider__track {
+  opacity: var(--slider-playhead-line-opacity, 1);
   height: 2px;
   border-radius: 0;
 }

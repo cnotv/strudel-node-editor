@@ -233,6 +233,7 @@ const trackStyle = computed(() => ({
       : `max(100%, ${props.timelineBars * STRUDEL_TIMELINE_MIN_CYCLE_WIDTH}px)`,
   '--timeline-cycles': props.timelineBars,
   '--timeline-steps-per-cycle': props.stepsPerCycle,
+  '--slider-playhead-line-opacity': showLanes.value ? 0 : 1,
   '--slider-playhead-extent': `calc(${showLanes.value ? (props.lanes?.length ?? 0) : 0} * (var(--spacing-3) + 1px))`
 }))
 
@@ -699,5 +700,18 @@ const timeReadout = computed(() => `${(props.playheadCycle / props.cyclesPerSeco
     0 0,
     0 50%;
   background-repeat: no-repeat;
+}
+
+/* With the lanes on, the ruler is only the numbers and the cycle lines: no step ticks and no
+   line under them, so the bars of the lanes start right below. The slider stays, invisible,
+   as the thing that takes the drag, with the playhead on it (see `--slider-playhead-line-opacity`). */
+.strudel-timeline__track.strudel-timeline__track--ruler::before {
+  background-image: repeating-linear-gradient(
+    to right,
+    var(--color-muted-foreground) 0 1px,
+    transparent 1px calc(100% / var(--timeline-cycles))
+  );
+  background-size: 100% 100%;
+  background-position: 0 0;
 }
 </style>

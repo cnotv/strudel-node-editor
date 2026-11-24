@@ -15,6 +15,7 @@ import {
   readScheduledHaps,
   renderStrudelPatternToWav
 } from './strudelOfflineRender'
+import { groupHapsIntoLanes } from './timeline/timelineLanes'
 import { findLoopBars, findPatternRepetition } from './patternRepetition'
 import { isRecordModule, requireCallable, requireRecordModule, toCallable } from './strudelModules'
 import { createRenderQueue } from './renderQueue'
@@ -482,6 +483,8 @@ export const loadDefaultStrudelPlayback = async (
             readOpeningHaps(latestPattern, STRUDEL_MAX_SONG_CYCLES * 2),
             STRUDEL_MAX_SONG_CYCLES
           ),
+    measureLanes: (cycleCount: number) =>
+      latestPattern === null ? [] : groupHapsIntoLanes(readOpeningHaps(latestPattern, cycleCount)),
     measureRepetition: async (patternCode: string): Promise<number | null> =>
       findPatternRepetition(
         readOpeningHaps(await evaluateForExport(patternCode), STRUDEL_MAX_SONG_CYCLES * 2),

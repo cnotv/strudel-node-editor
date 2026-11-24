@@ -164,7 +164,8 @@ const buildSuccessfulPlayback = (): StrudelPlayback => ({
   measureRepetition: vi.fn(async () => 1),
   readPosition: vi.fn(() => ({ cycle: 0, cyclesPerSecond: 0.5 })),
   seekToCycle: vi.fn(),
-  measureLoop: vi.fn(() => 1)
+  measureLoop: vi.fn(() => 1),
+  measureLanes: vi.fn(() => [])
 })
 
 describe('findStrudelExample', () => {
@@ -1034,7 +1035,8 @@ describe('useStrudelEditor', () => {
       measureRepetition: vi.fn(async () => 1),
       readPosition: vi.fn(() => ({ cycle: 0, cyclesPerSecond: 0.5 })),
       seekToCycle: vi.fn(),
-      measureLoop: vi.fn(() => 1)
+      measureLoop: vi.fn(() => 1),
+      measureLanes: vi.fn(() => [])
     }
     const { playPattern, editorStatus, errorMessage } = useStrudelEditor({
       initialExamples: buildExampleList(),
@@ -1139,7 +1141,8 @@ describe('useStrudelEditor', () => {
       measureRepetition: vi.fn(async () => 1),
       readPosition: vi.fn(() => ({ cycle: 0, cyclesPerSecond: 0.5 })),
       seekToCycle: vi.fn(),
-      measureLoop: vi.fn(() => 1)
+      measureLoop: vi.fn(() => 1),
+      measureLanes: vi.fn(() => [])
     }
     const { playPattern, stopPattern, editorStatus, errorMessage } = useStrudelEditor({
       initialExamples: buildExampleList(),

@@ -13,7 +13,8 @@ const buildPlayback = (cycle = 0, loopBars: number | null = 4): StrudelPlayback 
   measureRepetition: vi.fn(async () => 1),
   readPosition: vi.fn(() => ({ cycle, cyclesPerSecond: 0.75 })),
   seekToCycle: vi.fn(),
-  measureLoop: vi.fn(() => loopBars)
+  measureLoop: vi.fn(() => loopBars),
+  measureLanes: vi.fn(() => [])
 })
 
 const buildTimeline = (playback: StrudelPlayback | null, status: StrudelEditorStatus = 'idle') => {
@@ -56,6 +57,21 @@ describe('useStrudelTimeline', () => {
     expect(timeline.startCycle.value).toBe(2.5)
     expect(timeline.playheadCycle.value).toBe(2.5)
     expect(playback.seekToCycle).not.toHaveBeenCalled()
+  })
+
+  it('reads the lanes over the whole song when a pattern is measured', () => {
+    // Arrange
+    const playback = buildPlayback()
+    const lanes = [{ name: 'bd', notes: [{ beginCycle: 0, durationCycles: 0.25 }] }]
+    vi.mocked(playback.measureLanes).mockReturnValue(lanes)
+    const { timeline } = buildTimeline(playback)
+
+    // Act
+    timeline.measurePlayedPattern()
+
+    // Assert
+    expect(playback.measureLanes).toHaveBeenCalledWith(timeline.timelineBars.value)
+    expect(timeline.lanes.value).toEqual(lanes)
   })
 
   it('moves the playing scheduler when seeking while playing', () => {

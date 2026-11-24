@@ -201,4 +201,54 @@ describe('StrudelTimeline', () => {
     // Assert
     expect(trackWidth).toContain(`${64 * STRUDEL_TIMELINE_MIN_CYCLE_WIDTH}px`)
   })
+
+  it('draws a lane per instrument only once the lanes toggle is on', async () => {
+    // Arrange
+    const lanes = [
+      { name: 'bd', notes: [{ beginCycle: 0, durationCycles: 0.25 }] },
+      { name: 'hh', notes: [{ beginCycle: 1, durationCycles: 0.25 }] }
+    ]
+    const wrapper = mountTimeline({ lanes })
+    const beforeToggle = wrapper.findAll('.strudel-timeline__lane').length
+
+    // Act
+    await wrapper.get('[aria-label="Show instrument cycles"]').trigger('click')
+
+    // Assert
+    expect(beforeToggle).toBe(0)
+    expect(wrapper.findAll('.strudel-timeline__lane')).toHaveLength(2)
+    expect(wrapper.get('.strudel-timeline__note').attributes('style')).toContain('left: 0%')
+  })
+
+  it('offers the three progressions and pads the scroller when centred', async () => {
+    // Arrange
+    const wrapper = mountTimeline()
+    const labels = wrapper.findAll('.button-selector__btn').map((button) => button.text())
+
+    // Act
+    await wrapper.findAll('.button-selector__btn')[2]?.trigger('click')
+
+    // Assert
+    expect(labels).toEqual(['Fixed', 'Follow', 'Centre'])
+    expect(wrapper.get('.strudel-timeline__scroller').classes()).toContain(
+      'strudel-timeline__scroller--centered'
+    )
+  })
+
+  it('seeks to the centred cycle when the centred timeline is scrolled', async () => {
+    // Arrange
+    const wrapper = mountTimeline({ playheadCycle: 0, timelineBars: 8 })
+    await wrapper.findAll('.button-selector__btn')[2]?.trigger('click')
+    const scroller = wrapper.get('.strudel-timeline__scroller').element as HTMLElement
+    Object.defineProperty(wrapper.get('.strudel-timeline__track').element, 'offsetWidth', {
+      value: 800
+    })
+    scroller.scrollLeft = 400
+
+    // Act
+    await wrapper.get('.strudel-timeline__scroller').trigger('scroll')
+
+    // Assert
+    expect(wrapper.emitted('seek')?.at(-1)).toEqual([4])
+  })
 })

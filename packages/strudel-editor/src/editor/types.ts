@@ -74,6 +74,8 @@ export type StrudelPlayback = {
   seekToCycle: (cycle: number) => void
   /** Bars the last played pattern takes to repeat as a whole, or null when it does not within `STRUDEL_MAX_SONG_CYCLES`. */
   measureLoop: () => number | null
+  /** The last played pattern's notes over its first cycles, one lane per instrument. */
+  measureLanes: (cycleCount: number) => StrudelTimelineLane[]
   /** Renders the cycles offline and downloads them as a WAV file. */
   renderToWav: (
     patternCode: string,
@@ -100,6 +102,15 @@ export type StrudelPlayback = {
     exportOptions: StrudelExportOptions
   ) => Promise<StrudelEvaluationResult>
 }
+
+/** One instrument's row on the timeline: when each of its notes starts and how long it lasts, in cycles. */
+export type StrudelTimelineLane = {
+  name: string
+  notes: { beginCycle: number; durationCycles: number }[]
+}
+
+/** How the timeline follows the playhead: it stays put, keeps the playhead in view, or scrolls under a centred one. */
+export type StrudelTimelineProgression = 'static' | 'follow' | 'centered'
 
 /** One event of a pattern that starts inside the exported cycles, read off Strudel's hap. */
 export type StrudelScheduledHap = {

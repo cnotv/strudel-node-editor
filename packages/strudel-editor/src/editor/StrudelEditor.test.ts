@@ -76,7 +76,8 @@ vi.mock('./strudelPlayback', async (importOriginal) => ({
     stopPlayback: async () => undefined,
     readPosition: () => ({ cycle: 0, cyclesPerSecond: 0.5 }),
     seekToCycle: () => undefined,
-    measureLoop: () => 1
+    measureLoop: () => 1,
+    measureLanes: () => []
   })
 }))
 

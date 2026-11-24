@@ -885,6 +885,14 @@ export const STRUDEL_EXPORT_MEASURE_DELAY_MS = 600
 export const STRUDEL_TIMELINE_MIN_CYCLE_WIDTH = 48
 /** The furthest a touch on the timeline may wander, in pixels, and still count as a tap that seeks. */
 export const STRUDEL_TIMELINE_TAP_SLOP = 8
+/** How close the playhead may get to the edge, in pixels, before the following timeline scrolls it back to the middle. */
+export const STRUDEL_TIMELINE_FOLLOW_MARGIN = 24
+/** The three ways the timeline follows playback, in the order the switch shows them. */
+export const STRUDEL_TIMELINE_PROGRESSION_OPTIONS = [
+  { value: 'static', label: 'Fixed' },
+  { value: 'follow', label: 'Follow' },
+  { value: 'centered', label: 'Centre' }
+]
 /** The finest point the timeline seeks to: a sixteenth of a bar. */
 export const STRUDEL_TIMELINE_SEEK_STEP = 0.0625
 export const EXPORT_FORMAT_OPTIONS = [

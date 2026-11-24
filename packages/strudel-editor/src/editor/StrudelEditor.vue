@@ -120,6 +120,7 @@ const {
   loadTranscription,
   playheadCycle,
   timelineBars,
+  lanes,
   cyclesPerSecond,
   seekToCycle,
   rewind,
@@ -549,6 +550,7 @@ onBeforeUnmount(() => {
       <StrudelTimeline
         :playhead-cycle="playheadCycle"
         :timeline-bars="timelineBars"
+        :lanes="lanes"
         :cycles-per-second="cyclesPerSecond"
         :steps-per-cycle="editorMode === 'flow' ? flowBeatsPerCycle : STRUDEL_BEATS_PER_CYCLE"
         :loop-enabled="loopEnabled"

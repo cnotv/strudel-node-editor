@@ -553,7 +553,7 @@ export type StrudelFlowState = {
   beatsPerMinute: Ref<number>
   beatsPerCycle: Ref<number>
   compilation: ComputedRef<StrudelFlowCompilation>
-  addNode: (kind: StrudelFlowNodeKind) => void
+  addNode: (kind: StrudelFlowNodeKind, data?: StrudelFlowNodeData) => void
   updateNodeData: (nodeId: string, data: StrudelFlowNodeData) => void
   removeNode: (nodeId: string) => void
   /** Adds a cable when the same connection rules the canvas uses allow it. */

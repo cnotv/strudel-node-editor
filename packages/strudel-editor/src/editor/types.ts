@@ -1,5 +1,5 @@
 import type { Ref } from 'vue'
-import type { StrudelFlowTabInstrument } from '@webgamekit/strudel-flow'
+import type { StrudelFlowNodeKind, StrudelFlowTabInstrument } from '@webgamekit/strudel-flow'
 
 export type StrudelExample = {
   id: string
@@ -166,6 +166,50 @@ export type StrudelFunctionDocumentation = {
   description: string
   params: StrudelFunctionParameter[]
   examples: string[]
+}
+
+/** The purpose headings the function list groups its functions under. */
+export type StrudelApiGroupId =
+  | 'sources'
+  | 'time'
+  | 'structure'
+  | 'random'
+  | 'signals'
+  | 'tonal'
+  | 'controls'
+  | 'filters'
+  | 'space'
+  | 'drive'
+  | 'synth'
+  | 'visuals'
+  | 'midi'
+
+/** One heading in the function list. */
+export type StrudelApiGroup = {
+  id: StrudelApiGroupId
+  label: string
+  hint: string
+}
+
+/** A heading and the documented names it lists, as the catalog data declares them. */
+export type StrudelApiGroupDefinition = StrudelApiGroup & {
+  names: string[]
+}
+
+/** What Add creates: a node kind, or a Code node holding the documented example. */
+export type StrudelApiAddTarget =
+  | { kind: Exclude<StrudelFlowNodeKind, 'code'> }
+  | { kind: 'code'; code: string }
+
+/** One documented Strudel function, placed under a heading and mapped to what Add creates. */
+export type StrudelApiEntry = StrudelFunctionDocumentation & {
+  group: StrudelApiGroupId
+  add: StrudelApiAddTarget | null
+}
+
+/** A heading with the functions the current search leaves in it. */
+export type StrudelApiGroupEntries = StrudelApiGroup & {
+  entries: StrudelApiEntry[]
 }
 
 /** Everything the code editor completes from, beyond the language's own syntax. */

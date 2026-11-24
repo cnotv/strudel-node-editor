@@ -104,6 +104,21 @@ describe('useStrudelFlow', () => {
     ).toBe(flow.nodes.value.length)
   })
 
+  it('adds a Code node with the code it is given', () => {
+    // Arrange
+    const flow = createFlow()
+
+    // Act
+    flow.addNode('code', { kind: 'code', code: 'note("a4")' })
+
+    // Assert
+    expect(flow.nodes.value.find((node) => node.id === 'code-1')?.data).toEqual({
+      kind: 'code',
+      code: 'note("a4")'
+    })
+    expect(flow.compilation.value.code).toContain('note("a4")')
+  })
+
   it('updates a node and compiles its new settings', () => {
     // Arrange
     const flow = createFlow()

@@ -179,7 +179,7 @@ describe('StrudelEditor view', () => {
   })
 
   it.each([
-    ['an example menu over the code', '.strudel-editor__code [role="combobox"]'],
+    ['an example menu over the code', '.strudel-editor__code > [role="combobox"]'],
     ['a status line', '.strudel-editor__status'],
     ['an error while nothing has failed', '.strudel-editor__error']
   ])('shows no %s', async (_part, selector) => {

@@ -52,7 +52,13 @@ import { useStrudelHints } from './hints/useStrudelHints'
 import { readStrudelNoteBars } from './noteBars'
 import { useStrudelSounds } from './useStrudelSounds'
 import { previewStrudelSound } from './strudelPlayback'
-import type { StrudelEditorMode, StrudelExample, StrudelSoundEntry, StrudelTabId } from './types'
+import type {
+  StrudelEditorMode,
+  StrudelExample,
+  StrudelSoundEntry,
+  StrudelSourceRange,
+  StrudelTabId
+} from './types'
 import type { StrudelFlowNodeData, StrudelFlowNodeKind } from '@webgamekit/strudel-flow'
 import FlowTab from './tabs/FlowTab.vue'
 import InstrumentsTab from './tabs/InstrumentsTab.vue'
@@ -67,6 +73,7 @@ import ExportTab from './tabs/ExportTab.vue'
 import ConsoleTab from './tabs/ConsoleTab.vue'
 import SettingsTab from './tabs/SettingsTab.vue'
 import StrudelTimeline from './timeline/StrudelTimeline.vue'
+import { pickDefinitionRange } from './timeline/pickDefinitionRange'
 
 // Vue Flow is a large canvas library and only loads when the player opens flow mode.
 const StrudelFlowEditor = defineAsyncComponent(() =>
@@ -465,6 +472,38 @@ const onShowNodeCode = async (nodeId: string): Promise<void> => {
   }
 }
 
+const showCodeEditor = async (): Promise<void> => {
+  onEditorModeChange('code')
+  await nextTick()
+}
+
+const onSelectTimelineNote = async (
+  ranges: StrudelSourceRange[],
+  laneName: string
+): Promise<void> => {
+  const range = pickDefinitionRange(ranges, laneName, patternCode.value)
+  await showCodeEditor()
+  if (range !== null) {
+    codeEditor.value?.selectRange(range.from, range.to)
+  }
+}
+
+// A whole statement reads as the instrument's code, where the span alone is a bare string.
+const onSelectTimelineLane = async (
+  ranges: StrudelSourceRange[],
+  laneName: string
+): Promise<void> => {
+  const range = pickDefinitionRange(ranges, laneName, patternCode.value)
+  if (range === null) {
+    return
+  }
+  const code = patternCode.value
+  const lineStart = code.lastIndexOf('\n', range.from - 1) + 1
+  const lineEnd = code.indexOf('\n', range.to)
+  await showCodeEditor()
+  codeEditor.value?.selectRange(lineStart, lineEnd === -1 ? code.length : lineEnd)
+}
+
 const onFlowNodesConnected = (sourceNodeId: string, targetNodeId: string): void => {
   connectFlowNodes(sourceNodeId, targetNodeId)
 }
@@ -561,6 +600,8 @@ onBeforeUnmount(() => {
         @pause="onPauseRequested"
         @stop="onStopRequested"
         @update:loop-enabled="loopEnabled = $event"
+        @select-note="onSelectTimelineNote"
+        @select-lane="onSelectTimelineLane"
       />
     </section>
 

@@ -106,8 +106,13 @@ export type StrudelPlayback = {
 /** One instrument's row on the timeline: when each of its notes starts and how long it lasts, in cycles. */
 export type StrudelTimelineLane = {
   name: string
-  notes: { beginCycle: number; durationCycles: number }[]
+  notes: { beginCycle: number; durationCycles: number; sourceRanges: StrudelSourceRange[] }[]
+  /** The spans of code behind the lane's first note. */
+  sourceRanges: StrudelSourceRange[]
 }
+
+/** A span of the code, from the first character to the one after the last. */
+export type StrudelSourceRange = { from: number; to: number }
 
 /** How the timeline follows the playhead: it stays put, keeps the playhead in view, or scrolls under a centred one. */
 export type StrudelTimelineProgression = 'static' | 'follow' | 'centered'
@@ -117,6 +122,8 @@ export type StrudelScheduledHap = {
   value: unknown
   beginCycle: number
   durationCycles: number
+  /** Every span of code the event came from, empty when Strudel recorded no location. */
+  sourceRanges: StrudelSourceRange[]
 }
 
 /** What the transpiler found in the evaluated code, in Strudel's own untyped shapes. */

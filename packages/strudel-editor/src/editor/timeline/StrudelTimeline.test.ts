@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
+import { nextTick } from 'vue'
 import { mount } from '@vue/test-utils'
+import { Select } from '../../components/ui/select'
 import { STRUDEL_TIMELINE_MIN_CYCLE_WIDTH } from '../config'
 import StrudelTimeline from './StrudelTimeline.vue'
 
@@ -205,8 +207,16 @@ describe('StrudelTimeline', () => {
   it('draws a lane per instrument only once the lanes toggle is on', async () => {
     // Arrange
     const lanes = [
-      { name: 'bd', notes: [{ beginCycle: 0, durationCycles: 0.25 }] },
-      { name: 'hh', notes: [{ beginCycle: 1, durationCycles: 0.25 }] }
+      {
+        name: 'bd',
+        notes: [{ beginCycle: 0, durationCycles: 0.25, sourceRanges: [{ from: 5, to: 7 }] }],
+        sourceRanges: [{ from: 5, to: 7 }]
+      },
+      {
+        name: 'hh',
+        notes: [{ beginCycle: 1, durationCycles: 0.25, sourceRanges: [] }],
+        sourceRanges: []
+      }
     ]
     const wrapper = mountTimeline({ lanes })
     const beforeToggle = wrapper.findAll('.strudel-timeline__lane').length
@@ -220,25 +230,30 @@ describe('StrudelTimeline', () => {
     expect(wrapper.get('.strudel-timeline__note').attributes('style')).toContain('left: 0%')
   })
 
-  it('offers the three progressions and pads the scroller when centred', async () => {
+  it('selects the code of a note, and of an instrument, when they are clicked', async () => {
     // Arrange
-    const wrapper = mountTimeline()
-    const labels = wrapper.findAll('.button-selector__btn').map((button) => button.text())
+    const lane = {
+      name: 'bd',
+      notes: [{ beginCycle: 0, durationCycles: 0.25, sourceRanges: [{ from: 5, to: 7 }] }],
+      sourceRanges: [{ from: 5, to: 7 }]
+    }
+    const wrapper = mountTimeline({ lanes: [lane] })
+    await wrapper.get('[aria-label="Show instrument cycles"]').trigger('click')
 
     // Act
-    await wrapper.findAll('.button-selector__btn')[2]?.trigger('click')
+    await wrapper.get('.strudel-timeline__note').trigger('click')
+    await wrapper.get('.strudel-timeline__lane-name').trigger('click')
 
     // Assert
-    expect(labels).toEqual(['Fixed', 'Follow', 'Centre'])
-    expect(wrapper.get('.strudel-timeline__scroller').classes()).toContain(
-      'strudel-timeline__scroller--centered'
-    )
+    expect(wrapper.emitted('selectNote')).toEqual([[[{ from: 5, to: 7 }], 'bd']])
+    expect(wrapper.emitted('selectLane')).toEqual([[[{ from: 5, to: 7 }], 'bd']])
   })
 
   it('seeks to the centred cycle when the centred timeline is scrolled', async () => {
     // Arrange
     const wrapper = mountTimeline({ playheadCycle: 0, timelineBars: 8 })
-    await wrapper.findAll('.button-selector__btn')[2]?.trigger('click')
+    wrapper.getComponent(Select).vm.$emit('update:modelValue', 'centered')
+    await nextTick()
     const scroller = wrapper.get('.strudel-timeline__scroller').element as HTMLElement
     Object.defineProperty(wrapper.get('.strudel-timeline__track').element, 'offsetWidth', {
       value: 800

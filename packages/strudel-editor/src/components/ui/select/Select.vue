@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import type { Component } from 'vue'
 import {
   SelectRoot,
   SelectTrigger,
@@ -17,6 +18,7 @@ import { Check, ChevronDown } from 'lucide-vue-next'
 type SelectOption = {
   value: string
   label: string
+  icon?: Component
 }
 
 const props = defineProps<{
@@ -67,6 +69,12 @@ const selectedLabel = computed(
                 <Check class="h-4 w-4" />
               </SelectItemIndicator>
             </span>
+            <component
+              :is="option.icon"
+              v-if="option.icon"
+              class="select__item-icon"
+              aria-hidden="true"
+            />
             <SelectItemText>{{ option.label }}</SelectItemText>
           </SelectItem>
         </SelectViewport>
@@ -176,6 +184,13 @@ const selectedLabel = computed(
 
 .select__item[data-state='checked'] {
   font-weight: 500;
+}
+
+.select__item-icon {
+  width: 1em;
+  height: 1em;
+  margin-right: 0.5em;
+  flex-shrink: 0;
 }
 
 .select__item-indicator {

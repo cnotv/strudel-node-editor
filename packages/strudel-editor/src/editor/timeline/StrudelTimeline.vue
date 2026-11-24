@@ -4,6 +4,9 @@ import {
   Disc3,
   Footprints,
   ChartNoAxesGantt,
+  AlignCenterVertical,
+  Lock,
+  ScanEye,
   LoaderCircle,
   Pause,
   Play,
@@ -13,7 +16,7 @@ import {
 } from 'lucide-vue-next'
 import IconButton from '../../components/IconButton.vue'
 import { Slider } from '../../components/ui/slider'
-import ButtonSelector from '../../components/ui/button-selector/ButtonSelector.vue'
+import { Select } from '../../components/ui/select'
 import { Toggle } from '../../components/ui/toggle'
 import {
   STRUDEL_TIMELINE_FOLLOW_MARGIN,
@@ -21,7 +24,7 @@ import {
   STRUDEL_TIMELINE_PROGRESSION_OPTIONS,
   STRUDEL_TIMELINE_SEEK_STEP
 } from '../config'
-import type { StrudelTimelineLane, StrudelTimelineProgression } from '../types'
+import type { StrudelSourceRange, StrudelTimelineLane, StrudelTimelineProgression } from '../types'
 import { useTouchSeek } from './useTouchSeek'
 
 const props = defineProps<{
@@ -44,11 +47,24 @@ const emit = defineEmits<{
   pause: []
   stop: []
   'update:loopEnabled': [enabled: boolean]
+  selectNote: [ranges: StrudelSourceRange[], laneName: string]
+  selectLane: [ranges: StrudelSourceRange[], laneName: string]
 }>()
 
 const trackElement = ref<HTMLElement | null>(null)
 const showLanes = ref(false)
 const progression = ref<StrudelTimelineProgression>('static')
+const progressionIcons = { static: Lock, follow: ScanEye, centered: AlignCenterVertical }
+const progressionOptions = STRUDEL_TIMELINE_PROGRESSION_OPTIONS.map((option) => ({
+  ...option,
+  icon: progressionIcons[option.value]
+}))
+const onProgressionPicked = (value: string): void => {
+  const picked = STRUDEL_TIMELINE_PROGRESSION_OPTIONS.find((option) => option.value === value)
+  if (picked !== undefined) {
+    progression.value = picked.value
+  }
+}
 const scrollerElement = ref<HTMLElement | null>(null)
 const hiddenBefore = ref(false)
 const hiddenAfter = ref(false)
@@ -221,11 +237,17 @@ const timeReadout = computed(() => `${(props.playheadCycle / props.cyclesPerSeco
       >
         <ChartNoAxesGantt aria-hidden="true" />
       </Toggle>
-      <ButtonSelector
-        v-model="progression"
-        :options="STRUDEL_TIMELINE_PROGRESSION_OPTIONS"
+      <Select
+        :model-value="progression"
+        :options="progressionOptions"
+        class="strudel-timeline__progression"
         aria-label="Timeline progression"
-      />
+        @update:model-value="onProgressionPicked"
+      >
+        <template #icon>
+          <component :is="progressionIcons[progression]" aria-hidden="true" />
+        </template>
+      </Select>
       <p class="strudel-timeline__readout">
         <span class="strudel-timeline__reading">
           <span title="Cycle" role="img" aria-label="Cycle"><Disc3 aria-hidden="true" /></span>
@@ -241,51 +263,69 @@ const timeReadout = computed(() => `${(props.playheadCycle / props.cyclesPerSeco
         </span>
       </p>
     </div>
-    <div
-      ref="scrollerElement"
-      class="strudel-timeline__scroller"
-      :class="{
-        'strudel-timeline__scroller--hidden-before': hiddenBefore,
-        'strudel-timeline__scroller--hidden-after': hiddenAfter,
-        'strudel-timeline__scroller--centered': progression === 'centered'
-      }"
-      @scroll.passive="onScrolled"
-    >
-      <!-- The track hosts the cycle and step marks: scoped styles never reach the slider's
-           radix root, so the marks cannot live on the slider itself. -->
+    <div class="strudel-timeline__body">
+      <div v-if="showLanes && lanes?.length" class="strudel-timeline__lane-names">
+        <button
+          v-for="lane in lanes"
+          :key="lane.name"
+          type="button"
+          class="strudel-timeline__lane-name"
+          :title="`Select the code of ${lane.name}`"
+          :disabled="lane.sourceRanges.length === 0"
+          @click="emit('selectLane', lane.sourceRanges, lane.name)"
+        >
+          {{ lane.name }}
+        </button>
+      </div>
       <div
-        ref="trackElement"
-        class="strudel-timeline__track"
-        :style="trackStyle"
-        @pointerdown.capture="touchSeek.onPointerDown"
-        @pointermove.capture="touchSeek.onPointerMove"
-        @pointerup.capture="touchSeek.onPointerUp"
-        @pointercancel.capture="touchSeek.onPointerCancel"
+        ref="scrollerElement"
+        class="strudel-timeline__scroller"
+        :class="{
+          'strudel-timeline__scroller--hidden-before': hiddenBefore,
+          'strudel-timeline__scroller--hidden-after': hiddenAfter,
+          'strudel-timeline__scroller--centered': progression === 'centered'
+        }"
+        @scroll.passive="onScrolled"
       >
-        <div v-if="showLanes" class="strudel-timeline__lanes">
-          <div v-for="lane in lanes" :key="lane.name" class="strudel-timeline__lane">
-            <span class="strudel-timeline__lane-name">{{ lane.name }}</span>
-            <span
-              v-for="note in lane.notes"
-              :key="note.beginCycle"
-              class="strudel-timeline__note"
-              :style="{
-                left: `${(note.beginCycle / timelineBars) * 100}%`,
-                width: `${(note.durationCycles / timelineBars) * 100}%`
-              }"
-            ></span>
+        <!-- The track hosts the cycle and step marks: scoped styles never reach the slider's
+           radix root, so the marks cannot live on the slider itself. -->
+        <div
+          ref="trackElement"
+          class="strudel-timeline__track"
+          :style="trackStyle"
+          @pointerdown.capture="touchSeek.onPointerDown"
+          @pointermove.capture="touchSeek.onPointerMove"
+          @pointerup.capture="touchSeek.onPointerUp"
+          @pointercancel.capture="touchSeek.onPointerCancel"
+        >
+          <div v-if="showLanes" class="strudel-timeline__lanes">
+            <div v-for="lane in lanes" :key="lane.name" class="strudel-timeline__lane">
+              <button
+                v-for="(note, noteIndex) in lane.notes"
+                :key="noteIndex"
+                type="button"
+                class="strudel-timeline__note"
+                :aria-label="`${lane.name} at cycle ${note.beginCycle}`"
+                :disabled="note.sourceRanges.length === 0"
+                :style="{
+                  left: `${(note.beginCycle / timelineBars) * 100}%`,
+                  width: `${(note.durationCycles / timelineBars) * 100}%`
+                }"
+                @click="emit('selectNote', note.sourceRanges, lane.name)"
+              ></button>
+            </div>
           </div>
+          <Slider
+            :model-value="[playheadCycle]"
+            :min="0"
+            :max="timelineBars"
+            :step="STRUDEL_TIMELINE_SEEK_STEP"
+            label="Playhead"
+            orientation="horizontal"
+            variant="playhead"
+            @update:model-value="onSliderMoved"
+          />
         </div>
-        <Slider
-          :model-value="[playheadCycle]"
-          :min="0"
-          :max="timelineBars"
-          :step="STRUDEL_TIMELINE_SEEK_STEP"
-          label="Playhead"
-          orientation="horizontal"
-          variant="playhead"
-          @update:model-value="onSliderMoved"
-        />
       </div>
     </div>
   </section>
@@ -386,19 +426,49 @@ const timeReadout = computed(() => `${(props.playheadCycle / props.cyclesPerSeco
   gap: 1px;
 }
 
-.strudel-timeline__lane {
-  position: relative;
-  height: var(--spacing-3);
+.strudel-timeline__body {
+  display: flex;
+  min-width: 0;
+}
+
+.strudel-timeline__scroller {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Same top padding and row gap as the track, so each name sits level with its lane. */
+.strudel-timeline__lane-names {
+  display: grid;
+  align-content: start;
+  gap: 1px;
+  padding-block: var(--spacing-1) calc(var(--spacing-1) + var(--spacing-5));
+  max-width: 8rem;
 }
 
 .strudel-timeline__lane-name {
-  position: sticky;
-  left: 0;
-  z-index: 1;
-  padding-inline: var(--spacing-1);
+  height: var(--spacing-3);
+  padding: 0 var(--spacing-2) 0 0;
+  overflow: hidden;
+  border: 0;
+  background: none;
+  color: inherit;
   font-size: var(--font-size-xs);
   line-height: var(--spacing-3);
-  background: var(--color-background);
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.strudel-timeline__lane-name:hover:not(:disabled) {
+  color: var(--color-foreground);
+}
+
+.strudel-timeline__lane {
+  position: relative;
+  height: var(--spacing-3);
+  border-radius: 1px;
+  background: var(--color-muted);
 }
 
 .strudel-timeline__note {
@@ -406,8 +476,39 @@ const timeReadout = computed(() => `${(props.playheadCycle / props.cyclesPerSeco
   top: 0;
   bottom: 0;
   min-width: 2px;
+  padding: 0;
+  border: 0;
   border-radius: 1px;
   background: var(--color-primary);
+  cursor: pointer;
+}
+
+.strudel-timeline__note:disabled {
+  cursor: default;
+}
+
+:global(.select__trigger.strudel-timeline__progression) {
+  width: auto;
+  height: var(--btn-sm-height);
+  gap: var(--spacing-1);
+  padding: 0 var(--spacing-1);
+  border-color: transparent;
+  background: transparent;
+  font-size: var(--font-size-xs);
+}
+
+:global(.select__trigger.strudel-timeline__progression:hover) {
+  background: var(--color-accent);
+}
+
+:global(.select__trigger.strudel-timeline__progression svg) {
+  width: var(--font-size-base);
+  height: var(--font-size-base);
+}
+
+:global(.select__trigger.strudel-timeline__progression svg:last-child) {
+  width: var(--font-size-xs);
+  height: var(--font-size-xs);
 }
 
 .strudel-timeline__scroller--centered {

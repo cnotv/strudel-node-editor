@@ -4,7 +4,13 @@ const UNNAMED_LANE = 'notes'
 
 const readLaneName = (hap: StrudelScheduledHap): string => {
   const value = hap.value
-  if (typeof value === 'object' && value !== null && 's' in value && typeof value.s === 'string') {
+  if (
+    typeof value === 'object' &&
+    value !== null &&
+    's' in value &&
+    typeof value.s === 'string' &&
+    value.s !== ''
+  ) {
     return value.s
   }
   return UNNAMED_LANE
@@ -18,9 +24,13 @@ const readLaneName = (hap: StrudelScheduledHap): string => {
 export const groupHapsIntoLanes = (haps: StrudelScheduledHap[]): StrudelTimelineLane[] =>
   haps.reduce<StrudelTimelineLane[]>((lanes, hap) => {
     const name = readLaneName(hap)
-    const note = { beginCycle: hap.beginCycle, durationCycles: hap.durationCycles }
+    const note = {
+      beginCycle: hap.beginCycle,
+      durationCycles: hap.durationCycles,
+      sourceRanges: hap.sourceRanges
+    }
     const existing = lanes.find((lane) => lane.name === name)
     return existing === undefined
-      ? [...lanes, { name, notes: [note] }]
+      ? [...lanes, { name, notes: [note], sourceRanges: hap.sourceRanges }]
       : lanes.map((lane) => (lane === existing ? { ...lane, notes: [...lane.notes, note] } : lane))
   }, [])

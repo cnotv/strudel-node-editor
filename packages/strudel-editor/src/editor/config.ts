@@ -892,7 +892,7 @@ export const STRUDEL_TIMELINE_PROGRESSION_OPTIONS = [
   { value: 'static', label: 'Fixed' },
   { value: 'follow', label: 'Follow' },
   { value: 'centered', label: 'Centre' }
-]
+] as const
 /** The finest point the timeline seeks to: a sixteenth of a bar. */
 export const STRUDEL_TIMELINE_SEEK_STEP = 0.0625
 export const EXPORT_FORMAT_OPTIONS = [

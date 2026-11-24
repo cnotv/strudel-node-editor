@@ -1,5 +1,10 @@
 import { encodeWav } from './wavEncoding'
-import type { StrudelExportFormat, StrudelExportOptions, StrudelScheduledHap } from './types'
+import type {
+  StrudelExportFormat,
+  StrudelExportOptions,
+  StrudelScheduledHap,
+  StrudelSourceRange
+} from './types'
 
 type UnknownCallable = (...callArguments: unknown[]) => unknown
 
@@ -20,6 +25,16 @@ const readFunction = (owner: unknown, name: string): UnknownCallable => {
 const readCycle = (value: unknown): number => {
   const cycle = isRecord(value) ? readFunction(value, 'valueOf')() : value
   return typeof cycle === 'number' ? cycle : Number.NaN
+}
+
+const readSourceRanges = (hap: unknown): StrudelSourceRange[] => {
+  const context = isRecord(hap) ? hap.context : undefined
+  const locations = isRecord(context) && Array.isArray(context.locations) ? context.locations : []
+  return locations.flatMap((location) =>
+    isRecord(location) && typeof location.start === 'number' && typeof location.end === 'number'
+      ? [{ from: location.start, to: location.end }]
+      : []
+  )
 }
 
 /**
@@ -45,7 +60,8 @@ export const readScheduledHaps = (
       return {
         value: isRecord(hap) ? hap.value : undefined,
         beginCycle: readCycle(isRecord(hap) && isRecord(hap.whole) ? hap.whole.begin : undefined),
-        durationCycles: readCycle(isRecord(hap) ? hap.duration : undefined)
+        durationCycles: readCycle(isRecord(hap) ? hap.duration : undefined),
+        sourceRanges: readSourceRanges(hap)
       }
     })
     .filter((hap) => Number.isFinite(hap.beginCycle) && Number.isFinite(hap.durationCycles))

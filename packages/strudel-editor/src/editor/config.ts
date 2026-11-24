@@ -721,6 +721,8 @@ export const STRUDEL_DOCUMENTATION_URL = 'https://cnotv.github.io/strudel-node-e
 /** Strudel's own reference, linked beside this editor's guide. */
 export const STRUDEL_OFFICIAL_DOCUMENTATION_URL = 'https://strudel.cc/learn/getting-started/'
 /** Where the code on screen is kept between visits. */
+/** Where the volume is remembered; an agent or script that drives the page writes "0" here first, so nothing plays aloud. */
+export const STRUDEL_VOLUME_STORAGE_KEY = 'strudel-editor-volume'
 export const STRUDEL_SAVED_CODE_STORAGE_KEY = 'strudel-editor-code'
 /** Where the patterns saved under a name are kept. */
 export const STRUDEL_SAVED_PATTERNS_STORAGE_KEY = 'strudel-editor-saved-patterns'
@@ -893,7 +895,7 @@ export const STRUDEL_TIMELINE_PROGRESSION_OPTIONS = [
   { value: 'follow', label: 'Follow' },
   { value: 'centered', label: 'Centre' }
 ] as const
-/** The volume the sound button restores when it unmutes after the page started silent. */
+/** The volume a first visit starts at, and the one the sound button restores after a mute. */
 export const STRUDEL_TIMELINE_DEFAULT_VOLUME = 0.8
 /** Below this the speaker icon shows one wave, above it two. */
 export const STRUDEL_TIMELINE_LOW_VOLUME = 0.5

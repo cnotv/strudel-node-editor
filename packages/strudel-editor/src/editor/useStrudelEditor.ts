@@ -7,6 +7,7 @@ import {
   ELECTRO_TUNES,
   STRUDEL_EXAMPLES,
   STRUDEL_SAVED_CODE_STORAGE_KEY,
+  STRUDEL_VOLUME_STORAGE_KEY,
   STRUDEL_TABS
 } from './config'
 import { useSavedPatterns } from './useSavedPatterns'
@@ -34,6 +35,7 @@ import {
 } from './strudelPlayback'
 import { runTranscription } from './transcription/runTranscription'
 import { useStrudelTranscription } from './transcription/useStrudelTranscription'
+import { readStoredVolume } from './storedVolume'
 import { useStrudelTimeline } from './timeline/useStrudelTimeline'
 
 /**
@@ -208,8 +210,8 @@ export const useStrudelEditor = (
   const patternCode = usePersistedPatternCode(defaultExample?.code ?? '')
   const editorStatus = ref<StrudelEditorStatus>('idle')
   const isLoading = ref(false)
-  // Silent until asked: a page that is open all day should not play out loud on its own.
-  const volume = ref(0)
+  const volume = ref(readStoredVolume())
+  watch(volume, (level) => writeStorage(STRUDEL_VOLUME_STORAGE_KEY, String(level)))
   const errorMessage = ref('')
   const playbackReference = ref<StrudelPlayback | null>(null)
   const activeTab = ref<StrudelTabId | null>(null)

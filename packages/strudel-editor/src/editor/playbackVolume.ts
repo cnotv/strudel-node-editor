@@ -17,12 +17,12 @@ const writeGain = (node: unknown, volume: number): void => {
 /**
  * The master volume of the live output. Superdough rebuilds its final gain node every time it
  * resets, so the volume is applied through a setter on the output, which sees each new node
- * the moment it is made. The page starts silent: sound is for recording, not for listening.
+ * the moment it is made. It starts at full volume, so a host app that plays a song hears it; the editor sets its own.
  * @param readController - gives superdough's audio controller, once audio is initialised
  * @returns the volume setter and the hook for each new output
  */
 export const createVolumeControl = (readController: () => unknown): VolumeControl => {
-  let volume = 0
+  let volume = 1
   let hookedOutput: Record<string, unknown> | null = null
   let gainNode: unknown = null
 

@@ -461,6 +461,8 @@ const timeReadout = computed(() => `${(props.playheadCycle / props.cyclesPerSeco
 }
 
 .strudel-timeline__scroller {
+  /* Room for half of the first cycle number, which is centred on the start of the line. */
+  padding-inline: var(--spacing-2);
   overflow-x: auto;
   overflow-y: hidden;
   overscroll-behavior-x: contain;
@@ -539,16 +541,13 @@ const timeReadout = computed(() => `${(props.playheadCycle / props.cyclesPerSeco
   font-size: var(--font-size-xs);
   font-variant-numeric: tabular-nums;
   line-height: var(--spacing-3);
+  pointer-events: none;
+  user-select: none;
 }
 
 .strudel-timeline__ruler li {
   position: absolute;
   transform: translateX(-50%);
-}
-
-/* Centring the first number on the left edge would cut half of it off. */
-.strudel-timeline__ruler li:first-child {
-  transform: none;
 }
 
 /* The marks start under the numbers, so the ruler reads as a scale above the line. */

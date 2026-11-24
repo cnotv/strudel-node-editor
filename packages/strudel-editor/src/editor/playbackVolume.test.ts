@@ -7,7 +7,7 @@ const buildController = () => {
 }
 
 describe('createVolumeControl', () => {
-  it('silences the output as soon as it is hooked', () => {
+  it('leaves the output at full volume until told otherwise', () => {
     // Arrange
     const { controller, firstGain } = buildController()
     const volume = createVolumeControl(() => controller)
@@ -16,7 +16,7 @@ describe('createVolumeControl', () => {
     volume.attach()
 
     // Assert
-    expect(firstGain.gain.value).toBe(0)
+    expect(firstGain.gain.value).toBe(1)
   })
 
   it('applies a new volume to the current output', () => {

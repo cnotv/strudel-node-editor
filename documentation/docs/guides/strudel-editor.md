@@ -245,6 +245,8 @@ none, and opens to its parameters and examples. **Add** adds that node, or a Cod
 documented example. A function with neither a node nor an example has no Add button, but its
 example or name can still be copied.
 
+![The Functions list in the Nodes drawer: a Nodes and Functions switch, a search field, Start here shortcuts, and the Instruments & sources group with its count, each row showing its Code badge, Add and Copy](/img/strudel-flow/functions-list.webp)
+
 ![The starter patch: a Pad played by a Voice through a Filter, with the tempo bar above](/img/strudel-flow/flow-editor-dark.webp)
 
 | Node           | Kind       | What it plays                                                                       |

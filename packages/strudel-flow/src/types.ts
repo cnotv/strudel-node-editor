@@ -553,6 +553,7 @@ export type StrudelFlowState = {
   beatsPerMinute: Ref<number>
   beatsPerCycle: Ref<number>
   compilation: ComputedRef<StrudelFlowCompilation>
+  /** Adds a node; data replaces the kind's defaults, such as a Code node's code. */
   addNode: (kind: StrudelFlowNodeKind, data?: StrudelFlowNodeData) => void
   updateNodeData: (nodeId: string, data: StrudelFlowNodeData) => void
   removeNode: (nodeId: string) => void

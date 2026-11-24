@@ -556,5 +556,13 @@ export const STRUDEL_API_HIDDEN_NAMES: string[] = [
   'wordfall'
 ]
 
-/** The functions that make a sound on their own, listed above the groups. */
-export const STRUDEL_API_START_NAMES: string[] = ['s', 'sound', 'note']
+/** The functions that make a sound on their own, then the ones that combine patterns. */
+export const STRUDEL_API_START_NAMES: string[] = [
+  's',
+  'sound',
+  'note',
+  'stack',
+  'arrange',
+  'cat',
+  'seq'
+]

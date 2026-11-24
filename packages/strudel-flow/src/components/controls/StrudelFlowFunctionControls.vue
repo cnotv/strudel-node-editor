@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import StrudelFlowKnob from './StrudelFlowKnob.vue'
+import { isStrudelFlowCombinerName } from '../../nodeDefaults'
 import type { StrudelFlowFunctionData, StrudelFlowFunctionParameter } from '../../types'
 
 type NumberParameter = Extract<StrudelFlowFunctionParameter, { kind: 'number' }>
@@ -40,7 +41,10 @@ const updateText = (index: number, parameter: TextParameter, event: Event): void
 
 <template>
   <div class="strudel-flow-function">
-    <p v-if="data.parameters.length === 0" class="strudel-flow-function__empty">
+    <p v-if="isStrudelFlowCombinerName(data.name)" class="strudel-flow-function__empty">
+      Connect the patterns to combine into this node.
+    </p>
+    <p v-else-if="data.parameters.length === 0" class="strudel-flow-function__empty">
       No documented arguments.
     </p>
     <div v-else class="strudel-flow-function__parameters">

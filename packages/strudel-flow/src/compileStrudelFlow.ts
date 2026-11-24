@@ -1,7 +1,11 @@
 import { STRUDEL_FLOW_WIDGET_ID_PREFIX } from './config'
-import { isStrudelFlowInstrumentKind, isStrudelFlowSourceNode } from './nodeDefaults'
+import {
+  isStrudelFlowCombinerName,
+  isStrudelFlowInstrumentKind,
+  isStrudelFlowSourceNode
+} from './nodeDefaults'
 import { orderStrudelFlowArrangeParts, writeStrudelFlowArrange } from './arrangeGrid'
-import { generateStrudelFlowNodePattern } from './nodePatterns'
+import { generateStrudelFlowNodePattern, writeStrudelFlowCombination } from './nodePatterns'
 import { normalizeStrudelFlowBeatsPerCycle, normalizeStrudelFlowBeatsPerMinute } from './tempo'
 import type {
   StrudelFlowCompilation,
@@ -218,15 +222,14 @@ const planComponent = (
   }
 }
 
-// An Arrange node every branch passes through takes the branches as its parts, in the order of
-// the nodes cabled into it, and plays them one after another instead of stacking them.
-const compileArrangement = (
+// The branches become the parts of the node every branch passes through, in the order of the
+// nodes cabled into it, instead of being stacked.
+const collectParts = (
   plan: ComponentPlan,
-  arrangeIndex: number,
+  nodeIndex: number,
   nodesById: Map<string, StrudelFlowNode>
-): string => {
-  const before = plan.sharedIds.slice(0, arrangeIndex)
-  const arrange = nodesById.get(plan.sharedIds[arrangeIndex])?.data
+): string[] => {
+  const before = plan.sharedIds.slice(0, nodeIndex)
   const parts = plan.branches.flatMap((branch) => {
     const tail = nodesById.get([...branch.effectIds, ...before].at(-1) ?? branch.nodeId)
     return tail === undefined
@@ -242,20 +245,48 @@ const compileArrangement = (
           }
         ]
   })
-  const ordered = orderStrudelFlowArrangeParts(parts.map((part) => part.tail)).map(
+  return orderStrudelFlowArrangeParts(parts.map((part) => part.tail)).map(
     (tail) => parts.find((part) => part.tail === tail)?.pattern ?? ''
   )
+}
+
+const compileArrangement = (
+  plan: ComponentPlan,
+  arrangeIndex: number,
+  nodesById: Map<string, StrudelFlowNode>
+): string => {
+  const arrange = nodesById.get(plan.sharedIds[arrangeIndex])?.data
   const arranged = writeStrudelFlowArrange(
     arrange?.kind === 'arrange' ? arrange.sequence : [],
-    ordered
+    collectParts(plan, arrangeIndex, nodesById)
   )
   return `${plan.label} ${applyEffects(arranged, plan.sharedIds.slice(arrangeIndex + 1), nodesById)}`
+}
+
+const compileCombination = (
+  plan: ComponentPlan,
+  combinerIndex: number,
+  nodesById: Map<string, StrudelFlowNode>
+): string => {
+  const combiner = nodesById.get(plan.sharedIds[combinerIndex])?.data
+  const combined = writeStrudelFlowCombination(
+    combiner?.kind === 'function' ? combiner.name : 'stack',
+    collectParts(plan, combinerIndex, nodesById)
+  )
+  return `${plan.label} ${applyEffects(combined, plan.sharedIds.slice(combinerIndex + 1), nodesById)}`
 }
 
 const compilePlan = (plan: ComponentPlan, nodesById: Map<string, StrudelFlowNode>): string => {
   const arrangeIndex = plan.sharedIds.findIndex((id) => nodesById.get(id)?.data.kind === 'arrange')
   if (arrangeIndex !== -1) {
     return compileArrangement(plan, arrangeIndex, nodesById)
+  }
+  const combinerIndex = plan.sharedIds.findIndex((id) => {
+    const data = nodesById.get(id)?.data
+    return data?.kind === 'function' && isStrudelFlowCombinerName(data.name)
+  })
+  if (combinerIndex !== -1) {
+    return compileCombination(plan, combinerIndex, nodesById)
   }
   const branches = plan.branches.map((branch) =>
     applyEffects(branch.pattern, branch.effectIds, nodesById)

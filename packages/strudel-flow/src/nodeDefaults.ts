@@ -1,4 +1,5 @@
 import {
+  STRUDEL_FLOW_COMBINER_FUNCTIONS,
   STRUDEL_FLOW_DEFAULT_BEATS_STEPS,
   STRUDEL_FLOW_DRUM_ROWS,
   STRUDEL_FLOW_PAD_NOTE_COUNT,
@@ -268,6 +269,14 @@ export const isStrudelFlowInstrumentKind = (kind: StrudelFlowNodeKind): boolean 
   INSTRUMENT_KINDS.includes(kind)
 
 /**
+ * Whether a function takes whole patterns as arguments, like `stack`, instead of chaining on one.
+ * @param name - the function name
+ * @returns true for a combiner such as stack, cat, seq or arrange
+ */
+export const isStrudelFlowCombinerName = (name: string): boolean =>
+  STRUDEL_FLOW_COMBINER_FUNCTIONS.includes(name)
+
+/**
  * Whether a node starts a pattern rather than transforming one. An instrument always does; a
  * function node does until a cable enters it, and is an effect from then on.
  * @param node - the node
@@ -276,7 +285,9 @@ export const isStrudelFlowInstrumentKind = (kind: StrudelFlowNodeKind): boolean 
  */
 export const isStrudelFlowSourceNode = (node: StrudelFlowNode, edges: StrudelFlowEdge[]): boolean =>
   isStrudelFlowInstrumentKind(node.data.kind) ||
-  (node.data.kind === 'function' && !edges.some((edge) => edge.target === node.id))
+  (node.data.kind === 'function' &&
+    !isStrudelFlowCombinerName(node.data.name) &&
+    !edges.some((edge) => edge.target === node.id))
 
 /**
  * Whether a node kind transforms an incoming pattern. Sounds count: a voice reshapes the notes

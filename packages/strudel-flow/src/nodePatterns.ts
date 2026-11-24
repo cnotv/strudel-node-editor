@@ -1,5 +1,6 @@
 import { writeStrudelFlowChordSymbols } from './chordSymbols'
 import { getStrudelFlowChordNotes } from './chords'
+import { isStrudelFlowCombinerName } from './nodeDefaults'
 import type {
   StrudelFlowBeatsData,
   StrudelFlowCall,
@@ -244,7 +245,19 @@ const writeFunctionArguments = (parameters: StrudelFlowFunctionParameter[]): str
     .join(', ')
 }
 
+/**
+ * Writes a combiner call over the patterns cabled into it; `arrange` gives each part one cycle.
+ * @param name - the combiner function name
+ * @param parts - the patterns to combine, in order
+ * @returns the call, such as `stack(a, b)`
+ */
+export const writeStrudelFlowCombination = (name: string, parts: string[]): string =>
+  `${name}(${parts.map((part) => (name === 'arrange' ? `[1, ${part}]` : part)).join(', ')})`
+
 const generateFunctionPattern = (data: StrudelFlowFunctionData, input: string): string => {
+  if (isStrudelFlowCombinerName(data.name)) {
+    return input.length === 0 ? '' : writeStrudelFlowCombination(data.name, [input])
+  }
   const call = `${data.name}(${writeFunctionArguments(data.parameters)})`
   return input.length === 0 ? call : `${input}.${call}`
 }

@@ -1,3 +1,4 @@
+import { isStrudelFlowCombinerName } from '@webgamekit/strudel-flow'
 import type {
   StrudelFlowFunctionData,
   StrudelFlowFunctionParameter
@@ -268,9 +269,10 @@ export const groupStrudelApiEntries = (entries: StrudelApiEntry[]): StrudelApiGr
  * @returns fresh node data for a function node
  */
 export const createStrudelApiFunctionData = (entry: StrudelApiEntry): StrudelFlowFunctionData => {
-  const exampleArguments = readExampleArguments(entry)
-  const parameters =
-    entry.params.length > 0
+  const exampleArguments = isStrudelFlowCombinerName(entry.name) ? [] : readExampleArguments(entry)
+  const parameters = isStrudelFlowCombinerName(entry.name)
+    ? []
+    : entry.params.length > 0
       ? entry.params.map((parameter, index) => createParameter(parameter, exampleArguments[index]))
       : exampleArguments.length === 0
         ? []

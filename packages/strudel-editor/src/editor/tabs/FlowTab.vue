@@ -3,7 +3,6 @@ import { computed, ref } from 'vue'
 import { ExternalLink, Plus, RotateCcw } from 'lucide-vue-next'
 import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
-import { STRUDEL_FLOW_REFERENCE } from '@webgamekit/strudel-flow'
 import type { StrudelFlowNodeData, StrudelFlowNodeKind } from '@webgamekit/strudel-flow'
 import { STRUDEL_API_START_NAMES } from '../strudelApiGroups'
 import {
@@ -60,24 +59,28 @@ const addFunction = (entry: StrudelApiEntry): void => {
 
 <template>
   <div class="strudel-flow-tab">
-    <h3 class="strudel-flow-tab__heading">functions</h3>
-    <p class="strudel-flow-tab__intro">
-      Every documented Strudel function, grouped by what it does. Add creates a node holding the
-      call and a control for each documented argument; connect it to a pattern when the function
-      transforms one.
-    </p>
-    <Input
-      :model-value="searchQuery"
-      placeholder="Search functions or synonyms..."
-      aria-label="Search functions"
-      @update:model-value="setSearchQuery"
-    />
+    <div class="strudel-flow-tab__search">
+      <Input
+        class="strudel-flow-tab__search-input"
+        :model-value="searchQuery"
+        placeholder="Search functions or synonyms..."
+        aria-label="Search functions"
+        @update:model-value="setSearchQuery"
+      />
+      <Button
+        class="strudel-flow-tab__reset"
+        variant="outline"
+        size="icon"
+        aria-label="Reset patch"
+        title="Reset patch"
+        @click="emit('reset')"
+      >
+        <RotateCcw aria-hidden="true" />
+      </Button>
+    </div>
 
     <section class="strudel-flow-tab__start" aria-labelledby="strudel-flow-start">
       <h4 id="strudel-flow-start" class="strudel-flow-tab__group-title">Start here</h4>
-      <p class="strudel-flow-tab__group-hint">
-        The functions that make a sound on their own, and the ones that combine patterns.
-      </p>
       <ul class="strudel-flow-tab__start-list">
         <li v-for="shortcut in startEntries" :key="shortcut.name">
           <Button
@@ -166,56 +169,16 @@ const addFunction = (entry: StrudelApiEntry): void => {
         </li>
       </ul>
     </details>
-
-    <Button class="strudel-flow-tab__reset" variant="outline" @click="emit('reset')">
-      <RotateCcw aria-hidden="true" />
-      Reset patch
-    </Button>
-
-    <p class="strudel-flow-tab__credit">
-      The flow editor follows the nodes, controls and look of
-      <a :href="STRUDEL_FLOW_REFERENCE.url" target="_blank" rel="noopener">
-        {{ STRUDEL_FLOW_REFERENCE.name }}
-      </a>
-      by
-      <a :href="STRUDEL_FLOW_REFERENCE.authorUrl" target="_blank" rel="noopener">
-        {{ STRUDEL_FLOW_REFERENCE.author }}
-      </a>
-      who also make React Flow. Its source is on
-      <a :href="STRUDEL_FLOW_REFERENCE.sourceUrl" target="_blank" rel="noopener">GitHub</a>
-      under {{ STRUDEL_FLOW_REFERENCE.license }}.
-    </p>
   </div>
 </template>
 
 <style scoped>
-.strudel-flow-tab__credit {
-  margin: 0;
-  color: var(--color-muted-foreground);
-  font-size: var(--font-size-sm);
-}
-
-.strudel-flow-tab__credit a {
-  color: var(--color-foreground);
-}
-
 .strudel-flow-tab {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-4);
   padding: var(--spacing-4);
   font-size: var(--font-size-sm);
-}
-
-.strudel-flow-tab__heading {
-  margin: 0;
-  font-size: var(--font-size-lg);
-  font-weight: 700;
-}
-
-.strudel-flow-tab__intro {
-  margin: 0;
-  color: var(--color-muted-foreground);
 }
 
 .strudel-flow-tab__group {
@@ -387,7 +350,23 @@ const addFunction = (entry: StrudelApiEntry): void => {
   text-align: center;
 }
 
+.strudel-flow-tab__search {
+  position: sticky;
+  top: calc(var(--spacing-4) * -1);
+  z-index: 1;
+  display: flex;
+  gap: var(--spacing-2);
+  margin: calc(var(--spacing-4) * -1) calc(var(--spacing-4) * -1) 0;
+  padding: var(--spacing-4);
+  background: var(--color-background);
+}
+
+.strudel-flow-tab__search-input {
+  flex: 1;
+  min-width: 0;
+}
+
 .strudel-flow-tab__reset {
-  align-self: flex-start;
+  flex: none;
 }
 </style>

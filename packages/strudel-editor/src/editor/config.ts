@@ -893,6 +893,10 @@ export const STRUDEL_TIMELINE_PROGRESSION_OPTIONS = [
   { value: 'follow', label: 'Follow' },
   { value: 'centered', label: 'Centre' }
 ] as const
+/** The volume the sound button restores when it unmutes after the page started silent. */
+export const STRUDEL_TIMELINE_DEFAULT_VOLUME = 0.8
+/** Below this the speaker icon shows one wave, above it two. */
+export const STRUDEL_TIMELINE_LOW_VOLUME = 0.5
 /** The finest point the timeline seeks to: a sixteenth of a bar. */
 export const STRUDEL_TIMELINE_SEEK_STEP = 0.0625
 export const EXPORT_FORMAT_OPTIONS = [

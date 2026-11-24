@@ -14,7 +14,8 @@ const buildPlayback = (cycle = 0, loopBars: number | null = 4): StrudelPlayback 
   readPosition: vi.fn(() => ({ cycle, cyclesPerSecond: 0.75 })),
   seekToCycle: vi.fn(),
   measureLoop: vi.fn(() => loopBars),
-  measureLanes: vi.fn(() => [])
+  measureLanes: vi.fn(() => []),
+  setVolume: vi.fn()
 })
 
 const buildTimeline = (playback: StrudelPlayback | null, status: StrudelEditorStatus = 'idle') => {

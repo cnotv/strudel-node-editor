@@ -4,6 +4,9 @@ import {
   Disc3,
   Footprints,
   ChartNoAxesGantt,
+  Volume1,
+  Volume2,
+  VolumeX,
   AlignCenterVertical,
   Lock,
   ScanEye,
@@ -16,10 +19,13 @@ import {
 } from 'lucide-vue-next'
 import IconButton from '../../components/IconButton.vue'
 import { Slider } from '../../components/ui/slider'
+import { PopoverContent, PopoverPortal, PopoverRoot, PopoverTrigger } from 'radix-vue'
 import { Select } from '../../components/ui/select'
 import { Toggle } from '../../components/ui/toggle'
 import {
+  STRUDEL_TIMELINE_DEFAULT_VOLUME,
   STRUDEL_TIMELINE_FOLLOW_MARGIN,
+  STRUDEL_TIMELINE_LOW_VOLUME,
   STRUDEL_TIMELINE_MIN_CYCLE_WIDTH,
   STRUDEL_TIMELINE_PROGRESSION_OPTIONS,
   STRUDEL_TIMELINE_SEEK_STEP
@@ -32,6 +38,10 @@ const props = defineProps<{
   timelineBars: number
   /** Each instrument's notes over the song, drawn above the playhead when the lanes are on. */
   lanes?: StrudelTimelineLane[]
+  /** False until a pattern has been read, so the lanes have nothing to draw yet. */
+  lanesMeasured: boolean
+  /** How loud the live output is, from 0 to 1. */
+  volume: number
   cyclesPerSecond: number
   /** Beats in one cycle, so the readout can say which step the playhead is on. */
   stepsPerCycle: number
@@ -47,13 +57,45 @@ const emit = defineEmits<{
   pause: []
   stop: []
   'update:loopEnabled': [enabled: boolean]
+  'update:volume': [volume: number]
   selectNote: [ranges: StrudelSourceRange[], laneName: string]
   selectLane: [ranges: StrudelSourceRange[], laneName: string]
 }>()
 
 const trackElement = ref<HTMLElement | null>(null)
 const showLanes = ref(false)
+
+// What the mute button brings back, since muting sets the volume itself to zero.
+const lastAudibleVolume = ref(STRUDEL_TIMELINE_DEFAULT_VOLUME)
+const isMuted = computed(() => props.volume === 0)
+const volumeIcon = computed(() => {
+  if (isMuted.value) {
+    return VolumeX
+  }
+  return props.volume < STRUDEL_TIMELINE_LOW_VOLUME ? Volume1 : Volume2
+})
+const volumeLabel = computed(() => (isMuted.value ? 'Sound off' : 'Sound on'))
+const onVolumeMoved = (values: number[] | undefined): void => {
+  const [level] = values ?? []
+  if (level === undefined) {
+    return
+  }
+  if (level > 0) {
+    lastAudibleVolume.value = level
+  }
+  emit('update:volume', level)
+}
+const onMutePressed = (): void => {
+  emit('update:volume', isMuted.value ? lastAudibleVolume.value : 0)
+}
 const progression = ref<StrudelTimelineProgression>('static')
+
+// Only a read pattern has lanes, so turning them on before that starts the read.
+watch(showLanes, (shown) => {
+  if (shown && !props.lanesMeasured && !props.isPlaying && !props.isLoading) {
+    emit('play')
+  }
+})
 const progressionIcons = { static: Lock, follow: ScanEye, centered: AlignCenterVertical }
 const progressionOptions = STRUDEL_TIMELINE_PROGRESSION_OPTIONS.map((option) => ({
   ...option,
@@ -230,6 +272,35 @@ const timeReadout = computed(() => `${(props.playheadCycle / props.cyclesPerSeco
       >
         <Repeat aria-hidden="true" />
       </Toggle>
+      <PopoverRoot>
+        <PopoverTrigger as-child>
+          <IconButton size="sm" variant="ghost" :title="volumeLabel" :aria-label="volumeLabel">
+            <component :is="volumeIcon" aria-hidden="true" />
+          </IconButton>
+        </PopoverTrigger>
+        <PopoverPortal>
+          <PopoverContent class="strudel-timeline__volume" side="top" :side-offset="4">
+            <Toggle
+              size="sm"
+              :model-value="isMuted"
+              title="Mute"
+              aria-label="Mute"
+              @update:model-value="onMutePressed"
+            >
+              <VolumeX aria-hidden="true" />
+            </Toggle>
+            <Slider
+              :model-value="[volume]"
+              :min="0"
+              :max="1"
+              :step="0.05"
+              label="Volume"
+              class="strudel-timeline__volume-slider"
+              @update:model-value="onVolumeMoved"
+            />
+          </PopoverContent>
+        </PopoverPortal>
+      </PopoverRoot>
       <Toggle
         v-model="showLanes"
         size="sm"
@@ -293,6 +364,7 @@ const timeReadout = computed(() => `${(props.playheadCycle / props.cyclesPerSeco
         <div
           ref="trackElement"
           class="strudel-timeline__track"
+          :class="{ 'strudel-timeline__track--ruler': showLanes }"
           :style="trackStyle"
           @pointerdown.capture="touchSeek.onPointerDown"
           @pointermove.capture="touchSeek.onPointerMove"
@@ -309,6 +381,19 @@ const timeReadout = computed(() => `${(props.playheadCycle / props.cyclesPerSeco
             variant="playhead"
             @update:model-value="onSliderMoved"
           />
+          <ol v-if="showLanes" class="strudel-timeline__ruler" aria-hidden="true">
+            <li
+              v-for="cycleNumber in timelineBars"
+              :key="cycleNumber"
+              :style="{ left: `${((cycleNumber - 1) / timelineBars) * 100}%` }"
+            >
+              {{ cycleNumber }}
+            </li>
+          </ol>
+          <p v-if="showLanes && isLoading" class="strudel-timeline__lanes-loading" role="status">
+            <LoaderCircle class="strudel-timeline__spinner" aria-hidden="true" />
+            Reading the pattern
+          </p>
           <div v-if="showLanes" class="strudel-timeline__lanes">
             <div v-for="lane in lanes" :key="lane.name" class="strudel-timeline__lane">
               <button
@@ -421,6 +506,46 @@ const timeReadout = computed(() => `${(props.playheadCycle / props.cyclesPerSeco
   min-height: var(--spacing-5);
 }
 
+.strudel-timeline__volume-slider {
+  width: 7rem;
+}
+
+.strudel-timeline__ruler {
+  position: relative;
+  width: 100%;
+  height: var(--spacing-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--font-size-xs);
+  font-variant-numeric: tabular-nums;
+  line-height: var(--spacing-3);
+}
+
+.strudel-timeline__ruler li {
+  position: absolute;
+  padding-left: 2px;
+}
+
+/* The marks start under the numbers, so the ruler reads as a scale above the line. */
+.strudel-timeline__track--ruler::before {
+  top: var(--spacing-3);
+}
+
+.strudel-timeline__lanes-loading {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  margin: 0;
+  padding: var(--spacing-1) 0;
+  font-size: var(--font-size-xs);
+}
+
+.strudel-timeline__lanes-loading svg {
+  width: var(--font-size-base);
+  height: var(--font-size-base);
+}
+
 .strudel-timeline__lanes {
   display: grid;
   width: 100%;
@@ -440,7 +565,7 @@ const timeReadout = computed(() => `${(props.playheadCycle / props.cyclesPerSeco
 .strudel-timeline__lane-names {
   display: grid;
   align-content: start;
-  padding-block: calc(var(--spacing-1) + var(--spacing-5)) var(--spacing-1);
+  padding-block: calc(var(--spacing-1) + var(--spacing-3) + var(--spacing-5)) var(--spacing-1);
   max-width: 8rem;
 }
 
@@ -543,5 +668,19 @@ const timeReadout = computed(() => `${(props.playheadCycle / props.cyclesPerSeco
     0 0,
     0 50%;
   background-repeat: no-repeat;
+}
+</style>
+
+<style>
+.strudel-timeline__volume {
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-background);
+  box-shadow: var(--shadow-lg);
 }
 </style>

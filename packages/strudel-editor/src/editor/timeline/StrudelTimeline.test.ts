@@ -14,6 +14,8 @@ const mountTimeline = (props: Partial<InstanceType<typeof StrudelTimeline>['$pro
       stepsPerCycle: 4,
       loopEnabled: true,
       isPlaying: false,
+      lanesMeasured: true,
+      volume: 0,
       ...props
     }
   })
@@ -265,5 +267,60 @@ describe('StrudelTimeline', () => {
 
     // Assert
     expect(wrapper.emitted('seek')?.at(-1)).toEqual([4])
+  })
+
+  it('starts reading the pattern when the lanes are turned on before it was read', async () => {
+    // Arrange
+    const wrapper = mountTimeline({ lanesMeasured: false })
+
+    // Act
+    await wrapper.get('[aria-label="Show instrument cycles"]').trigger('click')
+
+    // Assert
+    expect(wrapper.emitted('play')).toHaveLength(1)
+  })
+
+  it.each([
+    ['the pattern was already read', { lanesMeasured: true }],
+    ['it is already playing', { lanesMeasured: false, isPlaying: true }],
+    ['it is already loading', { lanesMeasured: false, isLoading: true }]
+  ])('does not start again when %s', async (_, props) => {
+    // Arrange
+    const wrapper = mountTimeline(props)
+
+    // Act
+    await wrapper.get('[aria-label="Show instrument cycles"]').trigger('click')
+
+    // Assert
+    expect(wrapper.emitted('play')).toBeUndefined()
+  })
+
+  it('shows a loader in place of the lanes while the pattern loads', async () => {
+    // Arrange
+    const wrapper = mountTimeline({ isLoading: true, lanesMeasured: true })
+
+    // Act
+    await wrapper.get('[aria-label="Show instrument cycles"]').trigger('click')
+
+    // Assert
+    expect(wrapper.get('[role="status"]').text()).toContain('Reading the pattern')
+  })
+
+  it('numbers every cycle above the timeline once the lanes are on', async () => {
+    // Arrange
+    const wrapper = mountTimeline({ timelineBars: 4 })
+    const beforeToggle = wrapper.find('.strudel-timeline__ruler').exists()
+
+    // Act
+    await wrapper.get('[aria-label="Show instrument cycles"]').trigger('click')
+
+    // Assert
+    expect(beforeToggle).toBe(false)
+    expect(wrapper.findAll('.strudel-timeline__ruler li').map((item) => item.text())).toEqual([
+      '1',
+      '2',
+      '3',
+      '4'
+    ])
   })
 })

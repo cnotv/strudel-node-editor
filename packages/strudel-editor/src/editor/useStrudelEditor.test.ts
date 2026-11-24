@@ -83,6 +83,7 @@ vi.mock('@strudel/core', () => ({
 }))
 vi.mock('@strudel/mini', () => ({}))
 vi.mock('@strudel/webaudio', () => ({
+  getSuperdoughAudioController: vi.fn(),
   initAudio: mockAudioInitializer,
   getAudioContext: mockContextGetter,
   setAudioContext: mockContextSetter,
@@ -165,7 +166,8 @@ const buildSuccessfulPlayback = (): StrudelPlayback => ({
   readPosition: vi.fn(() => ({ cycle: 0, cyclesPerSecond: 0.5 })),
   seekToCycle: vi.fn(),
   measureLoop: vi.fn(() => 1),
-  measureLanes: vi.fn(() => [])
+  measureLanes: vi.fn(() => []),
+  setVolume: vi.fn()
 })
 
 describe('findStrudelExample', () => {
@@ -1036,7 +1038,8 @@ describe('useStrudelEditor', () => {
       readPosition: vi.fn(() => ({ cycle: 0, cyclesPerSecond: 0.5 })),
       seekToCycle: vi.fn(),
       measureLoop: vi.fn(() => 1),
-      measureLanes: vi.fn(() => [])
+      measureLanes: vi.fn(() => []),
+      setVolume: vi.fn()
     }
     const { playPattern, editorStatus, errorMessage } = useStrudelEditor({
       initialExamples: buildExampleList(),
@@ -1142,7 +1145,8 @@ describe('useStrudelEditor', () => {
       readPosition: vi.fn(() => ({ cycle: 0, cyclesPerSecond: 0.5 })),
       seekToCycle: vi.fn(),
       measureLoop: vi.fn(() => 1),
-      measureLanes: vi.fn(() => [])
+      measureLanes: vi.fn(() => []),
+      setVolume: vi.fn()
     }
     const { playPattern, stopPattern, editorStatus, errorMessage } = useStrudelEditor({
       initialExamples: buildExampleList(),

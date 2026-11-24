@@ -72,6 +72,8 @@ export type StrudelPlayback = {
   readPosition: () => StrudelPlaybackPosition
   /** Plays on from this cycle, or starts there on the next Play when stopped. */
   seekToCycle: (cycle: number) => void
+  /** Sets how loud the live output is, from 0 to 1; it starts silent, as only a recording needs sound. */
+  setVolume: (volume: number) => void
   /** Bars the last played pattern takes to repeat as a whole, or null when it does not within `STRUDEL_MAX_SONG_CYCLES`. */
   measureLoop: () => number | null
   /** The last played pattern's notes over its first cycles, one lane per instrument. */

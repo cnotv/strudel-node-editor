@@ -38,6 +38,7 @@ vi.mock('@strudel/core', () => ({
   })
 }))
 vi.mock('@strudel/webaudio', () => ({
+  getSuperdoughAudioController: vi.fn(),
   samples: vi.fn(),
   registerSound: vi.fn(),
   soundMap: { get: () => ({}) },

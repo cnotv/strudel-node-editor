@@ -128,6 +128,8 @@ const {
   playheadCycle,
   timelineBars,
   lanes,
+  loopMeasured,
+  volume,
   cyclesPerSecond,
   seekToCycle,
   rewind,
@@ -590,6 +592,8 @@ onBeforeUnmount(() => {
         :playhead-cycle="playheadCycle"
         :timeline-bars="timelineBars"
         :lanes="lanes"
+        :lanes-measured="loopMeasured"
+        :volume="volume"
         :cycles-per-second="cyclesPerSecond"
         :steps-per-cycle="editorMode === 'flow' ? flowBeatsPerCycle : STRUDEL_BEATS_PER_CYCLE"
         :loop-enabled="loopEnabled"
@@ -600,6 +604,7 @@ onBeforeUnmount(() => {
         @pause="onPauseRequested"
         @stop="onStopRequested"
         @update:loop-enabled="loopEnabled = $event"
+        @update:volume="volume = $event"
         @select-note="onSelectTimelineNote"
         @select-lane="onSelectTimelineLane"
       />

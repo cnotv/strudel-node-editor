@@ -1,4 +1,5 @@
 import {
+  STRUDEL_FLOW_COMBINER_FUNCTIONS,
   STRUDEL_FLOW_DEFAULT_BEATS_STEPS,
   STRUDEL_FLOW_DRUM_ROWS,
   STRUDEL_FLOW_PAD_NOTE_COUNT,
@@ -11,9 +12,11 @@ import type {
   StrudelFlowCodeData,
   StrudelFlowDelayData,
   StrudelFlowDrumRow,
+  StrudelFlowEdge,
   StrudelFlowEffectData,
   StrudelFlowEnvelopeData,
   StrudelFlowFilterData,
+  StrudelFlowFunctionData,
   StrudelFlowGainData,
   StrudelFlowLevelData,
   StrudelFlowMaskData,
@@ -22,6 +25,7 @@ import type {
   StrudelFlowVoicingData,
   StrudelFlowNodeData,
   StrudelFlowNodeKind,
+  StrudelFlowNode,
   StrudelFlowNotesData,
   StrudelFlowPadData,
   StrudelFlowSamplesData,
@@ -111,6 +115,14 @@ export const STRUDEL_FLOW_VOICE_DEFAULTS: StrudelFlowVoiceData = {
 export const STRUDEL_FLOW_EFFECT_DEFAULTS: StrudelFlowEffectData = {
   kind: 'effect',
   calls: [{ method: 'fast', argument: '2' }]
+}
+
+export const STRUDEL_FLOW_FUNCTION_DEFAULTS: StrudelFlowFunctionData = {
+  kind: 'function',
+  name: 'note',
+  description: 'Plays the given note name or midi number.',
+  docsUrl: 'https://strudel.cc/learn/mini-notation/#note',
+  parameters: [{ kind: 'text', name: 'note', label: 'Note', value: '"c3"' }]
 }
 
 export const STRUDEL_FLOW_FILTER_DEFAULTS: StrudelFlowFilterData = {
@@ -233,6 +245,10 @@ const NODE_DATA_FACTORIES: { [Kind in StrudelFlowNodeKind]: () => StrudelFlowNod
   effect: () => ({
     ...STRUDEL_FLOW_EFFECT_DEFAULTS,
     calls: STRUDEL_FLOW_EFFECT_DEFAULTS.calls.map((call) => ({ ...call }))
+  }),
+  function: () => ({
+    ...STRUDEL_FLOW_FUNCTION_DEFAULTS,
+    parameters: STRUDEL_FLOW_FUNCTION_DEFAULTS.parameters.map((parameter) => ({ ...parameter }))
   })
 }
 
@@ -251,6 +267,27 @@ export const createStrudelFlowNodeData = (kind: StrudelFlowNodeKind): StrudelFlo
  */
 export const isStrudelFlowInstrumentKind = (kind: StrudelFlowNodeKind): boolean =>
   INSTRUMENT_KINDS.includes(kind)
+
+/**
+ * Whether a function takes whole patterns as arguments, like `stack`, instead of chaining on one.
+ * @param name - the function name
+ * @returns true for a combiner such as stack, cat, seq or arrange
+ */
+export const isStrudelFlowCombinerName = (name: string): boolean =>
+  STRUDEL_FLOW_COMBINER_FUNCTIONS.includes(name)
+
+/**
+ * Whether a node starts a pattern rather than transforming one. An instrument always does; a
+ * function node does until a cable enters it, and is an effect from then on.
+ * @param node - the node
+ * @param edges - every cable in the patch
+ * @returns true when the node writes a call with nothing chained in front of it
+ */
+export const isStrudelFlowSourceNode = (node: StrudelFlowNode, edges: StrudelFlowEdge[]): boolean =>
+  isStrudelFlowInstrumentKind(node.data.kind) ||
+  (node.data.kind === 'function' &&
+    !isStrudelFlowCombinerName(node.data.name) &&
+    !edges.some((edge) => edge.target === node.id))
 
 /**
  * Whether a node kind transforms an incoming pattern. Sounds count: a voice reshapes the notes

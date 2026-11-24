@@ -73,14 +73,14 @@ export const useStrudelFlow = (): StrudelFlowState => {
 
   const compilation = computed<StrudelFlowCompilation>(() => compileStrudelFlow(currentPatch()))
 
-  const addNode = (kind: StrudelFlowNodeKind): void => {
+  const addNode = (kind: StrudelFlowNodeKind, data?: StrudelFlowNodeData): void => {
     nodes.value = [
       ...nodes.value,
       {
         id: nextNodeId(kind, nodes.value, 1),
         type: 'strudel',
         position: findStrudelFlowNodePosition(nodes.value, kind),
-        data: createStrudelFlowNodeData(kind)
+        data: data ?? createStrudelFlowNodeData(kind)
       }
     ]
   }
@@ -118,7 +118,7 @@ export const useStrudelFlow = (): StrudelFlowState => {
   }
 
   const resetPatch = (): void => {
-    applyPatch(createDefaultStrudelFlowPatch())
+    applyPatch({ ...createDefaultStrudelFlowPatch(), nodes: [], edges: [] })
   }
 
   const loadCode = (code: string): boolean => {

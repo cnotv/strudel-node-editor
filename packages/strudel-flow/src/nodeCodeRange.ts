@@ -1,6 +1,6 @@
 import { stripLineComments } from './codeScanner'
 import { getStrudelFlowCodeOrder } from './compileStrudelFlow'
-import { isStrudelFlowInstrumentKind } from './nodeDefaults'
+import { isStrudelFlowSourceNode } from './nodeDefaults'
 import { generateStrudelFlowNodePattern } from './nodePatterns'
 import type {
   StrudelFlowCodeRange,
@@ -30,15 +30,14 @@ const fixedKey = (node: StrudelFlowNode): NodeKey | null => {
   return { chained: true, names: method.length === 0 ? [] : [method] }
 }
 
-const readKey = (node: StrudelFlowNode): NodeKey | null => {
+const readKey = (node: StrudelFlowNode, isSource: boolean): NodeKey | null => {
   const fixed = fixedKey(node)
   if (fixed !== null) {
     return fixed.names.length === 0 ? null : fixed
   }
-  const instrument = isStrudelFlowInstrumentKind(node.data.kind)
-  const code = generateStrudelFlowNodePattern(node.data, instrument ? '' : EFFECT_INPUT)
-  const name = (instrument ? HEAD_PATTERN : METHOD_PATTERN).exec(code)?.[1]
-  return name === undefined ? null : { chained: !instrument, names: [name] }
+  const code = generateStrudelFlowNodePattern(node.data, isSource ? '' : EFFECT_INPUT)
+  const name = (isSource ? HEAD_PATTERN : METHOD_PATTERN).exec(code)?.[1]
+  return name === undefined ? null : { chained: !isSource, names: [name] }
 }
 
 const keyId = (key: NodeKey): string => `${key.chained}:${[...key.names].sort().join(',')}`
@@ -100,7 +99,7 @@ export const getStrudelFlowNodeCodeRanges = (
   const blanked = blankComments(code)
   const keyed = getStrudelFlowCodeOrder(nodes, edges).flatMap((nodeId) => {
     const node = nodesById.get(nodeId)
-    const key = node === undefined ? null : readKey(node)
+    const key = node === undefined ? null : readKey(node, isStrudelFlowSourceNode(node, edges))
     return node === undefined || key === null
       ? []
       : [{ nodeId, key, id: keyId(key), count: occurrenceCount(node) }]
@@ -144,8 +143,8 @@ const leftmostRange = (ranges: StrudelFlowNodeCodeRange[]): StrudelFlowNodeCodeR
     null
   )
 
-// Follows cables back from a node to the instruments that feed it; the guard stops a cycle.
-const findUpstreamInstrumentIds = (
+// Follows cables back from a node to the sources that feed it; the guard stops a cycle.
+const findUpstreamSourceIds = (
   nodesById: Map<string, StrudelFlowNode>,
   edges: StrudelFlowEdge[],
   nodeId: string,
@@ -155,28 +154,28 @@ const findUpstreamInstrumentIds = (
   if (node === undefined || seen.includes(nodeId)) {
     return []
   }
-  if (isStrudelFlowInstrumentKind(node.data.kind)) {
+  if (isStrudelFlowSourceNode(node, edges)) {
     return [nodeId]
   }
   const visited = [...seen, nodeId]
   return edges
     .filter((edge) => edge.target === nodeId)
-    .flatMap((edge) => findUpstreamInstrumentIds(nodesById, edges, edge.source, visited))
+    .flatMap((edge) => findUpstreamSourceIds(nodesById, edges, edge.source, visited))
 }
 
 /**
- * Finds the instruments a sounding note came from. A note carries a location for each piece of
+ * Finds the sources a sounding note came from. A note carries a location for each piece of
  * mini-notation it was built from, in no reliable order, and a note held in a setup variable has
  * none in any node. Each offset is mapped to its node (the narrowest range wins); the leftmost
- * instrument among them owns the note, else the instruments upstream of the owners do, when
- * there is exactly one.
+ * source among them owns the note, else the sources upstream of the owners do, when there is
+ * exactly one.
  * ponytail: a note whose mini-notation lives in a setup variable and passes through a shared
  * effect lights nothing; give the parser source offsets for setup variables to light it.
  * @param ranges - every node's code ranges
  * @param offsetsPerHap - for each sounding note, the character offsets of its locations
  * @param nodes - the patch's nodes
  * @param edges - the patch's cables
- * @returns the id of the instrument each note came from, once each
+ * @returns the id of the source each note came from, once each
  */
 export const findStrudelFlowPlayingNodeIds = (
   ranges: StrudelFlowNodeCodeRange[],
@@ -185,9 +184,9 @@ export const findStrudelFlowPlayingNodeIds = (
   edges: StrudelFlowEdge[]
 ): string[] => {
   const nodesById = new Map(nodes.map((node) => [node.id, node]))
-  const isInstrumentRange = (range: StrudelFlowNodeCodeRange): boolean => {
+  const isSourceRange = (range: StrudelFlowNodeCodeRange): boolean => {
     const node = nodesById.get(range.nodeId)
-    return node !== undefined && isStrudelFlowInstrumentKind(node.data.kind)
+    return node !== undefined && isStrudelFlowSourceNode(node, edges)
   }
   const narrowestOwner = (offset: number): StrudelFlowNodeCodeRange | null =>
     ranges
@@ -201,14 +200,12 @@ export const findStrudelFlowPlayingNodeIds = (
       )
   const headIds = offsetsPerHap.flatMap((offsets) => {
     const owners = offsets.flatMap((offset) => narrowestOwner(offset) ?? [])
-    const instrument = leftmostRange(owners.filter(isInstrumentRange))
-    if (instrument !== null) {
-      return [instrument.nodeId]
+    const source = leftmostRange(owners.filter(isSourceRange))
+    if (source !== null) {
+      return [source.nodeId]
     }
     const heads = [
-      ...new Set(
-        owners.flatMap((owner) => findUpstreamInstrumentIds(nodesById, edges, owner.nodeId))
-      )
+      ...new Set(owners.flatMap((owner) => findUpstreamSourceIds(nodesById, edges, owner.nodeId)))
     ]
     return heads.length === 1 ? heads : []
   })

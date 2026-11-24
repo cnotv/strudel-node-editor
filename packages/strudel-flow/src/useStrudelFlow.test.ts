@@ -104,6 +104,21 @@ describe('useStrudelFlow', () => {
     ).toBe(flow.nodes.value.length)
   })
 
+  it('adds a Code node with the code it is given', () => {
+    // Arrange
+    const flow = createFlow()
+
+    // Act
+    flow.addNode('code', { kind: 'code', code: 'note("a4")' })
+
+    // Assert
+    expect(flow.nodes.value.find((node) => node.id === 'code-1')?.data).toEqual({
+      kind: 'code',
+      code: 'note("a4")'
+    })
+    expect(flow.compilation.value.code).toContain('note("a4")')
+  })
+
   it('updates a node and compiles its new settings', () => {
     // Arrange
     const flow = createFlow()
@@ -267,7 +282,7 @@ describe('useStrudelFlow', () => {
     })
   })
 
-  it('resets the patch and tempo to the starter state', async () => {
+  it('resets to an empty patch and the default tempo', async () => {
     // Arrange
     const flow = createFlow()
     flow.addNode('chords')
@@ -279,8 +294,8 @@ describe('useStrudelFlow', () => {
     await nextTick()
 
     // Assert
-    expect(flow.nodes.value.map((node) => node.id)).toEqual(STARTER_IDS)
-    expect(flow.edges.value).toHaveLength(2)
+    expect(flow.nodes.value).toEqual([])
+    expect(flow.edges.value).toEqual([])
     expect(flow.beatsPerMinute.value).toBe(120)
     expect(readStoredPatch()?.beatsPerMinute).toBe(120)
   })

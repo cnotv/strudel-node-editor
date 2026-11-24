@@ -34,7 +34,8 @@ const NODE_SIZES: Record<StrudelFlowNodeKind, NodeSize> = {
   voicing: { width: 256, height: 140 },
   envelope: { width: 448, height: 260 },
   visualizer: { width: 384, height: 320 },
-  effect: { width: 320, height: 220 }
+  effect: { width: 320, height: 220 },
+  function: { width: 384, height: 300 }
 }
 
 const NODE_GAP = 32

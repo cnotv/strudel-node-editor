@@ -424,6 +424,38 @@
   padding: var(--spacing-2) 0 var(--spacing-1);
 }
 
+.strudel-flow-function {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.strudel-flow-function__parameters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.strudel-flow-function__empty {
+  margin: 0;
+  color: var(--sf-muted-foreground);
+  font-size: var(--font-size-xs);
+}
+
+.strudel-flow-function__docs {
+  align-self: flex-start;
+  color: var(--sf-accent);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.strudel-flow-function__docs:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--sf-ring);
+}
+
 .strudel-flow-knob {
   display: flex;
   flex-direction: column;

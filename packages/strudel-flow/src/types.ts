@@ -21,6 +21,7 @@ export type StrudelFlowNodeKind =
   | 'envelope'
   | 'visualizer'
   | 'effect'
+  | 'function'
 
 export type StrudelFlowNodeCategory = 'Instruments' | 'Effects' | 'Sounds'
 
@@ -398,6 +399,32 @@ export type StrudelFlowEffectData = {
   calls: StrudelFlowCall[]
 }
 
+/** One argument of a documented function, with the control the node draws for it. */
+export type StrudelFlowFunctionParameter =
+  | {
+      kind: 'number'
+      name: string
+      label: string
+      min: number
+      max: number
+      step: number
+      value: number
+    }
+  | { kind: 'boolean'; name: string; label: string; value: boolean }
+  | { kind: 'text'; name: string; label: string; value: string }
+
+/**
+ * One documented Strudel function as a node: the call alone, with a control per argument. An
+ * unconnected node writes `name(...)`; a connected one chains it as `.name(...)`.
+ */
+export type StrudelFlowFunctionData = {
+  kind: 'function'
+  name: string
+  description: string
+  docsUrl: string
+  parameters: StrudelFlowFunctionParameter[]
+}
+
 export type StrudelFlowFilterData = {
   kind: 'filter'
   cutoff: number
@@ -500,6 +527,7 @@ export type StrudelFlowNodeData =
   | StrudelFlowEnvelopeData
   | StrudelFlowVisualizerData
   | StrudelFlowEffectData
+  | StrudelFlowFunctionData
 
 export type StrudelFlowNodePosition = {
   x: number
@@ -553,7 +581,8 @@ export type StrudelFlowState = {
   beatsPerMinute: Ref<number>
   beatsPerCycle: Ref<number>
   compilation: ComputedRef<StrudelFlowCompilation>
-  addNode: (kind: StrudelFlowNodeKind) => void
+  /** Adds a node; data replaces the kind's defaults, such as a Code node's code. */
+  addNode: (kind: StrudelFlowNodeKind, data?: StrudelFlowNodeData) => void
   updateNodeData: (nodeId: string, data: StrudelFlowNodeData) => void
   removeNode: (nodeId: string) => void
   /** Adds a cable when the same connection rules the canvas uses allow it. */

@@ -47,12 +47,11 @@ flow tab:
   group. Clicking a sound plays it once; the number is how many variations `n` picks from.
 - **import**: turn an MP3, other audio, a MIDI file, a tab or a piano score image into a pattern (below)
 - **midi**: play or drive MIDI devices (below)
-- **reference**: function quick list
 - **export**: save the code as a WAV or MIDI file (below)
 - **console**: evaluation log
 - **compose**: write, revise or review the code with an AI model (below)
 - **settings**: theme, panel position, and the OpenRouter key and models the AI features use
-- **flow**: build a pattern from instrument and effect nodes (below)
+- **functions**: search every documented Strudel function and add it as a node (below)
 
 ![The sounds tab grouped by drum machine: under Roland TR909 and Sakata DPM48, sounds named Bass drum, Clap, Closed hi-hat and the rest, each with its code name and variation count](/img/strudel-editor/sounds-tab.webp)
 
@@ -236,6 +235,16 @@ follow theirs. Add a node from the
 palette or with the **+** button in the canvas; the **+** and a right-click both open the radial
 menu, split into Instruments, Effects and Sounds. A bar over the canvas sets the tempo in BPM and
 the beats in one cycle (**B/C**).
+
+The **Functions** drawer, open in code mode and flow mode alike, lists every documented Strudel
+function except setup and internals, searchable by name, synonym or description. Groups are
+collapsed until opened or searched, and each shows its count. **Start here** at the top holds the functions that make a sound on their own (`s`, `sound`, `note`) and the ones that combine patterns (`stack`, `arrange`, `cat`, `seq`). A combiner takes the nodes cabled into it as its arguments, so cable several patterns in and it writes `stack(a, b)`. Every function links to its page in
+the Strudel docs. **Add** puts a generic function node on the canvas holding only that call, with a
+knob, switch or field for each documented argument; nothing from the examples is added around it.
+Connect it to a pattern and it chains as `.name(...)`; left alone it starts a pattern as
+`name(...)`. **Reset patch** removes every node.
+
+![The Functions drawer: a search field, the Start here shortcuts, and the matching groups open with their counts, each function with Add, Docs and its parameters](/img/strudel-flow/functions-list.webp)
 
 ![The starter patch: a Pad played by a Voice through a Filter, with the tempo bar above](/img/strudel-flow/flow-editor-dark.webp)
 

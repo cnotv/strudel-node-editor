@@ -20,6 +20,17 @@ export const STRUDEL_FLOW_REFERENCE = {
   license: 'AGPL-3.0'
 }
 
+/** The functions that take whole patterns as their arguments, so cables feed them. */
+export const STRUDEL_FLOW_COMBINER_FUNCTIONS = [
+  'stack',
+  'cat',
+  'slowcat',
+  'fastcat',
+  'seq',
+  'sequence',
+  'arrange'
+]
+
 export const STRUDEL_FLOW_DEFAULT_BEATS_PER_MINUTE = 120
 export const STRUDEL_FLOW_MIN_BEATS_PER_MINUTE = 1
 export const STRUDEL_FLOW_MAX_BEATS_PER_MINUTE = 300

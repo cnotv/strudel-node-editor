@@ -357,3 +357,45 @@ describe('getStrudelFlowVisualizerWidgetIds', () => {
     })
   })
 })
+
+describe('combiner function nodes', () => {
+  const functionNode = (id: string, name: string, x = 0, y = 0): StrudelFlowNode => ({
+    id,
+    type: 'strudel',
+    position: { x, y },
+    data: {
+      kind: 'function',
+      name,
+      description: '',
+      docsUrl: 'https://strudel.cc/',
+      parameters: []
+    }
+  })
+  const codeNode = (id: string, code: string, y: number): StrudelFlowNode => ({
+    id,
+    type: 'strudel',
+    position: { x: 0, y },
+    data: { kind: 'code', code }
+  })
+  const compileWith = (name: string, edgeSources: string[]): string =>
+    compileStrudelFlow({
+      nodes: [codeNode('a', 's("bd")', 0), codeNode('b', 's("hh")', 100), functionNode('c', name)],
+      edges: edgeSources.map((source) => ({ id: `${source}-c`, source, target: 'c' })),
+      beatsPerMinute: 120,
+      beatsPerCycle: 4,
+      setup: ''
+    }).code
+
+  it.each([
+    ['stack', '$: stack((s("bd")), (s("hh")))'],
+    ['cat', '$: cat((s("bd")), (s("hh")))'],
+    ['seq', '$: seq((s("bd")), (s("hh")))'],
+    ['arrange', '$: arrange([1, (s("bd"))], [1, (s("hh"))])']
+  ])('writes %s over the nodes cabled into it', (name, expected) => {
+    // Act
+    const code = compileWith(name, ['a', 'b'])
+
+    // Assert
+    expect(code).toContain(expected)
+  })
+})

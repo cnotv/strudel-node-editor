@@ -1,10 +1,13 @@
 import { writeStrudelFlowChordSymbols } from './chordSymbols'
 import { getStrudelFlowChordNotes } from './chords'
+import { isStrudelFlowCombinerName } from './nodeDefaults'
 import type {
   StrudelFlowBeatsData,
   StrudelFlowCall,
   StrudelFlowChordsData,
   StrudelFlowDrumRow,
+  StrudelFlowFunctionData,
+  StrudelFlowFunctionParameter,
   StrudelFlowNodeData,
   StrudelFlowPadData
 } from './types'
@@ -223,6 +226,42 @@ const chainCalls = (calls: StrudelFlowCall[]): string =>
     .map((call) => `.${call.method.trim()}(${call.argument.trim()})`)
     .join('')
 
+const writeFunctionParameter = (parameter: StrudelFlowFunctionParameter): string => {
+  if (parameter.kind === 'number') {
+    return String(formatStrudelFlowNumber(parameter.value))
+  }
+  if (parameter.kind === 'boolean') {
+    return parameter.value ? 'true' : 'false'
+  }
+  return parameter.value.trim()
+}
+
+// Empty text arguments at the end are left out; one in the middle keeps its place as undefined.
+const writeFunctionArguments = (parameters: StrudelFlowFunctionParameter[]): string => {
+  const written = parameters.map(writeFunctionParameter)
+  const lastSet = written.findLastIndex((argument) => argument.length > 0)
+  return (lastSet === -1 ? [] : written.slice(0, lastSet + 1))
+    .map((argument) => (argument.length === 0 ? 'undefined' : argument))
+    .join(', ')
+}
+
+/**
+ * Writes a combiner call over the patterns cabled into it; `arrange` gives each part one cycle.
+ * @param name - the combiner function name
+ * @param parts - the patterns to combine, in order
+ * @returns the call, such as `stack(a, b)`
+ */
+export const writeStrudelFlowCombination = (name: string, parts: string[]): string =>
+  `${name}(${parts.map((part) => (name === 'arrange' ? `[1, ${part}]` : part)).join(', ')})`
+
+const generateFunctionPattern = (data: StrudelFlowFunctionData, input: string): string => {
+  if (isStrudelFlowCombinerName(data.name)) {
+    return input.length === 0 ? '' : writeStrudelFlowCombination(data.name, [input])
+  }
+  const call = `${data.name}(${writeFunctionArguments(data.parameters)})`
+  return input.length === 0 ? call : `${input}.${call}`
+}
+
 type PatternGenerators = {
   [Kind in StrudelFlowNodeData['kind']]: (
     data: Extract<StrudelFlowNodeData, { kind: Kind }>,
@@ -250,7 +289,8 @@ const PATTERN_GENERATORS: PatternGenerators = {
   voicing: (_data, input) => (input.length === 0 ? '' : `${input}.voicing()`),
   envelope: generateEnvelopePattern,
   visualizer: generateVisualizerPattern,
-  effect: (data, input) => (input.length === 0 ? '' : `${input}${chainCalls(data.calls)}`)
+  effect: (data, input) => (input.length === 0 ? '' : `${input}${chainCalls(data.calls)}`),
+  function: generateFunctionPattern
 }
 
 const generateWith = <Kind extends StrudelFlowNodeData['kind']>(

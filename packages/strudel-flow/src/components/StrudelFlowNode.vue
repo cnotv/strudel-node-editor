@@ -11,6 +11,7 @@ import StrudelFlowCodeControls from './controls/StrudelFlowCodeControls.vue'
 import StrudelFlowDelayControls from './controls/StrudelFlowDelayControls.vue'
 import StrudelFlowEnvelopeControls from './controls/StrudelFlowEnvelopeControls.vue'
 import StrudelFlowFilterControls from './controls/StrudelFlowFilterControls.vue'
+import StrudelFlowFunctionControls from './controls/StrudelFlowFunctionControls.vue'
 import StrudelFlowGainControls from './controls/StrudelFlowGainControls.vue'
 import StrudelFlowLevelControls from './controls/StrudelFlowLevelControls.vue'
 import StrudelFlowMaskControls from './controls/StrudelFlowMaskControls.vue'
@@ -69,7 +70,8 @@ const NODE_CONTROLS: Record<Exclude<StrudelFlowNodeKind, 'effect'>, Component> =
   slow: markRaw(StrudelFlowSlowControls),
   voicing: markRaw(StrudelFlowVoicingControls),
   envelope: markRaw(StrudelFlowEnvelopeControls),
-  visualizer: markRaw(StrudelFlowVisualizerControls)
+  visualizer: markRaw(StrudelFlowVisualizerControls),
+  function: markRaw(StrudelFlowFunctionControls)
 }
 
 const EFFECT_CODE_INPUT = 'pattern'
@@ -79,7 +81,9 @@ const isMenuOpen = ref(false)
 const isCodeVisible = ref(false)
 
 const definition = computed(() => getStrudelFlowNodeDefinition(props.data.kind))
-const title = computed(() => definition.value.title)
+const title = computed(() =>
+  props.data.kind === 'function' ? props.data.name : definition.value.title
+)
 // Only the nodes that pick sounds take a list; on any other it would land as an attribute.
 const controlProperties = computed(() => {
   if (SAMPLE_PICKING_KINDS.has(props.data.kind)) {
@@ -97,7 +101,10 @@ const inputLabel = computed(() => `${title.value} pattern input`)
 const outputLabel = computed(() => `${title.value} pattern output`)
 const muteLabel = computed(() => `${isMuted.value ? 'Unmute' : 'Mute'} ${title.value}`)
 const nodeCode = computed(() =>
-  generateStrudelFlowNodePattern(props.data, isInstrument.value ? '' : EFFECT_CODE_INPUT)
+  generateStrudelFlowNodePattern(
+    props.data,
+    isInstrument.value || props.data.kind === 'function' ? '' : EFFECT_CODE_INPUT
+  )
 )
 
 const onDataUpdate = (data: StrudelFlowNodeData): void => {

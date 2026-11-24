@@ -26,6 +26,7 @@ const emit = defineEmits<{
 
 type FlowTabView = 'nodes' | 'functions'
 type FunctionCopyMessage = { name: string; text: string }
+type FunctionShortcut = { name: string; entry: StrudelApiEntry }
 
 const COPY_MESSAGE_MILLISECONDS = 2000
 const VIEW_OPTIONS = [
@@ -49,9 +50,10 @@ const nodeTitleByKind = new Map(
   STRUDEL_FLOW_NODE_DEFINITIONS.map((definition) => [definition.kind, definition.title])
 )
 
-const workshopEntries = STRUDEL_API_WORKSHOP_NAMES.map((name) => findStrudelApiEntry(name)).filter(
-  (entry): entry is StrudelApiEntry => entry !== null
-)
+const workshopEntries: FunctionShortcut[] = STRUDEL_API_WORKSHOP_NAMES.flatMap((name) => {
+  const entry = findStrudelApiEntry(name)
+  return entry === null ? [] : [{ name, entry }]
+})
 
 const visibleFunctionGroups = computed(() =>
   groupStrudelApiEntries(
@@ -182,15 +184,15 @@ const copyFunction = async (entry: StrudelApiEntry): Promise<void> => {
           The functions the Strudel workshop teaches first.
         </p>
         <ul class="strudel-flow-tab__workshop-list">
-          <li v-for="entry in workshopEntries" :key="entry.name">
+          <li v-for="shortcut in workshopEntries" :key="shortcut.name">
             <Button
               size="sm"
               variant="secondary"
-              :aria-label="`Add ${entry.name} as ${describeAddTarget(entry)}`"
-              :title="entry.description"
-              @click="addFunction(entry)"
+              :aria-label="`Add ${shortcut.name} as ${describeAddTarget(shortcut.entry)}`"
+              :title="shortcut.entry.description"
+              @click="addFunction(shortcut.entry)"
             >
-              {{ entry.name }}
+              {{ shortcut.name }}
             </Button>
           </li>
         </ul>
@@ -469,6 +471,15 @@ const copyFunction = async (entry: StrudelApiEntry): Promise<void> => {
 .strudel-flow-tab__function-actions {
   display: flex;
   gap: var(--spacing-1);
+}
+
+.strudel-flow-tab__function-actions .btn {
+  gap: var(--spacing-1);
+}
+
+.strudel-flow-tab__function-actions .btn svg {
+  width: var(--font-size-sm);
+  height: var(--font-size-sm);
 }
 
 .strudel-flow-tab__details-summary {

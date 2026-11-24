@@ -184,7 +184,8 @@ const trackStyle = computed(() => ({
       ? `${props.timelineBars * STRUDEL_TIMELINE_MIN_CYCLE_WIDTH}px`
       : `max(100%, ${props.timelineBars * STRUDEL_TIMELINE_MIN_CYCLE_WIDTH}px)`,
   '--timeline-cycles': props.timelineBars,
-  '--timeline-steps-per-cycle': props.stepsPerCycle
+  '--timeline-steps-per-cycle': props.stepsPerCycle,
+  '--slider-playhead-extent': `calc(${showLanes.value ? (props.lanes?.length ?? 0) : 0} * (var(--spacing-3) + 1px))`
 }))
 
 const cycleReadout = computed(() => `${Math.floor(props.playheadCycle) + 1}/${props.timelineBars}`)
@@ -298,6 +299,16 @@ const timeReadout = computed(() => `${(props.playheadCycle / props.cyclesPerSeco
           @pointerup.capture="touchSeek.onPointerUp"
           @pointercancel.capture="touchSeek.onPointerCancel"
         >
+          <Slider
+            :model-value="[playheadCycle]"
+            :min="0"
+            :max="timelineBars"
+            :step="STRUDEL_TIMELINE_SEEK_STEP"
+            label="Playhead"
+            orientation="horizontal"
+            variant="playhead"
+            @update:model-value="onSliderMoved"
+          />
           <div v-if="showLanes" class="strudel-timeline__lanes">
             <div v-for="lane in lanes" :key="lane.name" class="strudel-timeline__lane">
               <button
@@ -315,16 +326,6 @@ const timeReadout = computed(() => `${(props.playheadCycle / props.cyclesPerSeco
               ></button>
             </div>
           </div>
-          <Slider
-            :model-value="[playheadCycle]"
-            :min="0"
-            :max="timelineBars"
-            :step="STRUDEL_TIMELINE_SEEK_STEP"
-            label="Playhead"
-            orientation="horizontal"
-            variant="playhead"
-            @update:model-value="onSliderMoved"
-          />
         </div>
       </div>
     </div>
@@ -423,7 +424,6 @@ const timeReadout = computed(() => `${(props.playheadCycle / props.cyclesPerSeco
 .strudel-timeline__lanes {
   display: grid;
   width: 100%;
-  gap: 1px;
 }
 
 .strudel-timeline__body {
@@ -440,14 +440,14 @@ const timeReadout = computed(() => `${(props.playheadCycle / props.cyclesPerSeco
 .strudel-timeline__lane-names {
   display: grid;
   align-content: start;
-  gap: 1px;
-  padding-block: var(--spacing-1) calc(var(--spacing-1) + var(--spacing-5));
+  padding-block: calc(var(--spacing-1) + var(--spacing-5)) var(--spacing-1);
   max-width: 8rem;
 }
 
 .strudel-timeline__lane-name {
-  height: var(--spacing-3);
-  padding: 0 var(--spacing-2) 0 0;
+  box-sizing: border-box;
+  height: calc(var(--spacing-3) + 1px);
+  padding: 0 var(--spacing-2) 1px 0;
   overflow: hidden;
   border: 0;
   background: none;
@@ -466,8 +466,9 @@ const timeReadout = computed(() => `${(props.playheadCycle / props.cyclesPerSeco
 
 .strudel-timeline__lane {
   position: relative;
+  box-sizing: content-box;
   height: var(--spacing-3);
-  border-radius: 1px;
+  border-bottom: 1px solid var(--color-border);
   background: var(--color-muted);
 }
 
@@ -521,7 +522,8 @@ const timeReadout = computed(() => `${(props.playheadCycle / props.cyclesPerSeco
   content: '';
   position: absolute;
   z-index: -1;
-  inset: 0;
+  inset: 0 0 auto;
+  height: var(--spacing-5);
   pointer-events: none;
   background-image:
     repeating-linear-gradient(

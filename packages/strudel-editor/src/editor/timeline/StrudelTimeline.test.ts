@@ -262,6 +262,9 @@ describe('StrudelTimeline', () => {
     Object.defineProperty(wrapper.get('.strudel-timeline__track').element, 'offsetWidth', {
       value: 800
     })
+    // The track has scrolled 400px left of the scroller's edge, with no padding before it.
+    ;(wrapper.get('.strudel-timeline__track').element as HTMLElement).getBoundingClientRect = () =>
+      new DOMRect(-400, 0, 800, 20)
     scroller.scrollLeft = 400
 
     // Act

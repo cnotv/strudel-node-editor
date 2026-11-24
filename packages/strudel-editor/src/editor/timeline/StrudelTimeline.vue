@@ -134,9 +134,14 @@ onBeforeUnmount(() => resizeObserver?.disconnect())
 
 watch(() => props.timelineBars, readHiddenEnds, { flush: 'post' })
 
+// How far the track starts from the scroller's left edge once scrolled to the start: the
+// padding, which in centred mode is half the width.
+const readTrackInset = (scroller: HTMLElement, track: HTMLElement): number =>
+  track.getBoundingClientRect().left - scroller.getBoundingClientRect().left + scroller.scrollLeft
+
 // Where the playhead sits inside the scrolling content, in pixels.
-const readPlayheadOffset = (track: HTMLElement): number =>
-  (props.playheadCycle / props.timelineBars) * track.offsetWidth
+const readPlayheadOffset = (scroller: HTMLElement, track: HTMLElement): number =>
+  readTrackInset(scroller, track) + (props.playheadCycle / props.timelineBars) * track.offsetWidth
 
 // The scroll position the centred mode last set, so its own scroll event is not taken for a drag.
 let lastCentredScroll = -1
@@ -157,12 +162,12 @@ const moveTimelineWithPlayhead = (): void => {
   if (scroller === null || track === null || progression.value === 'static') {
     return
   }
-  const playheadOffset = readPlayheadOffset(track)
+  const playheadOffset = readPlayheadOffset(scroller, track)
   if (progression.value === 'follow') {
     scrollToKeepPlayheadInView(scroller, playheadOffset)
     return
   }
-  scroller.scrollLeft = playheadOffset
+  scroller.scrollLeft = playheadOffset - scroller.clientWidth / 2
   lastCentredScroll = scroller.scrollLeft
 }
 
@@ -179,7 +184,9 @@ const seekFromCentredScroll = (): void => {
     return
   }
   lastCentredScroll = scroller.scrollLeft
-  emit('seek', (scroller.scrollLeft / track.offsetWidth) * props.timelineBars)
+  const centredOffset =
+    scroller.scrollLeft + scroller.clientWidth / 2 - readTrackInset(scroller, track)
+  emit('seek', Math.min(Math.max(centredOffset / track.offsetWidth, 0), 1) * props.timelineBars)
 }
 
 const onScrolled = (): void => {
@@ -551,7 +558,7 @@ const timeReadout = computed(() => `${(props.playheadCycle / props.cyclesPerSeco
 }
 
 /* The marks start under the numbers, so the ruler reads as a scale above the line. */
-.strudel-timeline__track--ruler::before {
+.strudel-timeline__track.strudel-timeline__track--ruler::before {
   top: var(--spacing-3);
 }
 
@@ -590,6 +597,7 @@ const timeReadout = computed(() => `${(props.playheadCycle / props.cyclesPerSeco
   align-content: start;
   padding-block: calc(var(--spacing-1) + var(--spacing-3) + var(--spacing-5)) var(--spacing-1);
   max-width: 8rem;
+  flex-shrink: 0;
 }
 
 .strudel-timeline__lane-name {

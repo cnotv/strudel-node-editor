@@ -260,3 +260,33 @@ describe('generateStrudelFlowNodePattern', () => {
     expect(patternWithoutInput).toBe('')
   })
 })
+
+describe('function node', () => {
+  const lowPass = {
+    kind: 'function' as const,
+    name: 'lpf',
+    description: '',
+    docsUrl: 'https://strudel.cc/learn/effects/',
+    parameters: [
+      {
+        kind: 'number' as const,
+        name: 'frequency',
+        label: 'frequency',
+        min: 0,
+        max: 8000,
+        step: 1,
+        value: 800
+      }
+    ]
+  }
+
+  it('writes the call alone, or chained after what is connected', () => {
+    // Act
+    const alone = generateStrudelFlowNodePattern(lowPass, '')
+    const chained = generateStrudelFlowNodePattern(lowPass, 's("bd")')
+
+    // Assert
+    expect(alone).toBe('lpf(800)')
+    expect(chained).toBe('s("bd").lpf(800)')
+  })
+})

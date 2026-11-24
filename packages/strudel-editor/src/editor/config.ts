@@ -929,7 +929,7 @@ export const STRUDEL_TABS: { id: StrudelTabId; label: string }[] = [
   { id: 'compose', label: 'Compose' },
   { id: 'console', label: 'Console' },
   { id: 'settings', label: 'Settings' },
-  { id: 'flow', label: 'Nodes' },
+  { id: 'flow', label: 'Functions' },
   { id: 'hints', label: 'Hints' }
 ]
 

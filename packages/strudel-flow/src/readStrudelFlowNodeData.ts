@@ -27,6 +27,7 @@ import {
   STRUDEL_FLOW_DELAY_DEFAULTS,
   STRUDEL_FLOW_ENVELOPE_DEFAULTS,
   STRUDEL_FLOW_FILTER_DEFAULTS,
+  STRUDEL_FLOW_FUNCTION_DEFAULTS,
   STRUDEL_FLOW_GAIN_DEFAULTS,
   STRUDEL_FLOW_LEVEL_DEFAULTS,
   STRUDEL_FLOW_MASK_DEFAULTS,
@@ -49,6 +50,8 @@ import type {
   StrudelFlowCall,
   StrudelFlowChordsData,
   StrudelFlowDrumRow,
+  StrudelFlowFunctionData,
+  StrudelFlowFunctionParameter,
   StrudelFlowNodeData,
   StrudelFlowNodeKind,
   StrudelFlowPadData
@@ -74,7 +77,8 @@ const NODE_KINDS: StrudelFlowNodeKind[] = [
   'voicing',
   'envelope',
   'visualizer',
-  'effect'
+  'effect',
+  'function'
 ]
 
 const readSteps = (value: unknown, fallback: boolean[]): boolean[] =>
@@ -236,6 +240,64 @@ const readArrangeSequence = (value: unknown): number[] => {
   return sequence.length > 0 ? sequence : STRUDEL_FLOW_ARRANGE_DEFAULTS.sequence
 }
 
+const readFunctionParameter = (value: unknown): StrudelFlowFunctionParameter | null => {
+  if (!isStoredRecord(value)) {
+    return null
+  }
+  const name = readStoredString(value.name, '').trim()
+  if (name.length === 0) {
+    return null
+  }
+  const label = readStoredString(value.label, name)
+  if (value.kind === 'number') {
+    const min = readStoredNumber(value.min, 0, -1e9, 1e9)
+    const max = readStoredNumber(value.max, Math.max(min, 1), min, 1e9)
+    return {
+      kind: 'number',
+      name,
+      label,
+      min,
+      max,
+      step: readStoredNumber(value.step, 0.01, 0.0001, 1e9),
+      value: readStoredNumber(value.value, min, min, max)
+    }
+  }
+  if (value.kind === 'boolean') {
+    return { kind: 'boolean', name, label, value: value.value === true }
+  }
+  return value.kind === 'text'
+    ? { kind: 'text', name, label, value: readStoredString(value.value, '') }
+    : null
+}
+
+const readFunctionDocumentationUrl = (value: unknown): string => {
+  const url = readStoredString(value, '')
+  return /^https?:\/\//i.test(url) ? url : STRUDEL_FLOW_FUNCTION_DEFAULTS.docsUrl
+}
+
+const readFunction = (raw: Record<string, unknown>): StrudelFlowFunctionData => {
+  const name = readStoredString(raw.name, '').trim()
+  if (name.length === 0) {
+    return {
+      ...STRUDEL_FLOW_FUNCTION_DEFAULTS,
+      parameters: STRUDEL_FLOW_FUNCTION_DEFAULTS.parameters.map((parameter) => ({
+        ...parameter
+      }))
+    }
+  }
+  const parameters = (Array.isArray(raw.parameters) ? raw.parameters : [])
+    .map(readFunctionParameter)
+    .filter((parameter): parameter is StrudelFlowFunctionParameter => parameter !== null)
+    .slice(0, 32)
+  return {
+    kind: 'function',
+    name,
+    description: readStoredString(raw.description, ''),
+    docsUrl: readFunctionDocumentationUrl(raw.docsUrl),
+    parameters
+  }
+}
+
 type NodeDataReader = (raw: Record<string, unknown>) => StrudelFlowNodeData
 
 const NODE_DATA_READERS: { [Kind in StrudelFlowNodeKind]: NodeDataReader } = {
@@ -357,7 +419,8 @@ const NODE_DATA_READERS: { [Kind in StrudelFlowNodeKind]: NodeDataReader } = {
       raw.calls === undefined && typeof raw.method === 'string'
         ? [{ method: raw.method, argument: readStoredString(raw.argument, '') }]
         : readCalls(raw.calls)
-  })
+  }),
+  function: readFunction
 }
 
 /**

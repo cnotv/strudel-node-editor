@@ -1,5 +1,5 @@
 import type { Ref } from 'vue'
-import type { StrudelFlowNodeKind, StrudelFlowTabInstrument } from '@webgamekit/strudel-flow'
+import type { StrudelFlowTabInstrument } from '@webgamekit/strudel-flow'
 
 export type StrudelExample = {
   id: string
@@ -189,6 +189,8 @@ export type StrudelApiGroup = {
   id: StrudelApiGroupId
   label: string
   hint: string
+  /** The learn page its functions are documented on. */
+  docsUrl: string
 }
 
 /** A heading and the documented names it lists, as the catalog data declares them. */
@@ -196,15 +198,10 @@ export type StrudelApiGroupDefinition = StrudelApiGroup & {
   names: string[]
 }
 
-/** What Add creates: a node kind, or a Code node holding the documented example. */
-export type StrudelApiAddTarget =
-  | { kind: Exclude<StrudelFlowNodeKind, 'code'> }
-  | { kind: 'code'; code: string }
-
-/** One documented Strudel function, placed under a heading and mapped to what Add creates. */
+/** One documented Strudel function, placed under a heading, with the page that documents it. */
 export type StrudelApiEntry = StrudelFunctionDocumentation & {
   group: StrudelApiGroupId
-  add: StrudelApiAddTarget | null
+  docsUrl: string
 }
 
 /** A heading with the functions the current search leaves in it. */

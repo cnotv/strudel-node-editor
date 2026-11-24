@@ -1,59 +1,35 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { Copy, Plus, RotateCcw } from 'lucide-vue-next'
+import { ExternalLink, Plus, RotateCcw } from 'lucide-vue-next'
 import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
-import ButtonSelector from '../../components/ui/button-selector/ButtonSelector.vue'
-import { STRUDEL_FLOW_NODE_DEFINITIONS, STRUDEL_FLOW_REFERENCE } from '@webgamekit/strudel-flow'
+import { STRUDEL_FLOW_REFERENCE } from '@webgamekit/strudel-flow'
+import type { StrudelFlowNodeData, StrudelFlowNodeKind } from '@webgamekit/strudel-flow'
 import { STRUDEL_API_WORKSHOP_NAMES } from '../strudelApiGroups'
 import {
   STRUDEL_API_ENTRIES,
+  createStrudelApiFunctionData,
   findStrudelApiEntry,
   groupStrudelApiEntries,
   matchesStrudelApiSearch
 } from '../strudelApiCatalog'
-import type {
-  StrudelApiEntry,
-  StrudelFlowNodeCategory,
-  StrudelFlowNodeData,
-  StrudelFlowNodeKind
-} from '../types'
+import type { StrudelApiEntry } from '../types'
 
 const emit = defineEmits<{
   addNode: [kind: StrudelFlowNodeKind, data?: StrudelFlowNodeData]
   reset: []
 }>()
 
-type FlowTabView = 'nodes' | 'functions'
-type FunctionCopyMessage = { name: string; text: string }
 type FunctionShortcut = { name: string; entry: StrudelApiEntry }
 
-const COPY_MESSAGE_MILLISECONDS = 2000
-const VIEW_OPTIONS = [
-  { value: 'nodes', label: 'Nodes' },
-  { value: 'functions', label: 'Functions' }
-]
-const NODE_CATEGORIES: StrudelFlowNodeCategory[] = ['Instruments', 'Effects', 'Sounds']
-
-const activeView = ref<FlowTabView>('nodes')
 const searchQuery = ref('')
-const copyMessage = ref<FunctionCopyMessage | null>(null)
-
-const nodeGroups = NODE_CATEGORIES.map((category) => ({
-  category,
-  definitions: STRUDEL_FLOW_NODE_DEFINITIONS.filter(
-    (definition) => definition.category === category
-  )
-}))
-
-const nodeTitleByKind = new Map(
-  STRUDEL_FLOW_NODE_DEFINITIONS.map((definition) => [definition.kind, definition.title])
-)
 
 const workshopEntries: FunctionShortcut[] = STRUDEL_API_WORKSHOP_NAMES.flatMap((name) => {
   const entry = findStrudelApiEntry(name)
   return entry === null ? [] : [{ name, entry }]
 })
+
+const isSearching = computed(() => searchQuery.value.trim().length > 0)
 
 const visibleFunctionGroups = computed(() =>
   groupStrudelApiEntries(
@@ -61,23 +37,8 @@ const visibleFunctionGroups = computed(() =>
   )
 )
 
-const setView = (view: string): void => {
-  if (view === 'nodes' || view === 'functions') {
-    activeView.value = view
-  }
-}
-
 const setSearchQuery = (query: string | number): void => {
   searchQuery.value = String(query)
-}
-
-const nodeTitle = (kind: StrudelFlowNodeKind): string => nodeTitleByKind.get(kind) ?? kind
-
-const describeAddTarget = (entry: StrudelApiEntry): string => {
-  if (entry.add === null) {
-    return 'No example'
-  }
-  return entry.add.kind === 'code' ? 'Code' : nodeTitle(entry.add.kind)
 }
 
 const describeDetails = (entry: StrudelApiEntry): string =>
@@ -93,194 +54,116 @@ const describeDetails = (entry: StrudelApiEntry): string =>
     .join(' · ')
 
 const addFunction = (entry: StrudelApiEntry): void => {
-  const target = entry.add
-  if (target === null) {
-    return
-  }
-  if (target.kind === 'code') {
-    emit('addNode', 'code', { kind: 'code', code: target.code })
-    return
-  }
-  emit('addNode', target.kind)
-}
-
-const copyFunction = async (entry: StrudelApiEntry): Promise<void> => {
-  try {
-    await navigator.clipboard.writeText(entry.examples[0] ?? entry.name)
-    copyMessage.value = { name: entry.name, text: 'Copied' }
-    setTimeout(() => {
-      copyMessage.value = null
-    }, COPY_MESSAGE_MILLISECONDS)
-  } catch {
-    copyMessage.value = { name: entry.name, text: 'Copy failed' }
-  }
+  emit('addNode', 'function', createStrudelApiFunctionData(entry))
 }
 </script>
 
 <template>
   <div class="strudel-flow-tab">
-    <h3 class="strudel-flow-tab__heading">flow</h3>
-    <ButtonSelector
-      :model-value="activeView"
-      :options="VIEW_OPTIONS"
-      @update:model-value="setView"
+    <h3 class="strudel-flow-tab__heading">functions</h3>
+    <p class="strudel-flow-tab__intro">
+      Every documented Strudel function, grouped by what it does. Add creates a node holding the
+      call and a control for each documented argument; connect it to a pattern when the function
+      transforms one.
+    </p>
+    <Input
+      :model-value="searchQuery"
+      placeholder="Search functions or synonyms..."
+      aria-label="Search functions"
+      @update:model-value="setSearchQuery"
     />
 
-    <template v-if="activeView === 'nodes'">
-      <p class="strudel-flow-tab__intro">
-        Add instrument, effect and sound nodes, connect an output to an input, then press Play. The
-        patch writes itself into the code editor on every change, and code you type rebuilds the
-        patch. Tempo and beats per cycle sit on top of the canvas.
-      </p>
-
-      <section
-        v-for="group in nodeGroups"
-        :key="group.category"
-        class="strudel-flow-tab__group"
-        :aria-labelledby="`strudel-flow-palette-${group.category}`"
-      >
-        <h4 :id="`strudel-flow-palette-${group.category}`" class="strudel-flow-tab__group-title">
-          {{ group.category }}
-        </h4>
-        <ul class="strudel-flow-tab__list">
-          <li
-            v-for="definition in group.definitions"
-            :key="definition.kind"
-            class="strudel-flow-tab__item"
+    <section class="strudel-flow-tab__workshop" aria-labelledby="strudel-flow-workshop">
+      <h4 id="strudel-flow-workshop" class="strudel-flow-tab__group-title">Start here</h4>
+      <p class="strudel-flow-tab__group-hint">The functions the Strudel workshop teaches first.</p>
+      <ul class="strudel-flow-tab__workshop-list">
+        <li v-for="shortcut in workshopEntries" :key="shortcut.name">
+          <Button
+            size="sm"
+            variant="secondary"
+            :aria-label="`Add ${shortcut.name} function`"
+            :title="shortcut.entry.description"
+            @click="addFunction(shortcut.entry)"
           >
-            <div class="strudel-flow-tab__item-text">
-              <p class="strudel-flow-tab__item-title">{{ definition.title }}</p>
-              <p class="strudel-flow-tab__item-description">{{ definition.description }}</p>
-            </div>
+            {{ shortcut.name }}
+          </Button>
+        </li>
+      </ul>
+    </section>
+
+    <p v-if="visibleFunctionGroups.length === 0" class="strudel-flow-tab__empty" role="status">
+      No function matches "{{ searchQuery }}". Try a name, a synonym, or a word from the
+      description.
+    </p>
+
+    <details
+      v-for="group in visibleFunctionGroups"
+      :key="group.id"
+      class="strudel-flow-tab__group"
+      :open="isSearching"
+    >
+      <summary class="strudel-flow-tab__group-summary">
+        <span class="strudel-flow-tab__group-title">{{ group.label }}</span>
+        <span class="strudel-flow-tab__group-count">{{ group.entries.length }}</span>
+      </summary>
+      <p class="strudel-flow-tab__group-hint">{{ group.hint }}</p>
+      <ul class="strudel-flow-tab__list">
+        <li v-for="entry in group.entries" :key="entry.name" class="strudel-flow-tab__function">
+          <div class="strudel-flow-tab__function-head">
+            <p class="strudel-flow-tab__function-name">{{ entry.name }}</p>
+            <p v-if="entry.synonyms.length > 0" class="strudel-flow-tab__function-synonyms">
+              {{ entry.synonyms.join(', ') }}
+            </p>
+          </div>
+          <p class="strudel-flow-tab__function-description" :title="entry.description">
+            {{ entry.description }}
+          </p>
+          <div class="strudel-flow-tab__function-actions">
             <Button
               size="sm"
               variant="secondary"
-              :aria-label="`Add ${definition.title} node`"
-              @click="emit('addNode', definition.kind)"
+              :aria-label="`Add ${entry.name} function`"
+              @click="addFunction(entry)"
             >
               <Plus aria-hidden="true" />
               Add
             </Button>
-          </li>
-        </ul>
-      </section>
-    </template>
-
-    <template v-else>
-      <p class="strudel-flow-tab__intro">
-        Every documented Strudel function, grouped by what it does. Add uses an existing node, or a
-        Code node holding the documented example.
-      </p>
-      <Input
-        :model-value="searchQuery"
-        placeholder="Search functions or synonyms..."
-        aria-label="Search functions"
-        @update:model-value="setSearchQuery"
-      />
-
-      <section class="strudel-flow-tab__workshop" aria-labelledby="strudel-flow-workshop">
-        <h4 id="strudel-flow-workshop" class="strudel-flow-tab__group-title">Start here</h4>
-        <p class="strudel-flow-tab__group-hint">
-          The functions the Strudel workshop teaches first.
-        </p>
-        <ul class="strudel-flow-tab__workshop-list">
-          <li v-for="shortcut in workshopEntries" :key="shortcut.name">
-            <Button
-              size="sm"
-              variant="secondary"
-              :aria-label="`Add ${shortcut.name} as ${describeAddTarget(shortcut.entry)}`"
-              :title="shortcut.entry.description"
-              @click="addFunction(shortcut.entry)"
+            <a
+              class="strudel-flow-tab__function-docs"
+              :href="entry.docsUrl"
+              target="_blank"
+              rel="noopener"
+              :aria-label="`Read the ${entry.name} docs`"
             >
-              {{ shortcut.name }}
-            </Button>
-          </li>
-        </ul>
-      </section>
-
-      <p v-if="visibleFunctionGroups.length === 0" class="strudel-flow-tab__empty" role="status">
-        No function matches "{{ searchQuery }}". Try a name, a synonym, or a word from the
-        description.
-      </p>
-
-      <section
-        v-for="group in visibleFunctionGroups"
-        :key="group.id"
-        class="strudel-flow-tab__group"
-        :aria-labelledby="`strudel-flow-functions-${group.id}`"
-      >
-        <h4 :id="`strudel-flow-functions-${group.id}`" class="strudel-flow-tab__group-title">
-          {{ group.label }}
-          <span class="strudel-flow-tab__group-count">{{ group.entries.length }}</span>
-        </h4>
-        <p class="strudel-flow-tab__group-hint">{{ group.hint }}</p>
-        <ul class="strudel-flow-tab__list">
-          <li v-for="entry in group.entries" :key="entry.name" class="strudel-flow-tab__function">
-            <div class="strudel-flow-tab__function-head">
-              <p class="strudel-flow-tab__function-name">{{ entry.name }}</p>
-              <p v-if="entry.synonyms.length > 0" class="strudel-flow-tab__function-synonyms">
-                {{ entry.synonyms.join(', ') }}
-              </p>
-              <span
-                class="strudel-flow-tab__badge"
-                :class="{
-                  'strudel-flow-tab__badge--code': entry.add?.kind === 'code',
-                  'strudel-flow-tab__badge--none': entry.add === null
-                }"
-              >
-                {{ describeAddTarget(entry) }}
-              </span>
-            </div>
-            <p class="strudel-flow-tab__function-description" :title="entry.description">
-              {{ entry.description }}
-            </p>
-            <div class="strudel-flow-tab__function-actions">
-              <Button
-                v-if="entry.add !== null"
-                size="sm"
-                variant="secondary"
-                :aria-label="`Add ${entry.name} as ${describeAddTarget(entry)}`"
-                @click="addFunction(entry)"
-              >
-                <Plus aria-hidden="true" />
-                Add
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                :aria-label="`Copy ${entry.name} example`"
-                @click="copyFunction(entry)"
-              >
-                <Copy aria-hidden="true" />
-                {{ copyMessage?.name === entry.name ? copyMessage.text : 'Copy' }}
-              </Button>
-            </div>
-            <details
-              v-if="entry.params.length > 0 || entry.examples.length > 0"
-              class="strudel-flow-tab__details"
-            >
-              <summary class="strudel-flow-tab__details-summary">
-                {{ describeDetails(entry) }}
-              </summary>
-              <ul v-if="entry.params.length > 0" class="strudel-flow-tab__params">
-                <li v-for="param in entry.params" :key="param.name" class="strudel-flow-tab__param">
-                  <code class="strudel-flow-tab__param-name">{{ param.name }}</code>
-                  <span v-if="param.type" class="strudel-flow-tab__param-type">
-                    {{ param.type }}
-                  </span>
-                  <span class="strudel-flow-tab__param-description">{{ param.description }}</span>
-                </li>
-              </ul>
-              <pre
-                v-for="example in entry.examples"
-                :key="example"
-                class="strudel-flow-tab__example"
-              ><code>{{ example }}</code></pre>
-            </details>
-          </li>
-        </ul>
-      </section>
-    </template>
+              <ExternalLink aria-hidden="true" />
+              Docs
+            </a>
+          </div>
+          <details
+            v-if="entry.params.length > 0 || entry.examples.length > 0"
+            class="strudel-flow-tab__details"
+          >
+            <summary class="strudel-flow-tab__details-summary">
+              {{ describeDetails(entry) }}
+            </summary>
+            <ul v-if="entry.params.length > 0" class="strudel-flow-tab__params">
+              <li v-for="param in entry.params" :key="param.name" class="strudel-flow-tab__param">
+                <code class="strudel-flow-tab__param-name">{{ param.name }}</code>
+                <span v-if="param.type" class="strudel-flow-tab__param-type">
+                  {{ param.type }}
+                </span>
+                <span class="strudel-flow-tab__param-description">{{ param.description }}</span>
+              </li>
+            </ul>
+            <pre
+              v-for="example in entry.examples"
+              :key="example"
+              class="strudel-flow-tab__example"
+            ><code>{{ example }}</code></pre>
+          </details>
+        </li>
+      </ul>
+    </details>
 
     <Button class="strudel-flow-tab__reset" variant="outline" @click="emit('reset')">
       <RotateCcw aria-hidden="true" />
@@ -339,6 +222,17 @@ const copyFunction = async (entry: StrudelApiEntry): Promise<void> => {
   gap: var(--spacing-2);
 }
 
+.strudel-flow-tab__group-summary {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-2);
+  cursor: pointer;
+}
+
+.strudel-flow-tab__group-summary::marker {
+  color: var(--color-muted-foreground);
+}
+
 .strudel-flow-tab__group-title {
   margin: 0;
   color: var(--color-muted-foreground);
@@ -348,7 +242,6 @@ const copyFunction = async (entry: StrudelApiEntry): Promise<void> => {
 }
 
 .strudel-flow-tab__group-count {
-  margin-inline-start: var(--spacing-1);
   color: var(--color-foreground);
 }
 
@@ -365,36 +258,6 @@ const copyFunction = async (entry: StrudelApiEntry): Promise<void> => {
   margin: 0;
   padding: 0;
   list-style: none;
-}
-
-.strudel-flow-tab__item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--spacing-3);
-  padding: var(--spacing-2) var(--spacing-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-}
-
-.strudel-flow-tab__item-text {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-0-5);
-  min-width: 0;
-}
-
-.strudel-flow-tab__item-title,
-.strudel-flow-tab__item-description {
-  margin: 0;
-}
-
-.strudel-flow-tab__item-title {
-  font-weight: 600;
-}
-
-.strudel-flow-tab__item-description {
-  color: var(--color-muted-foreground);
 }
 
 .strudel-flow-tab__workshop,
@@ -450,36 +313,28 @@ const copyFunction = async (entry: StrudelApiEntry): Promise<void> => {
   -webkit-line-clamp: 3;
 }
 
-.strudel-flow-tab__badge {
-  margin-inline-start: auto;
-  padding: 0 var(--spacing-2);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-full);
-  color: var(--color-foreground);
-  font-size: var(--font-size-xs);
-  white-space: nowrap;
-}
-
-.strudel-flow-tab__badge--code {
-  border-style: dashed;
-}
-
-.strudel-flow-tab__badge--none {
-  color: var(--color-muted-foreground);
-}
-
 .strudel-flow-tab__function-actions {
   display: flex;
-  gap: var(--spacing-1);
+  align-items: center;
+  gap: var(--spacing-3);
 }
 
 .strudel-flow-tab__function-actions .btn {
   gap: var(--spacing-1);
 }
 
-.strudel-flow-tab__function-actions .btn svg {
+.strudel-flow-tab__function-actions .btn svg,
+.strudel-flow-tab__function-docs svg {
   width: var(--font-size-sm);
   height: var(--font-size-sm);
+}
+
+.strudel-flow-tab__function-docs {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  color: var(--color-muted-foreground);
+  font-size: var(--font-size-xs);
 }
 
 .strudel-flow-tab__details-summary {

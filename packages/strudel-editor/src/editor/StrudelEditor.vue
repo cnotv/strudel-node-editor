@@ -10,7 +10,7 @@ import {
 } from 'vue'
 import {
   AudioLines,
-  Boxes,
+  Braces,
   Cable,
   CircleHelp,
   BookMarked,
@@ -52,6 +52,7 @@ import { readStrudelNoteBars } from './noteBars'
 import { useStrudelSounds } from './useStrudelSounds'
 import { previewStrudelSound } from './strudelPlayback'
 import type { StrudelEditorMode, StrudelExample, StrudelSoundEntry, StrudelTabId } from './types'
+import type { StrudelFlowNodeData, StrudelFlowNodeKind } from '@webgamekit/strudel-flow'
 import FlowTab from './tabs/FlowTab.vue'
 import InstrumentsTab from './tabs/InstrumentsTab.vue'
 import ComposeTab from './tabs/ComposeTab.vue'
@@ -233,8 +234,12 @@ watch(patternCode, scheduleReplay)
 // The flow writes its compilation into the code; that text is already the graph.
 const isFlowEcho = (code: string): boolean => code === flowCompilation.value.code
 
-// Code is the source of truth: once typing pauses on code that parses, the graph follows it.
-loadFlowCode(patternCode.value)
+// Code is the source of truth: once typing pauses on code that parses, the graph follows it. A
+// stored patch that already writes the code on screen is kept as it is, so the generic function
+// nodes it holds survive a reload.
+if (flowCompilation.value.code !== patternCode.value) {
+  loadFlowCode(patternCode.value)
+}
 watch(patternCode, (code) => {
   codeParseTimer = clearTimer(codeParseTimer)
   if (isFlowEcho(code)) {
@@ -397,13 +402,24 @@ const onEditorModeChange = (mode: string): void => {
     return
   }
   editorMode.value = 'code'
-  if (activeTab.value === 'flow') {
-    setActiveTab(null)
-  }
 }
 
 const toggleDrawer = (tabId: StrudelTabId): void => {
   setActiveTab(activeTab.value === tabId ? null : tabId)
+}
+
+const onFlowAddNode = (kind: StrudelFlowNodeKind, data?: StrudelFlowNodeData): void => {
+  addFlowNode(kind, data)
+  const compiledCode = flowCompilation.value.code
+  if (editorMode.value === 'code' && compiledCode.length > 0) {
+    updatePatternCode(compiledCode)
+  }
+}
+
+const onFlowReset = (): void => {
+  resetFlowPatch()
+  void stopPattern()
+  updatePatternCode('')
 }
 
 const toolbarTools = [
@@ -415,13 +431,11 @@ const toolbarTools = [
   { id: 'compose', label: 'Compose', icon: Sparkles },
   { id: 'console', label: 'Console', icon: Terminal },
   { id: 'settings', label: 'Settings', icon: Settings },
-  { id: 'flow', label: 'Nodes', icon: Boxes },
+  { id: 'flow', label: 'Functions', icon: Braces },
   { id: 'hints', label: 'Hints', icon: CircleHelp }
 ] as const satisfies { id: StrudelTabId; label: string; icon: unknown; wideOnly?: boolean }[]
 
-const visibleTools = computed(() =>
-  toolbarTools.filter((tool) => tool.id !== 'flow' || editorMode.value === 'flow')
-)
+const visibleTools = toolbarTools
 
 type ImportPanelId = 'music' | 'sounds' | 'import'
 
@@ -644,7 +658,7 @@ onBeforeUnmount(() => {
           :log-entries="logEntries"
           @clear="clearLogEntries"
         />
-        <FlowTab v-else-if="activeTab === 'flow'" @add-node="addFlowNode" @reset="resetFlowPatch" />
+        <FlowTab v-else-if="activeTab === 'flow'" @add-node="onFlowAddNode" @reset="onFlowReset" />
         <SettingsTab v-else />
       </div>
       <p class="strudel-editor__license">{{ STRUDEL_LICENSE_NOTE }}</p>

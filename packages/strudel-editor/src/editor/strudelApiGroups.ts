@@ -1,5 +1,4 @@
 import type { StrudelApiGroupDefinition } from './types'
-import type { StrudelFlowNodeKind } from '@webgamekit/strudel-flow'
 
 /** The purpose headings the function list groups its functions under, and the functions in each. */
 export const STRUDEL_API_GROUP_DEFINITIONS: StrudelApiGroupDefinition[] = [
@@ -7,6 +6,7 @@ export const STRUDEL_API_GROUP_DEFINITIONS: StrudelApiGroupDefinition[] = [
     id: 'sources',
     label: 'Instruments & sources',
     hint: 'Start a pattern: a sound, a note line, a stack or an arrangement.',
+    docsUrl: 'https://strudel.cc/learn/mini-notation/',
     names: [
       'arrange',
       'bank',
@@ -46,6 +46,7 @@ export const STRUDEL_API_GROUP_DEFINITIONS: StrudelApiGroupDefinition[] = [
     id: 'time',
     label: 'Time & rhythm',
     hint: 'Stretch, shift, repeat or reorder a pattern in time.',
+    docsUrl: 'https://strudel.cc/learn/mini-notation/',
     names: [
       'chop',
       'chunk',
@@ -112,6 +113,7 @@ export const STRUDEL_API_GROUP_DEFINITIONS: StrudelApiGroupDefinition[] = [
     id: 'structure',
     label: 'Pattern & structure',
     hint: 'Choose which steps play, how they repeat, and how patterns combine.',
+    docsUrl: 'https://strudel.cc/learn/conditional-modifiers/',
     names: [
       'add',
       'apply',
@@ -187,6 +189,7 @@ export const STRUDEL_API_GROUP_DEFINITIONS: StrudelApiGroupDefinition[] = [
     id: 'random',
     label: 'Random & conditional',
     hint: 'Leave a choice to chance, or apply a function some of the time.',
+    docsUrl: 'https://strudel.cc/learn/random-modifiers/',
     names: [
       'almostAlways',
       'almostNever',
@@ -213,6 +216,7 @@ export const STRUDEL_API_GROUP_DEFINITIONS: StrudelApiGroupDefinition[] = [
     id: 'signals',
     label: 'Signals & LFOs',
     hint: 'Continuous values to drive a parameter, from a sine to a random walk.',
+    docsUrl: 'https://strudel.cc/learn/signals/',
     names: [
       'brand',
       'brandBy',
@@ -247,6 +251,7 @@ export const STRUDEL_API_GROUP_DEFINITIONS: StrudelApiGroupDefinition[] = [
     id: 'tonal',
     label: 'Tonal & harmony',
     hint: 'Turn numbers into notes, transpose, voice chords and pick scales.',
+    docsUrl: 'https://strudel.cc/learn/tonal/',
     names: [
       'addVoicings',
       'anchor',
@@ -271,6 +276,7 @@ export const STRUDEL_API_GROUP_DEFINITIONS: StrudelApiGroupDefinition[] = [
     id: 'controls',
     label: 'Sound controls',
     hint: 'The everyday parameters: level, position, speed and length.',
+    docsUrl: 'https://strudel.cc/learn/effects/',
     names: [
       'begin',
       'clip',
@@ -294,6 +300,7 @@ export const STRUDEL_API_GROUP_DEFINITIONS: StrudelApiGroupDefinition[] = [
     id: 'filters',
     label: 'Filters & envelopes',
     hint: 'Low, high and band pass filters with their envelopes.',
+    docsUrl: 'https://strudel.cc/learn/effects/',
     names: [
       'bpattack',
       'bpdc',
@@ -343,6 +350,7 @@ export const STRUDEL_API_GROUP_DEFINITIONS: StrudelApiGroupDefinition[] = [
     id: 'space',
     label: 'Space, delay & modulation',
     hint: 'Reverb, echo, chorus, phaser, tremolo and vibrato.',
+    docsUrl: 'https://strudel.cc/learn/effects/',
     names: [
       'chorus',
       'delay',
@@ -372,6 +380,7 @@ export const STRUDEL_API_GROUP_DEFINITIONS: StrudelApiGroupDefinition[] = [
     id: 'drive',
     label: 'Drive & dynamics',
     hint: 'Saturation, bit reduction and compression.',
+    docsUrl: 'https://strudel.cc/learn/effects/',
     names: [
       'asym',
       'bite',
@@ -403,6 +412,7 @@ export const STRUDEL_API_GROUP_DEFINITIONS: StrudelApiGroupDefinition[] = [
     id: 'synth',
     label: 'Synth parameters',
     hint: 'The oscillator, envelope, FM, wavetable and warp controls behind a sound.',
+    docsUrl: 'https://strudel.cc/learn/synths/',
     names: [
       'adsr',
       'attack',
@@ -460,6 +470,7 @@ export const STRUDEL_API_GROUP_DEFINITIONS: StrudelApiGroupDefinition[] = [
     id: 'visuals',
     label: 'Visuals',
     hint: 'Draw the pattern under the line or behind the code.',
+    docsUrl: 'https://strudel.cc/learn/visual-feedback/',
     names: [
       '_pianoroll',
       '_pitchwheel',
@@ -482,6 +493,7 @@ export const STRUDEL_API_GROUP_DEFINITIONS: StrudelApiGroupDefinition[] = [
     id: 'midi',
     label: 'MIDI & OSC',
     hint: 'Send notes and controls to hardware, or receive them.',
+    docsUrl: 'https://strudel.cc/learn/input-output/',
     names: [
       'ccn',
       'ccv',
@@ -543,50 +555,6 @@ export const STRUDEL_API_HIDDEN_NAMES: string[] = [
   'tables',
   'wordfall'
 ]
-
-/** The node kind each documented name maps to, its synonyms included; the first match wins. */
-export const STRUDEL_API_NODE_BY_NAME: Record<string, Exclude<StrudelFlowNodeKind, 'code'>> = {
-  n: 'pad',
-  scale: 'pad',
-  s: 'samples',
-  sound: 'voice',
-  note: 'notes',
-  chord: 'notes',
-  lpf: 'filter',
-  lpq: 'filter',
-  delay: 'delay',
-  delayspeed: 'delay',
-  delaytime: 'delay',
-  delayfeedback: 'delay',
-  room: 'space',
-  roomsize: 'space',
-  roomfade: 'space',
-  roomlp: 'space',
-  roomdim: 'space',
-  gain: 'gain',
-  pan: 'level',
-  postgain: 'level',
-  mask: 'mask',
-  struct: 'struct',
-  slow: 'slow',
-  voicing: 'voicing',
-  attack: 'envelope',
-  decay: 'envelope',
-  sustain: 'envelope',
-  release: 'envelope',
-  pianoroll: 'visualizer',
-  _pianoroll: 'visualizer',
-  punchcard: 'visualizer',
-  _punchcard: 'visualizer',
-  scope: 'visualizer',
-  _scope: 'visualizer',
-  spiral: 'visualizer',
-  _spiral: 'visualizer',
-  pitchwheel: 'visualizer',
-  _pitchwheel: 'visualizer',
-  spectrum: 'visualizer',
-  _spectrum: 'visualizer'
-}
 
 /** The functions the Strudel workshop teaches first, listed above the groups. */
 export const STRUDEL_API_WORKSHOP_NAMES: string[] = [

@@ -1,5 +1,5 @@
 import { STRUDEL_FLOW_WIDGET_ID_PREFIX } from './config'
-import { isStrudelFlowInstrumentKind } from './nodeDefaults'
+import { isStrudelFlowInstrumentKind, isStrudelFlowSourceNode } from './nodeDefaults'
 import { orderStrudelFlowArrangeParts, writeStrudelFlowArrange } from './arrangeGrid'
 import { generateStrudelFlowNodePattern } from './nodePatterns'
 import { normalizeStrudelFlowBeatsPerCycle, normalizeStrudelFlowBeatsPerMinute } from './tempo'
@@ -130,14 +130,15 @@ const findEffectIntoInstrument = (
 
 const isMuted = (node: StrudelFlowNode): boolean => 'muted' in node.data && node.data.muted === true
 
-const instrumentsInComponent = (
+const sourceNodesInComponent = (
   componentIds: string[],
+  edges: StrudelFlowEdge[],
   nodesById: Map<string, StrudelFlowNode>
 ): StrudelFlowNode[] =>
   componentIds
     .map((nodeId) => nodesById.get(nodeId))
     .filter((node): node is StrudelFlowNode => node !== undefined)
-    .filter((node) => isStrudelFlowInstrumentKind(node.data.kind))
+    .filter((node) => isStrudelFlowSourceNode(node, edges))
 
 const collectDownstream = (
   nodeId: string,
@@ -173,22 +174,22 @@ const applyEffects = (
       : generateStrudelFlowNodePattern(node.data, currentPattern)
   }, pattern)
 
-type InstrumentPath = { nodeId: string; pattern: string; effectIds: string[] }
+type SourcePath = { nodeId: string; pattern: string; effectIds: string[] }
 
-type ComponentPlan = { label: string; branches: InstrumentPath[]; sharedIds: string[] }
+type ComponentPlan = { label: string; branches: SourcePath[]; sharedIds: string[] }
 
-// Each instrument only goes through the effects downstream of it. The effects every path shares
+// Each source only goes through the effects downstream of it. The effects every path shares
 // are chained once after the stack; the rest stay on their own branch inside it.
 const planComponent = (
   componentIds: string[],
   edges: StrudelFlowEdge[],
   nodesById: Map<string, StrudelFlowNode>
 ): ComponentPlan | null => {
-  const instruments = instrumentsInComponent(componentIds, nodesById)
-  const isComponentMuted = instruments.length > 0 && instruments.every(isMuted)
+  const sources = sourceNodesInComponent(componentIds, edges, nodesById)
+  const isComponentMuted = sources.length > 0 && sources.every(isMuted)
   const outgoing = buildOutgoingMap(edges, componentIds)
   const ordered = orderComponent(componentIds, edges).ordered
-  const paths: InstrumentPath[] = instruments.flatMap((node) => {
+  const paths: SourcePath[] = sources.flatMap((node) => {
     const pattern = generateStrudelFlowNodePattern(node.data, '')
     if (pattern.length === 0) {
       return []
@@ -291,10 +292,11 @@ export const compileStrudelFlow = (patch: StrudelFlowPatch): StrudelFlowCompilat
         'An instrument cannot take an input. Connect the effect to another effect instead.'
     }
   }
-  if (!patch.nodes.some((node) => isStrudelFlowInstrumentKind(node.data.kind))) {
+  if (!patch.nodes.some((node) => isStrudelFlowSourceNode(node, patch.edges))) {
     return {
       code: '',
-      errorMessage: 'Add an instrument node such as Pad, Beats, Chords or Code to start a pattern.'
+      errorMessage:
+        'Add an instrument or function node such as Pad, Beats, Chords, Code or a function from the list to start a pattern.'
     }
   }
   const components = findComponents(patch.nodes, patch.edges)

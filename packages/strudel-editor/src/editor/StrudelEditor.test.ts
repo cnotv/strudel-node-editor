@@ -231,6 +231,7 @@ describe('StrudelEditor view', () => {
       'Compose',
       'Console',
       'Settings',
+      'Functions',
       'Hints'
     ])
   })
@@ -592,13 +593,13 @@ describe('StrudelEditor view', () => {
     await vi.waitFor(() => {
       expect(wrapper.find('.strudel-flow-editor-stub').exists()).toBe(true)
     })
-    await openDrawer(wrapper, 'Nodes')
+    await openDrawer(wrapper, 'Functions')
     const codeOnOpen = readEditorCode(wrapper)
     // The palette renders with the flow tab, which can land a tick after the canvas on a slow run.
     await vi.waitFor(() => {
-      expect(wrapper.find('button[aria-label="Add Notes node"]').exists()).toBe(true)
+      expect(wrapper.find('button[aria-label="Add note function"]').exists()).toBe(true)
     })
-    await wrapper.find('button[aria-label="Add Notes node"]').trigger('click')
+    await wrapper.find('button[aria-label="Add note function"]').trigger('click')
     await flushPromises()
     const codeAfterAdd = readEditorCode(wrapper)
     await clickMode(wrapper, 'Code')
@@ -606,7 +607,7 @@ describe('StrudelEditor view', () => {
     // Assert
     expect(codeOnOpen).toBe(originalCode)
     expect(codeAfterAdd).toContain('$: s("bd sd, hh*8")')
-    expect(codeAfterAdd).toContain('$: note("c3 [e3 g3] a3 [g3 e3]")')
+    expect(codeAfterAdd).toContain('$: note(')
     expect(wrapper.find('.strudel-flow-editor-stub').exists()).toBe(false)
     expect(readEditorCode(wrapper)).toBe(codeAfterAdd)
   })
@@ -694,17 +695,17 @@ describe('StrudelEditor view', () => {
     expect(wrapper.find('.strudel-settings').exists()).toBe(true)
   })
 
-  it('shows the Nodes tool only in flow mode', async () => {
+  it('shows the Functions tool in code mode and in flow mode', async () => {
     // Arrange
     const wrapper = await mountEditorView()
 
     // Act
-    const inCodeMode = wrapper.find('button[aria-label="Nodes"]').exists()
+    const inCodeMode = wrapper.find('button[aria-label="Functions"]').exists()
     await clickMode(wrapper, 'Flow')
-    const inFlowMode = wrapper.find('button[aria-label="Nodes"]').exists()
+    const inFlowMode = wrapper.find('button[aria-label="Functions"]').exists()
 
     // Assert
-    expect(inCodeMode).toBe(false)
+    expect(inCodeMode).toBe(true)
     expect(inFlowMode).toBe(true)
   })
 })

@@ -3,6 +3,7 @@ import strudelDocumentation from './codeEditor/strudelDocumentation.json'
 import { STRUDEL_API_GROUP_DEFINITIONS, STRUDEL_API_HIDDEN_NAMES } from './strudelApiGroups'
 import {
   STRUDEL_API_ENTRIES,
+  createStrudelApiFunctionData,
   findStrudelApiEntry,
   groupStrudelApiEntries,
   matchesStrudelApiSearch
@@ -80,25 +81,28 @@ describe('strudelApiCatalog', () => {
     expect(nonsenseMatches).toEqual([])
   })
 
-  it('adds the mapped node kind for a function a node covers', () => {
+  it('links every function to its learn page', () => {
     // Assert
-    expect(findStrudelApiEntry('lpf')?.add).toEqual({ kind: 'filter' })
-    expect(findStrudelApiEntry('sound')?.add).toEqual({ kind: 'samples' })
+    expect(findStrudelApiEntry('lpf')?.docsUrl).toBe('https://strudel.cc/learn/effects/#lpf')
+    expect(
+      STRUDEL_API_ENTRIES.every((entry) => entry.docsUrl.startsWith('https://strudel.cc/learn/'))
+    ).toBe(true)
   })
 
-  it('adds a Code node holding the documented example for an unmapped function', () => {
+  it('builds a generic function node with a control per documented argument', () => {
     // Arrange
-    const stackExample = strudelDocumentation.find(
-      (documentation) => documentation.name === 'stack'
-    )?.examples[0]
+    const lpfEntry = findStrudelApiEntry('lpf')!
+
+    // Act
+    const data = createStrudelApiFunctionData(lpfEntry)
 
     // Assert
-    expect(stackExample).toBeDefined()
-    expect(findStrudelApiEntry('stack')?.add).toEqual({ kind: 'code', code: stackExample })
-  })
-
-  it('offers no Add action for an unmapped function with no example', () => {
-    // Assert
-    expect(findStrudelApiEntry('asym')?.add).toBeNull()
+    expect(data.kind).toBe('function')
+    expect(data.name).toBe('lpf')
+    expect(data.docsUrl).toBe(lpfEntry.docsUrl)
+    expect(data.parameters.map((parameter) => parameter.name)).toEqual(
+      lpfEntry.params.map((parameter) => parameter.name)
+    )
+    expect(data.parameters[0].kind).toBe('number')
   })
 })

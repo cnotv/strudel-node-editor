@@ -118,7 +118,7 @@ export const useStrudelFlow = (): StrudelFlowState => {
   }
 
   const resetPatch = (): void => {
-    applyPatch(createDefaultStrudelFlowPatch())
+    applyPatch({ ...createDefaultStrudelFlowPatch(), nodes: [], edges: [] })
   }
 
   const loadCode = (code: string): boolean => {

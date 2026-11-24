@@ -282,7 +282,7 @@ describe('useStrudelFlow', () => {
     })
   })
 
-  it('resets the patch and tempo to the starter state', async () => {
+  it('resets to an empty patch and the default tempo', async () => {
     // Arrange
     const flow = createFlow()
     flow.addNode('chords')
@@ -294,8 +294,8 @@ describe('useStrudelFlow', () => {
     await nextTick()
 
     // Assert
-    expect(flow.nodes.value.map((node) => node.id)).toEqual(STARTER_IDS)
-    expect(flow.edges.value).toHaveLength(2)
+    expect(flow.nodes.value).toEqual([])
+    expect(flow.edges.value).toEqual([])
     expect(flow.beatsPerMinute.value).toBe(120)
     expect(readStoredPatch()?.beatsPerMinute).toBe(120)
   })

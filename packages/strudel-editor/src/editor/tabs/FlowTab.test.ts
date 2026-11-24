@@ -1,85 +1,135 @@
-import { describe, expect, it, vi } from 'vitest'
-import { flushPromises, mount } from '@vue/test-utils'
+import { describe, expect, it } from 'vitest'
+import { mount } from '@vue/test-utils'
 import type { VueWrapper } from '@vue/test-utils'
-import { findStrudelApiEntry } from '../strudelApiCatalog'
+import { createStrudelApiFunctionData, findStrudelApiEntry } from '../strudelApiCatalog'
+import type { StrudelApiEntry } from '../types'
 import FlowTab from './FlowTab.vue'
 
 const mountFlowTab = () => mount(FlowTab)
-
-const findButton = (wrapper: VueWrapper, label: string) =>
-  wrapper.findAll('button').find((button) => button.text() === label)
-
-const switchView = async (wrapper: VueWrapper, label: 'Nodes' | 'Functions'): Promise<void> => {
-  await findButton(wrapper, label)?.trigger('click')
-}
 
 const searchFunctions = async (wrapper: VueWrapper, query: string): Promise<void> => {
   await wrapper.find('input[aria-label="Search functions"]').setValue(query)
 }
 
-const mockClipboard = (writeText: ReturnType<typeof vi.fn>): void => {
-  Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true })
+const expectedFunctionData = (name: string) => {
+  const entry = findStrudelApiEntry(name)
+  if (entry === null) {
+    throw new Error(`${name} is not in the catalog`)
+  }
+  return createStrudelApiFunctionData(entry)
 }
 
 describe('FlowTab', () => {
-  it('lists every instrument, effect and sound node under its category', () => {
-    // Arrange
+  it('lists every function under a collapsed heading', () => {
+    // Arrange / Act
     const wrapper = mountFlowTab()
-
-    // Act
     const groupTitles = wrapper
       .findAll('.strudel-flow-tab__group-title')
       .map((title) => title.text())
-    const itemTitles = wrapper.findAll('.strudel-flow-tab__item-title').map((title) => title.text())
+    const groups = wrapper.findAll('details.strudel-flow-tab__group')
 
     // Assert
-    expect(groupTitles).toEqual(['Instruments', 'Effects', 'Sounds'])
-    expect(itemTitles).toEqual([
-      'Pad',
-      'Beats',
-      'Chords',
-      'Notes',
-      'Samples',
-      'Code',
-      'Arrange',
-      'Filter',
-      'Delay',
-      'Space',
-      'Gain',
-      'Level',
-      'Mask',
-      'Struct',
-      'Slow',
-      'Voicing',
-      'Envelope',
-      'Visualizer',
-      'Effect',
-      'Voice'
-    ])
+    expect(groupTitles[0]).toBe('Start here')
+    expect(groupTitles).toContain('Instruments & sources')
+    expect(groups).toHaveLength(13)
+    expect(groups.every((group) => group.attributes('open') === undefined)).toBe(true)
+    expect(wrapper.findAll('.strudel-flow-tab__function-name')).toHaveLength(408)
   })
 
-  it('asks for a node when its Add button is pressed', async () => {
-    // Arrange
-    const wrapper = mountFlowTab()
-
-    // Act
-    await wrapper.find('button[aria-label="Add Beats node"]').trigger('click')
-
-    // Assert
-    expect(wrapper.emitted('addNode')).toEqual([['beats']])
-  })
-
-  it('does not duplicate the generated code in the side panel', () => {
+  it('keeps the function palette as the only list', () => {
     // Arrange / Act
     const wrapper = mountFlowTab()
 
     // Assert
-    expect(wrapper.text()).not.toContain('Generated code')
-    expect(wrapper.find('pre').exists()).toBe(false)
-    expect(wrapper.find('[role="alert"]').exists()).toBe(false)
+    expect(wrapper.text()).not.toContain('Add instrument, effect and sound nodes')
+    expect(wrapper.find('.strudel-flow-tab__item').exists()).toBe(false)
+    expect(wrapper.findAll('button').some((button) => button.text() === 'Nodes')).toBe(false)
   })
 
-  it('asks for the starter patch when Reset is pressed', async () => {
+  it('asks for a generic function node when its Add button is pressed', async () => {
+    // Arrange
+    const wrapper = mountFlowTab()
+    await searchFunctions(wrapper, 'lpf')
+
+    // Act
+    await wrapper.find('button[aria-label="Add lpf function"]').trigger('click')
+
+    // Assert
+    expect(wrapper.emitted('addNode')).toEqual([['function', expectedFunctionData('lpf')]])
+  })
+
+  it('opens the groups a search matches', async () => {
+    // Arrange
+    const wrapper = mountFlowTab()
+
+    // Act
+    await searchFunctions(wrapper, 'reverb')
+
+    // Assert
+    expect(wrapper.findAll('details.strudel-flow-tab__group').length).toBeGreaterThan(0)
+    expect(
+      wrapper
+        .findAll('details.strudel-flow-tab__group')
+        .every((group) => group.attributes('open') !== undefined)
+    ).toBe(true)
+  })
+
+  it('finds s when searching for its synonym sound', async () => {
+    // Arrange
+    const wrapper = mountFlowTab()
+
+    // Act
+    await searchFunctions(wrapper, 'sound')
+
+    // Assert
+    expect(
+      wrapper.findAll('.strudel-flow-tab__function-name').map((name) => name.text())
+    ).toContain('s')
+  })
+
+  it('shows an empty state for a nonsense search', async () => {
+    // Arrange
+    const wrapper = mountFlowTab()
+
+    // Act
+    await searchFunctions(wrapper, 'zzzzzz')
+
+    // Assert
+    expect(wrapper.find('.strudel-flow-tab__empty').text()).toContain('No function matches')
+    expect(wrapper.findAll('.strudel-flow-tab__function').length).toBe(0)
+  })
+
+  it('links each function to its docs page', async () => {
+    // Arrange
+    const wrapper = mountFlowTab()
+    const entry: StrudelApiEntry | null = findStrudelApiEntry('lpf')
+    await searchFunctions(wrapper, 'lpf')
+
+    // Act
+    const link = wrapper
+      .findAll('.strudel-flow-tab__function')
+      .find((row) => row.find('.strudel-flow-tab__function-name').text() === 'lpf')!
+      .find('.strudel-flow-tab__function-docs')
+
+    // Assert
+    expect(entry).not.toBeNull()
+    expect(link.attributes('href')).toBe(entry?.docsUrl)
+  })
+
+  it('adds a start-here function', async () => {
+    // Arrange
+    const wrapper = mountFlowTab()
+
+    // Act
+    await wrapper
+      .find('.strudel-flow-tab__workshop-list button[aria-label="Add s function"]')
+      .trigger('click')
+
+    // Assert
+    expect(wrapper.emitted('addNode')).toEqual([['function', expectedFunctionData('s')]])
+  })
+
+  it('asks for the patch to be cleared when Reset is pressed', async () => {
     // Arrange
     const wrapper = mountFlowTab()
 
@@ -103,122 +153,5 @@ describe('FlowTab', () => {
       'https://xyflow.com',
       'https://github.com/xyflow/strudel-flow'
     ])
-  })
-
-  it('keeps the node list when switching to functions and back', async () => {
-    // Arrange
-    const wrapper = mountFlowTab()
-    const nodeTitles = wrapper.findAll('.strudel-flow-tab__item-title').map((title) => title.text())
-
-    // Act
-    await switchView(wrapper, 'Functions')
-    await switchView(wrapper, 'Nodes')
-
-    // Assert
-    expect(wrapper.findAll('.strudel-flow-tab__item-title').map((title) => title.text())).toEqual(
-      nodeTitles
-    )
-  })
-
-  it('lists functions in groups with their counts and start-here shortcuts', async () => {
-    // Arrange
-    const wrapper = mountFlowTab()
-
-    // Act
-    await switchView(wrapper, 'Functions')
-
-    // Assert
-    const groupTitles = wrapper
-      .findAll('.strudel-flow-tab__group-title')
-      .map((title) => title.text())
-    expect(groupTitles[0]).toContain('Start here')
-    expect(groupTitles[1]).toContain('Instruments & sources')
-    expect(groupTitles[1]).toContain('32')
-    expect(wrapper.findAll('.strudel-flow-tab__function-name').length).toBe(408)
-  })
-
-  it('finds s when searching for its synonym sound', async () => {
-    // Arrange
-    const wrapper = mountFlowTab()
-    await switchView(wrapper, 'Functions')
-
-    // Act
-    await searchFunctions(wrapper, 'sound')
-
-    // Assert
-    expect(
-      wrapper.findAll('.strudel-flow-tab__function-name').map((name) => name.text())
-    ).toContain('s')
-  })
-
-  it('shows an empty state for a nonsense search', async () => {
-    // Arrange
-    const wrapper = mountFlowTab()
-    await switchView(wrapper, 'Functions')
-
-    // Act
-    await searchFunctions(wrapper, 'zzzzzz')
-
-    // Assert
-    expect(wrapper.find('.strudel-flow-tab__empty').text()).toContain('No function matches')
-    expect(wrapper.findAll('.strudel-flow-tab__function').length).toBe(0)
-  })
-
-  it('adds the mapped node kind for a function a node covers', async () => {
-    // Arrange
-    const wrapper = mountFlowTab()
-    await switchView(wrapper, 'Functions')
-    await searchFunctions(wrapper, 'lpf')
-
-    // Act
-    await wrapper.find('button[aria-label="Add lpf as Filter"]').trigger('click')
-
-    // Assert
-    expect(wrapper.emitted('addNode')).toEqual([['filter']])
-  })
-
-  it('adds a Code node holding the documented example for an unmapped function', async () => {
-    // Arrange
-    const wrapper = mountFlowTab()
-    const stackExample = findStrudelApiEntry('stack')?.examples[0]
-    await switchView(wrapper, 'Functions')
-    await searchFunctions(wrapper, 'stack')
-
-    // Act
-    await wrapper.find('button[aria-label="Add stack as Code"]').trigger('click')
-
-    // Assert
-    expect(wrapper.emitted('addNode')).toEqual([['code', { kind: 'code', code: stackExample }]])
-  })
-
-  it('copies a function example', async () => {
-    // Arrange
-    const writeText = vi.fn().mockResolvedValue(undefined)
-    mockClipboard(writeText)
-    const wrapper = mountFlowTab()
-    const stackExample = findStrudelApiEntry('stack')?.examples[0] ?? ''
-    await switchView(wrapper, 'Functions')
-    await searchFunctions(wrapper, 'stack')
-
-    // Act
-    await wrapper.find('button[aria-label="Copy stack example"]').trigger('click')
-    await flushPromises()
-
-    // Assert
-    expect(writeText).toHaveBeenCalledWith(stackExample)
-  })
-
-  it('adds a start-here function', async () => {
-    // Arrange
-    const wrapper = mountFlowTab()
-    await switchView(wrapper, 'Functions')
-
-    // Act
-    await wrapper
-      .find('.strudel-flow-tab__workshop-list button[aria-label="Add s as Samples"]')
-      .trigger('click')
-
-    // Assert
-    expect(wrapper.emitted('addNode')).toEqual([['samples']])
   })
 })

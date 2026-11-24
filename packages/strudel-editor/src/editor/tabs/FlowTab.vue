@@ -75,9 +75,7 @@ const addFunction = (entry: StrudelApiEntry): void => {
 
     <section class="strudel-flow-tab__start" aria-labelledby="strudel-flow-start">
       <h4 id="strudel-flow-start" class="strudel-flow-tab__group-title">Start here</h4>
-      <p class="strudel-flow-tab__group-hint">
-        The functions that start a pattern, like the instruments.
-      </p>
+      <p class="strudel-flow-tab__group-hint">The functions that make a sound on their own.</p>
       <ul class="strudel-flow-tab__start-list">
         <li v-for="shortcut in startEntries" :key="shortcut.name">
           <Button

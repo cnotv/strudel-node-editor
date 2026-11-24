@@ -238,7 +238,7 @@ the beats in one cycle (**B/C**).
 
 The **Functions** drawer, open in code mode and flow mode alike, lists every documented Strudel
 function except setup and internals, searchable by name, synonym or description. Groups are
-collapsed until opened or searched, and each shows its count. **Start here** at the top holds the functions that start a pattern (`s`, `note`, `stack` and the like), as the instrument nodes do. Every function links to its page in
+collapsed until opened or searched, and each shows its count. **Start here** at the top holds the functions that make a sound on their own: `s`, `sound` and `note`. Every function links to its page in
 the Strudel docs. **Add** puts a generic function node on the canvas holding only that call, with a
 knob, switch or field for each documented argument; nothing from the examples is added around it.
 Connect it to a pattern and it chains as `.name(...)`; left alone it starts a pattern as

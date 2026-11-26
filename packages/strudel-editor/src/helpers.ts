@@ -1,4 +1,4 @@
-export { ELECTRO_TUNES as STRUDEL_SONGS } from './editor/config'
+export { ELECTRO_TUNES as STRUDEL_SONGS } from './editor/songs'
 export { STRUDEL_SAVED_CODE_STORAGE_KEY } from './editor/config'
 export { readStrudelNoteBars } from './editor/noteBars'
 export { readStrudelAddress, writeStrudelAddress } from './editor/strudelAddress'

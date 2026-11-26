@@ -4,12 +4,12 @@ import { appendStrudelFlowBlocks } from '@webgamekit/strudel-flow'
 import { readStorage, writeStorage } from '../utils/storage'
 import {
   DEFAULT_STRUDEL_EXAMPLE_ID,
-  ELECTRO_TUNES,
   STRUDEL_EXAMPLES,
   STRUDEL_SAVED_CODE_STORAGE_KEY,
   STRUDEL_VOLUME_STORAGE_KEY,
   STRUDEL_TABS
 } from './config'
+import { ELECTRO_TUNES } from './songs'
 import { useSavedPatterns } from './useSavedPatterns'
 import { useStrudelExport } from './useStrudelExport'
 import { useStrudelLog } from './useStrudelLog'

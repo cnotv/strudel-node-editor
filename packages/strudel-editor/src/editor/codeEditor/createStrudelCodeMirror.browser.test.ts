@@ -22,7 +22,8 @@ const mountEditor = (initialCode: string) => {
     ariaLabel: 'Live code pattern',
     onCodeChange,
     onEvaluate,
-    onStop
+    onStop,
+    onModifierClick: vi.fn()
   })
   mountedEditors.push({ parent, editor })
   return { parent, editor, onCodeChange, onEvaluate, onStop }

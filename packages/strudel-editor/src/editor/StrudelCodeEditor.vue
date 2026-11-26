@@ -11,6 +11,7 @@ const emit = defineEmits<{
   'update:code': [patternCode: string]
   evaluate: []
   stop: []
+  'modifier-click': [position: number]
   ready: [editorHandle: StrudelEditorHandle | null]
 }>()
 
@@ -64,7 +65,8 @@ onMounted(async () => {
     ariaLabel: STRUDEL_EDITOR_ARIA_LABEL,
     onCodeChange: (patternCode) => emit('update:code', patternCode),
     onEvaluate: () => emit('evaluate'),
-    onStop: () => emit('stop')
+    onStop: () => emit('stop'),
+    onModifierClick: (position) => emit('modifier-click', position)
   })
   codeMirror.value = createdEditor
   emit('ready', {

@@ -174,6 +174,8 @@ export type StrudelCodeMirrorOptions = {
   onCodeChange: (patternCode: string) => void
   onEvaluate: () => void
   onStop: () => void
+  /** Ctrl or Cmd plus click, with the document offset under the pointer. */
+  onModifierClick: (position: number) => void
 }
 
 export type StrudelFunctionParameter = {

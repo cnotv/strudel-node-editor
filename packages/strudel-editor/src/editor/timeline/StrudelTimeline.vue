@@ -655,8 +655,12 @@ const timeReadout = computed(() => `${(props.playheadCycle / props.cyclesPerSeco
   min-width: 2px;
   padding: 0;
   border: 0;
+  border-right: 1px solid transparent;
   border-radius: 1px;
+
+  /* The transparent edge leaves a gap, so notes that touch still read as separate hits. */
   background: var(--color-primary);
+  background-clip: padding-box;
   cursor: pointer;
 }
 

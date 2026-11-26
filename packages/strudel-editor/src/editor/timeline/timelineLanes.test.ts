@@ -21,6 +21,23 @@ describe('groupHapsIntoLanes', () => {
     ])
   })
 
+  it('numbers the lanes of one sound whose notes play together', () => {
+    // Arrange
+    const haps = [
+      { value: { s: 'sawtooth' }, beginCycle: 0, durationCycles: 1, sourceRanges: [] },
+      { value: { s: 'sawtooth' }, beginCycle: 0.5, durationCycles: 0.25, sourceRanges: [] },
+      { value: { s: 'sawtooth' }, beginCycle: 1, durationCycles: 1, sourceRanges: [] }
+    ]
+
+    // Act
+    const lanes = groupHapsIntoLanes(haps)
+
+    // Assert
+    expect(lanes.map((lane) => lane.name)).toEqual(['sawtooth', 'sawtooth 2'])
+    expect(lanes[0]?.notes.map((note) => note.beginCycle)).toEqual([0, 1])
+    expect(lanes[1]?.notes.map((note) => note.beginCycle)).toEqual([0.5])
+  })
+
   it('names a note without a sound after the generic lane', () => {
     // Act
     const lanes = groupHapsIntoLanes([

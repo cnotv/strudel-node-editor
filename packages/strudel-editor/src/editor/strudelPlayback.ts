@@ -671,6 +671,9 @@ export const renderStrudelCodeToWav = async (patternCode: string): Promise<Array
   return result.file
 }
 
+// One playback and one scheduler serve both, and Strudel keeps tempo and the scheduler in module
+// globals that a second playback would rebind, so notes cannot get a playback of their own. A
+// live play goes first instead, and a notes render in the way steps aside and starts over.
 const runSongWorkInTurn = createRenderQueue()
 
 // The engine keeps the tempo the last song set, so a song that sets none starts from Strudel's
@@ -681,22 +684,27 @@ const fromDefaultTempo = (songCode: string): string => `setcps(${DEFAULT_CPS})\n
  * Writes a whole song's notes to MIDI without playing a sound, so a game can chart it. It renders
  * notes only, never audio, which takes a fraction of a second where a recording took minutes.
  * @param songCode - Strudel code for the song
+ * Yields to a live play: a render still waiting lets it go first, and one running stops at its next
+ * step and starts over once the song is playing.
  * @returns the MIDI file of one full play of the song, and the tempo the song set
  * @throws {Error} when the code does not evaluate
  */
 export const renderStrudelCodeToNotes = (
   songCode: string
 ): Promise<{ midi: ArrayBuffer; cyclesPerSecond: number }> =>
-  runSongWorkInTurn(async () => {
+  runSongWorkInTurn(async (signal) => {
     const patternCode = fromDefaultTempo(songCode)
     await prepareInstrumentsForCode(patternCode)
     const playback = await loadSilentPlayback()
+    signal.throwIfAborted()
     const cycles = (await playback.measureRepetition(patternCode)) ?? STRUDEL_MAX_SONG_CYCLES
+    signal.throwIfAborted()
     const midi = await playback.renderToMidiBytes(patternCode, {
       ...EXPORT_DEFAULT_OPTIONS,
       format: 'midi',
       endCycle: cycles
     })
+    signal.throwIfAborted()
     if (!midi.success || midi.file === undefined) {
       throw new Error(midi.errorMessage ?? 'The code did not render.')
     }
@@ -710,14 +718,17 @@ export const renderStrudelCodeToNotes = (
  * @throws {Error} when the code does not evaluate
  */
 export const playStrudelSong = (songCode: string): Promise<StrudelLiveSong> =>
-  runSongWorkInTurn(async () => {
-    const patternCode = fromDefaultTempo(songCode)
-    await prepareInstrumentsForCode(patternCode)
-    const playback = await loadSilentPlayback()
-    const result = await playback.evaluateCode(patternCode)
-    if (!result.success) throw new Error(result.errorMessage ?? 'The song did not play.')
-    return { readPosition: playback.readPosition, stop: playback.stopPlayback }
-  })
+  runSongWorkInTurn(
+    async () => {
+      const patternCode = fromDefaultTempo(songCode)
+      await prepareInstrumentsForCode(patternCode)
+      const playback = await loadSilentPlayback()
+      const result = await playback.evaluateCode(patternCode)
+      if (!result.success) throw new Error(result.errorMessage ?? 'The song did not play.')
+      return { readPosition: playback.readPosition, stop: playback.stopPlayback }
+    },
+    { urgent: true }
+  )
 
 /**
  * Plays a rendered WAV once on the page's audio and hands back a way to stop it. One buffer,

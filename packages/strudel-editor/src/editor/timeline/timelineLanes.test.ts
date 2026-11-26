@@ -11,7 +11,7 @@ describe('groupHapsIntoLanes', () => {
     ]
 
     // Act
-    const lanes = groupHapsIntoLanes(haps)
+    const lanes = groupHapsIntoLanes(haps, '')
 
     // Assert
     expect(lanes.map((lane) => lane.name)).toEqual(['bd', 'hh'])
@@ -45,7 +45,7 @@ describe('groupHapsIntoLanes', () => {
     ]
 
     // Act
-    const lanes = groupHapsIntoLanes(haps)
+    const lanes = groupHapsIntoLanes(haps, '')
 
     // Assert
     expect(lanes.map((lane) => lane.name)).toEqual(['sawtooth', 'sawtooth 2'])
@@ -56,12 +56,31 @@ describe('groupHapsIntoLanes', () => {
 
   it('names a note without a sound after the generic lane', () => {
     // Act
-    const lanes = groupHapsIntoLanes([
-      { value: { note: 'c3' }, beginCycle: 0, durationCycles: 1, sourceRanges: [] }
-    ])
+    const lanes = groupHapsIntoLanes(
+      [{ value: { note: 'c3' }, beginCycle: 0, durationCycles: 1, sourceRanges: [] }],
+      ''
+    )
 
     // Assert
     expect(lanes.map((lane) => lane.name)).toEqual(['notes'])
+  })
+
+  it('keeps the notes of one string in one lane, though each has its own span', () => {
+    // Arrange
+    const code = 'note("e1 g1 a1").s("sawtooth")'
+    const haps = [0, 1, 2].map((index) => ({
+      value: { s: 'sawtooth' },
+      beginCycle: index,
+      durationCycles: 1,
+      sourceRanges: [{ from: 6 + index * 3, to: 8 + index * 3 }]
+    }))
+
+    // Act
+    const lanes = groupHapsIntoLanes(haps, code)
+
+    // Assert
+    expect(lanes.map((lane) => lane.name)).toEqual(['sawtooth'])
+    expect(lanes[0]?.notes).toHaveLength(3)
   })
 
   it('points the lane at where its instrument is first defined', () => {
@@ -77,7 +96,7 @@ describe('groupHapsIntoLanes', () => {
     ]
 
     // Act
-    const lanes = groupHapsIntoLanes(haps)
+    const lanes = groupHapsIntoLanes(haps, '')
 
     // Assert
     expect(lanes[0]?.sourceRanges).toEqual([{ from: 10, to: 14 }])

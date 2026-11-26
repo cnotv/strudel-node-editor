@@ -1,4 +1,4 @@
-import type { StrudelScheduledHap, StrudelTimelineLane } from '../types'
+import type { StrudelScheduledHap, StrudelSourceRange, StrudelTimelineLane } from '../types'
 
 const UNNAMED_LANE = 'notes'
 
@@ -16,6 +16,22 @@ const readLaneName = (hap: StrudelScheduledHap): string => {
   return UNNAMED_LANE
 }
 
+const STRING_LITERAL = /"(?:[^\n"\\]|\\.)*"|'(?:[^\n'\\]|\\.)*'|`(?:[^\\`]|\\.)*`/g
+
+// Every note of a string has a span of its own, so a layer is told apart by the strings its
+// notes came from, not by the notes.
+const readLayerKey = (code: string, ranges: StrudelSourceRange[]): string => {
+  const literals = Array.from(code.matchAll(STRING_LITERAL), (match) => ({
+    from: match.index,
+    to: match.index + match[0].length
+  }))
+  const owners = ranges.map(
+    (range) =>
+      literals.find((literal) => range.from >= literal.from && range.to <= literal.to) ?? range
+  )
+  return JSON.stringify(owners.map((owner) => [owner.from, owner.to]))
+}
+
 const laneLabel = (sound: string, layerIndex: number): string =>
   layerIndex === 0 ? sound : `${sound} ${layerIndex + 1}`
 
@@ -24,13 +40,17 @@ const laneLabel = (sound: string, layerIndex: number): string =>
  * a sound are told apart by the code they came from and numbered `sawtooth`, `sawtooth 2`,
  * so each lane selects its own code.
  * @param haps - the events that start inside the measured cycles
+ * @param code - the code the events came from, to tell the layers of one sound apart
  * @returns the lanes in the order their layer first plays
  */
-export const groupHapsIntoLanes = (haps: StrudelScheduledHap[]): StrudelTimelineLane[] => {
+export const groupHapsIntoLanes = (
+  haps: StrudelScheduledHap[],
+  code: string
+): StrudelTimelineLane[] => {
   const layersBySound = new Map<string, string[]>()
   const lanesByLayer = haps.reduce<Map<string, StrudelTimelineLane>>((lanes, hap) => {
     const sound = readLaneName(hap)
-    const layerKey = JSON.stringify(hap.sourceRanges)
+    const layerKey = readLayerKey(code, hap.sourceRanges)
     const layers = layersBySound.get(sound) ?? []
     const layerIndex = layers.includes(layerKey) ? layers.indexOf(layerKey) : layers.length
     layersBySound.set(sound, layers.includes(layerKey) ? layers : [...layers, layerKey])

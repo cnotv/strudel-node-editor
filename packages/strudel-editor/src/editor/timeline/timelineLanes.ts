@@ -20,16 +20,35 @@ const STRING_LITERAL = /"(?:[^\n"\\]|\\.)*"|'(?:[^\n'\\]|\\.)*'|`(?:[^\\`]|\\.)*
 
 // Every note of a string has a span of its own, so a layer is told apart by the strings its
 // notes came from, not by the notes.
-const readLayerKey = (code: string, ranges: StrudelSourceRange[]): string => {
+const readOwners = (code: string, ranges: StrudelSourceRange[]): StrudelSourceRange[] => {
   const literals = Array.from(code.matchAll(STRING_LITERAL), (match) => ({
     from: match.index,
     to: match.index + match[0].length
   }))
-  const owners = ranges.map(
+  return ranges.map(
     (range) =>
       literals.find((literal) => range.from >= literal.from && range.to <= literal.to) ?? range
   )
-  return JSON.stringify(owners.map((owner) => [owner.from, owner.to]))
+}
+
+const readLayerKey = (code: string, ranges: StrudelSourceRange[]): string =>
+  JSON.stringify(readOwners(code, ranges).map((owner) => [owner.from, owner.to]))
+
+const isSameRange = (first: StrudelSourceRange, second: StrudelSourceRange): boolean =>
+  first.from === second.from && first.to === second.to
+
+// A definition such as `mellowFuzz = p => p.s("sawtooth")` is shared by every layer that calls
+// it; the string only one layer owns is what says which of them a lane is.
+const pickOwnRanges = (
+  lane: StrudelTimelineLane,
+  siblings: StrudelTimelineLane[],
+  code: string
+): StrudelSourceRange[] => {
+  const siblingOwners = siblings.map((sibling) => readOwners(code, sibling.sourceRanges))
+  const ownRanges = readOwners(code, lane.sourceRanges).filter((owner) =>
+    siblingOwners.some((owners) => !owners.some((other) => isSameRange(owner, other)))
+  )
+  return ownRanges.length === 0 ? lane.sourceRanges : ownRanges
 }
 
 const laneLabel = (sound: string, layerIndex: number): string =>
@@ -73,5 +92,13 @@ export const groupHapsIntoLanes = (
         : { ...lane, notes: [...lane.notes, note] }
     )
   }, new Map())
-  return [...lanesByLayer.values()]
+  const lanes = [...lanesByLayer.values()]
+  return lanes.map((lane) => ({
+    ...lane,
+    sourceRanges: pickOwnRanges(
+      lane,
+      lanes.filter((sibling) => sibling !== lane && sibling.sound === lane.sound),
+      code
+    )
+  }))
 }

@@ -83,6 +83,34 @@ describe('groupHapsIntoLanes', () => {
     expect(lanes[0]?.notes).toHaveLength(3)
   })
 
+  it('points each lane of a shared definition at the string only its layer owns', () => {
+    // Arrange
+    const code = [
+      'const fuzz = p => p.s("sawtooth")',
+      'stack(fuzz(note("e1 g1")), fuzz(note("e2 g2")))'
+    ].join('\n')
+    const definition = { from: code.indexOf('sawtooth'), to: code.indexOf('sawtooth') + 8 }
+    const first = { from: code.indexOf('e1'), to: code.indexOf('e1') + 2 }
+    const second = { from: code.indexOf('e2'), to: code.indexOf('e2') + 2 }
+    const haps = [first, second].map((own) => ({
+      value: { s: 'sawtooth' },
+      beginCycle: 0,
+      durationCycles: 1,
+      sourceRanges: [definition, own]
+    }))
+
+    // Act
+    const lanes = groupHapsIntoLanes(haps, code)
+
+    // Assert
+    const literalOf = (range: { from: number; to: number } | undefined): string =>
+      range === undefined ? '' : code.slice(range.from, range.to)
+    expect(lanes.map((lane) => lane.sourceRanges.map(literalOf))).toEqual([
+      ['"e1 g1"'],
+      ['"e2 g2"']
+    ])
+  })
+
   it('points the lane at where its instrument is first defined', () => {
     // Arrange
     const haps = [

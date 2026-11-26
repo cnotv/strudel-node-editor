@@ -122,6 +122,15 @@ const buildExtensions = (
       event.preventDefault()
       options.onModifierClick(position)
       return true
+    },
+    // On a Mac, Ctrl+click also opens the context menu, which would select the word under the
+    // pointer right after the jump.
+    contextmenu: (event) => {
+      if (!event.ctrlKey) {
+        return false
+      }
+      event.preventDefault()
+      return true
     }
   }),
   EditorView.updateListener.of((update) => {

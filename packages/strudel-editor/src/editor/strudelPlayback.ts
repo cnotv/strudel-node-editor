@@ -211,6 +211,12 @@ export const readEvaluationMeta = (evaluation: unknown): StrudelEvaluationMeta =
     : { miniLocations: [], widgets: [] }
 }
 
+// Twice the song limit, so a loop longer than the limit is seen to repeat or not.
+const SONG_SCAN_CYCLES = STRUDEL_MAX_SONG_CYCLES * 2
+
+const readEvaluationCode = (evaluation: unknown): string =>
+  isRecordModule(evaluation) && typeof evaluation.code === 'string' ? evaluation.code : ''
+
 const patternHasPainters = (evaluation: unknown): boolean => {
   const pattern = isRecordModule(evaluation) ? evaluation.pattern : undefined
   const getPainters = isRecordModule(pattern) ? toCallable(pattern.getPainters) : undefined
@@ -392,6 +398,7 @@ export const loadDefaultStrudelPlayback = async (
   let replScheduler: unknown = null
   let latestEvaluationError: unknown = null
   let latestPattern: unknown = null
+  let latestCode = ''
   const volumeControl = createVolumeControl(() => readAudioController(engine.audioModule))
   const callbacks: ReplCallbacks = {
     beforeEval: cleanupVisuals,
@@ -402,6 +409,7 @@ export const loadDefaultStrudelPlayback = async (
     },
     afterEval: (evaluation) => {
       latestPattern = isRecordModule(evaluation) ? (evaluation.pattern ?? null) : null
+      latestCode = readEvaluationCode(evaluation)
       hooks.onEvaluated(readEvaluationMeta(evaluation))
       drawer.setDrawTime(patternHasPainters(evaluation) ? STRUDEL_DRAW_TIME : STRUDEL_NO_DRAW_TIME)
       drawer.invalidate(replScheduler)
@@ -493,15 +501,14 @@ export const loadDefaultStrudelPlayback = async (
     measureLoop: (): number | null =>
       latestPattern === null
         ? null
-        : findLoopBars(
-            readOpeningHaps(latestPattern, STRUDEL_MAX_SONG_CYCLES * 2),
-            STRUDEL_MAX_SONG_CYCLES
-          ),
+        : findLoopBars(readOpeningHaps(latestPattern, SONG_SCAN_CYCLES), STRUDEL_MAX_SONG_CYCLES),
     measureLanes: (cycleCount: number) =>
-      latestPattern === null ? [] : groupHapsIntoLanes(readOpeningHaps(latestPattern, cycleCount)),
+      latestPattern === null
+        ? []
+        : groupHapsIntoLanes(readOpeningHaps(latestPattern, cycleCount), latestCode),
     measureRepetition: async (patternCode: string): Promise<number | null> =>
       findPatternRepetition(
-        readOpeningHaps(await evaluateForExport(patternCode), STRUDEL_MAX_SONG_CYCLES * 2),
+        readOpeningHaps(await evaluateForExport(patternCode), SONG_SCAN_CYCLES),
         STRUDEL_MAX_SONG_CYCLES
       ),
     renderToWavBytes: (patternCode: string, exportOptions: StrudelExportOptions) =>

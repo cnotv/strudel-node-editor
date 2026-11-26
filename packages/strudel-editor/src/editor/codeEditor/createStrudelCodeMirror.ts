@@ -113,6 +113,26 @@ const buildExtensions = (
   inlineWidgetField,
   Prec.highest(highlightExtension),
   flashField,
+  EditorView.domEventHandlers({
+    mousedown: (event, view) => {
+      const position = view.posAtCoords({ x: event.clientX, y: event.clientY })
+      if (!(event.ctrlKey || event.metaKey) || position === null) {
+        return false
+      }
+      event.preventDefault()
+      options.onModifierClick(position)
+      return true
+    },
+    // On a Mac, Ctrl+click also opens the context menu, which would select the word under the
+    // pointer right after the jump.
+    contextmenu: (event) => {
+      if (!event.ctrlKey) {
+        return false
+      }
+      event.preventDefault()
+      return true
+    }
+  }),
   EditorView.updateListener.of((update) => {
     if (update.docChanged) {
       options.onCodeChange(update.state.doc.toString())

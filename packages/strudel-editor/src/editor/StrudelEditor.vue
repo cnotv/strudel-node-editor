@@ -74,6 +74,7 @@ import ConsoleTab from './tabs/ConsoleTab.vue'
 import SettingsTab from './tabs/SettingsTab.vue'
 import StrudelTimeline from './timeline/StrudelTimeline.vue'
 import { pickDefinitionRange } from './timeline/pickDefinitionRange'
+import { findVariableDefinition } from './codeEditor/findVariableDefinition'
 
 // Vue Flow is a large canvas library and only loads when the player opens flow mode.
 const StrudelFlowEditor = defineAsyncComponent(() =>
@@ -474,6 +475,14 @@ const onShowNodeCode = async (nodeId: string): Promise<void> => {
   }
 }
 
+// Ctrl or Cmd plus click on a variable jumps to where it is declared, as in VS Code.
+const onCodeModifierClick = (position: number): void => {
+  const definition = findVariableDefinition(patternCode.value, position)
+  if (definition !== null) {
+    codeEditor.value?.selectRange(definition.from, definition.to)
+  }
+}
+
 const showCodeEditor = async (): Promise<void> => {
   onEditorModeChange('code')
   await nextTick()
@@ -560,6 +569,7 @@ onBeforeUnmount(() => {
         @update:code="updatePatternCode"
         @evaluate="onPlayRequested"
         @stop="onStopRequested"
+        @modifier-click="onCodeModifierClick"
         @ready="attachEditor"
       />
       <div v-if="editorMode === 'flow'" class="strudel-editor__flow">

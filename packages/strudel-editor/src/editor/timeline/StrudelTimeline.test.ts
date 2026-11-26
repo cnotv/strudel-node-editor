@@ -215,11 +215,13 @@ describe('StrudelTimeline', () => {
     const lanes = [
       {
         name: 'bd',
+        sound: 'bd',
         notes: [{ beginCycle: 0, durationCycles: 0.25, sourceRanges: [{ from: 5, to: 7 }] }],
         sourceRanges: [{ from: 5, to: 7 }]
       },
       {
         name: 'hh',
+        sound: 'hh',
         notes: [{ beginCycle: 1, durationCycles: 0.25, sourceRanges: [] }],
         sourceRanges: []
       }
@@ -240,6 +242,7 @@ describe('StrudelTimeline', () => {
     // Arrange
     const lane = {
       name: 'bd',
+      sound: 'bd',
       notes: [{ beginCycle: 0, durationCycles: 0.25, sourceRanges: [{ from: 5, to: 7 }] }],
       sourceRanges: [{ from: 5, to: 7 }]
     }

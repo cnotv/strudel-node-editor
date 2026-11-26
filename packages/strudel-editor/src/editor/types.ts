@@ -107,7 +107,10 @@ export type StrudelPlayback = {
 
 /** One instrument's row on the timeline: when each of its notes starts and how long it lasts, in cycles. */
 export type StrudelTimelineLane = {
+  /** The label shown, with a number when several layers play the same sound. */
   name: string
+  /** The sound the layer plays, which the code spells out. */
+  sound: string
   notes: { beginCycle: number; durationCycles: number; sourceRanges: StrudelSourceRange[] }[]
   /** The spans of code behind the lane's first note. */
   sourceRanges: StrudelSourceRange[]
@@ -171,6 +174,8 @@ export type StrudelCodeMirrorOptions = {
   onCodeChange: (patternCode: string) => void
   onEvaluate: () => void
   onStop: () => void
+  /** Ctrl or Cmd plus click, with the document offset under the pointer. */
+  onModifierClick: (position: number) => void
 }
 
 export type StrudelFunctionParameter = {

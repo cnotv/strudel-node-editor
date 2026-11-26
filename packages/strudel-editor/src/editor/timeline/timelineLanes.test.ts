@@ -21,12 +21,27 @@ describe('groupHapsIntoLanes', () => {
     ])
   })
 
-  it('numbers the lanes of one sound whose notes play together', () => {
+  it('numbers the lanes of one sound played by different layers of code', () => {
     // Arrange
     const haps = [
-      { value: { s: 'sawtooth' }, beginCycle: 0, durationCycles: 1, sourceRanges: [] },
-      { value: { s: 'sawtooth' }, beginCycle: 0.5, durationCycles: 0.25, sourceRanges: [] },
-      { value: { s: 'sawtooth' }, beginCycle: 1, durationCycles: 1, sourceRanges: [] }
+      {
+        value: { s: 'sawtooth' },
+        beginCycle: 0,
+        durationCycles: 1,
+        sourceRanges: [{ from: 1, to: 5 }]
+      },
+      {
+        value: { s: 'sawtooth' },
+        beginCycle: 0,
+        durationCycles: 1,
+        sourceRanges: [{ from: 20, to: 25 }]
+      },
+      {
+        value: { s: 'sawtooth' },
+        beginCycle: 1,
+        durationCycles: 1,
+        sourceRanges: [{ from: 1, to: 5 }]
+      }
     ]
 
     // Act
@@ -34,8 +49,9 @@ describe('groupHapsIntoLanes', () => {
 
     // Assert
     expect(lanes.map((lane) => lane.name)).toEqual(['sawtooth', 'sawtooth 2'])
+    expect(lanes.map((lane) => lane.sound)).toEqual(['sawtooth', 'sawtooth'])
     expect(lanes[0]?.notes.map((note) => note.beginCycle)).toEqual([0, 1])
-    expect(lanes[1]?.notes.map((note) => note.beginCycle)).toEqual([0.5])
+    expect(lanes[1]?.sourceRanges).toEqual([{ from: 20, to: 25 }])
   })
 
   it('names a note without a sound after the generic lane', () => {

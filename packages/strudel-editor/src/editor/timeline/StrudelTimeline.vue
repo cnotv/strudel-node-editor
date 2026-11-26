@@ -364,7 +364,7 @@ const timeReadout = computed(() => `${(props.playheadCycle / props.cyclesPerSeco
           class="strudel-timeline__lane-name"
           :title="`Select the code of ${lane.name}`"
           :disabled="lane.sourceRanges.length === 0"
-          @click="emit('selectLane', lane.sourceRanges, lane.name)"
+          @click="emit('selectLane', lane.sourceRanges, lane.sound)"
         >
           {{ lane.name }}
         </button>
@@ -427,7 +427,7 @@ const timeReadout = computed(() => `${(props.playheadCycle / props.cyclesPerSeco
                   left: `${(note.beginCycle / timelineBars) * 100}%`,
                   width: `${(note.durationCycles / timelineBars) * 100}%`
                 }"
-                @click="emit('selectNote', note.sourceRanges, lane.name)"
+                @click="emit('selectNote', note.sourceRanges, lane.sound)"
               ></button>
             </div>
           </div>

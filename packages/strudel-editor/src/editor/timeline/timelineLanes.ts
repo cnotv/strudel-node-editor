@@ -1,8 +1,6 @@
 import type { StrudelScheduledHap, StrudelTimelineLane } from '../types'
 
 const UNNAMED_LANE = 'notes'
-// Float rounding must not turn a note that starts exactly as another ends into an overlap.
-const OVERLAP_TOLERANCE = 1e-6
 
 const readLaneName = (hap: StrudelScheduledHap): string => {
   const value = hap.value
@@ -18,58 +16,42 @@ const readLaneName = (hap: StrudelScheduledHap): string => {
   return UNNAMED_LANE
 }
 
-// Each note takes the first row whose last note has already ended, so layers that play
-// together stay apart instead of merging into one solid bar.
-const placeOnRows = (haps: StrudelScheduledHap[]): number[] => {
-  const ordered = haps
-    .map((hap, index) => ({ hap, index }))
-    .sort((a, b) => a.hap.beginCycle - b.hap.beginCycle)
-  const rowEnds = ordered.reduce<{ rowEnds: number[]; rows: number[] }>(
-    (state, { hap, index }) => {
-      const freeRow = state.rowEnds.findIndex((end) => end <= hap.beginCycle + OVERLAP_TOLERANCE)
-      const row = freeRow === -1 ? state.rowEnds.length : freeRow
-      const nextEnds = Object.assign([...state.rowEnds], {
-        [row]: hap.beginCycle + hap.durationCycles
-      })
-      return { rowEnds: nextEnds, rows: Object.assign([...state.rows], { [index]: row }) }
-    },
-    { rowEnds: [], rows: [] }
-  )
-  return rowEnds.rows
-}
-
-const laneKey = (name: string, row: number): string => (row === 0 ? name : `${name} ${row + 1}`)
+const laneLabel = (sound: string, layerIndex: number): string =>
+  layerIndex === 0 ? sound : `${sound} ${layerIndex + 1}`
 
 /**
- * Sorts events into one lane per instrument, named by the sound the event plays. Events of
- * the same sound that play together go to further lanes, numbered `sawtooth 2`, `sawtooth 3`.
+ * Sorts events into one lane per layer, named by the sound the event plays. Layers that share
+ * a sound are told apart by the code they came from and numbered `sawtooth`, `sawtooth 2`,
+ * so each lane selects its own code.
  * @param haps - the events that start inside the measured cycles
- * @returns the lanes in the order their instrument first plays
+ * @returns the lanes in the order their layer first plays
  */
 export const groupHapsIntoLanes = (haps: StrudelScheduledHap[]): StrudelTimelineLane[] => {
-  const hapsBySound = haps.reduce<Map<string, StrudelScheduledHap[]>>(
-    (bySound, hap) =>
-      bySound.set(readLaneName(hap), [...(bySound.get(readLaneName(hap)) ?? []), hap]),
-    new Map()
-  )
-  const placed = Array.from(hapsBySound, ([sound, soundHaps]) => {
-    const rows = placeOnRows(soundHaps)
-    return soundHaps.map((hap, index) => ({ hap, name: laneKey(sound, rows[index] ?? 0) }))
-  }).flat()
-  const ordered = placed.sort((a, b) => haps.indexOf(a.hap) - haps.indexOf(b.hap))
-  const lanes = ordered.reduce<Map<string, StrudelTimelineLane>>((byName, { hap, name }) => {
+  const layersBySound = new Map<string, string[]>()
+  const lanesByLayer = haps.reduce<Map<string, StrudelTimelineLane>>((lanes, hap) => {
+    const sound = readLaneName(hap)
+    const layerKey = JSON.stringify(hap.sourceRanges)
+    const layers = layersBySound.get(sound) ?? []
+    const layerIndex = layers.includes(layerKey) ? layers.indexOf(layerKey) : layers.length
+    layersBySound.set(sound, layers.includes(layerKey) ? layers : [...layers, layerKey])
+    const laneKey = `${sound}\n${layerKey}`
     const note = {
       beginCycle: hap.beginCycle,
       durationCycles: hap.durationCycles,
       sourceRanges: hap.sourceRanges
     }
-    const lane = byName.get(name)
-    return byName.set(
-      name,
+    const lane = lanes.get(laneKey)
+    return lanes.set(
+      laneKey,
       lane === undefined
-        ? { name, notes: [note], sourceRanges: hap.sourceRanges }
+        ? {
+            name: laneLabel(sound, layerIndex),
+            sound,
+            notes: [note],
+            sourceRanges: hap.sourceRanges
+          }
         : { ...lane, notes: [...lane.notes, note] }
     )
   }, new Map())
-  return [...lanes.values()]
+  return [...lanesByLayer.values()]
 }

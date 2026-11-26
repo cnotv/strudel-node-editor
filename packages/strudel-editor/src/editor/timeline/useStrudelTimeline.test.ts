@@ -63,7 +63,7 @@ describe('useStrudelTimeline', () => {
   it('reads the lanes over the whole song when a pattern is measured', () => {
     // Arrange
     const playback = buildPlayback()
-    const lanes = [{ name: 'bd', notes: [{ beginCycle: 0, durationCycles: 0.25 }] }]
+    const lanes = [{ name: 'bd', sound: 'bd', notes: [{ beginCycle: 0, durationCycles: 0.25 }] }]
     vi.mocked(playback.measureLanes).mockReturnValue(lanes)
     const { timeline } = buildTimeline(playback)
 

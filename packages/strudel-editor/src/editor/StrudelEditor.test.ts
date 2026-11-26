@@ -337,7 +337,10 @@ describe('StrudelEditor view', () => {
       'Uptown Strut (funk)',
       'Blue Hour (jazz)',
       'Acid Doom (psytrance doom)',
-      'Late Fusion (jazz funk)'
+      'Late Fusion (jazz funk)',
+      'Psy Funk Jazz (psytrance funk jazz)',
+      'Doom Thrash Psy (psytrance doom thrash)',
+      'Black Neon (drum and bass synthwave)'
     ])
   })
 

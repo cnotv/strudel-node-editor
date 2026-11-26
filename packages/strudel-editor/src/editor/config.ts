@@ -710,6 +710,171 @@ $: arrange(
   [16, chord(chords).voicing().s("gm_string_ensemble_1").attack(.3).release(.5).room(.3).gain(.2)],
   [1, silence]
 )`
+  },
+  {
+    id: 'psy-funk-jazz',
+    label: 'Psy Funk Jazz (psytrance funk jazz)',
+    code: `// Psy funk jazz, 145 BPM, D dorian
+setcps(145/60/4)
+
+// psytrance kick: four on the floor
+$: s("bd*4").bank("RolandTR909").gain(1.1)
+  .mask("<1 1 1 1 1 1 1 0>")
+
+// funk backbeat with ghost notes
+$: s("~ sd ~ sd").bank("RolandTR909").gain(.9)
+  .mask("<0 0 1 1 1 1 1 1>")
+$: s("sd*16").bank("RolandTR909")
+  .gain("0 0 0 0 0 .2 0 .15 0 .2 0 0 0 .15 .2 0")
+  .mask("<0 0 1 1 1 1 1 1>")
+
+// offbeat open hats plus 16th shuffle
+$: s("[~ oh]*4").bank("RolandTR909").gain(.5).decay(.15)
+$: s("hh*16").bank("RolandTR909").gain(.18)
+  .mask("<0 1 1 1 1 1 1 1>")
+
+// rolling psytrance bass, root follows the changes
+$: note("<d2 g2 c2 f2>")
+  .struct("[~ x x x]*4")
+  .s("sawtooth").lpf(sine.range(250, 1400).slow(8)).lpq(8)
+  .decay(.12).sustain(0).gain(.9)
+
+// funk clav chops on jazz chords
+$: chord("<Dm9 G13 Cmaj9 Fmaj7>").voicing()
+  .struct("[x ~ ~ x ~ x ~ ~ x ~ ~ x ~ x x ~]")
+  .s("sawtooth").lpf(2400).decay(.09).sustain(0)
+  .gain(.5).pan(.35)
+  .mask("<0 0 1 1 1 1 1 1>")
+
+// jazz electric piano lead, swung phrases
+$: n("<[0 2 4 5] [7 6 4 2] [4 ~ 2 4] [0 ~ ~ -1]>")
+  .scale("D4:dorian").s("gm_epiano1")
+  .gain(.7).room(.4).delay(.25).delaytime(.1875).delayfeedback(.4)
+  .mask("<0 0 0 1 1 1 1 1>")
+
+// psy sweep texture on top
+$: note("<d4 g4 c4 f4>").s("sawtooth")
+  .lpf(sine.range(400, 3500).slow(4)).gain(.12).room(.6)
+  .mask("<0 0 0 0 1 1 1 1>")`
+  },
+  {
+    id: 'doom-thrash-psy',
+    label: 'Doom Thrash Psy (psytrance doom thrash)',
+    code: `// Mix of 1200 Micrograms (psytrance), 1000mods (doom fuzz) and Slayer (thrash)
+// E phrygian, 148 bpm. Paste whole block into Strudel and play.
+setcpm(148/4)
+
+const fuzz = p => p.s("sawtooth").distort(2.5).lpf(1800)
+const mellowFuzz = p => p.s("sawtooth").distort(1).lpf(900).room(.3)
+const soft = p => p.s("supersaw").lpf(1100).distort(.3).room(.3)
+const kick4 = s("bd*4").gain(1.1)
+const offHat = s("~ hh").fast(4).gain(.5)
+const roll = note("~ e1 e1 e1").fast(4).s("sawtooth")
+  .lpf(sine.range(250, 900).slow(8)).lpq(8).gain(.9)
+const lead = note("e4 g4 e4 a4 e4 bb4 e4 g4").fast(2).s("supersaw")
+  .lpf(sine.range(400, 2500).slow(4)).lpq(6).delay(.3).delaytime(.1875).room(.3)
+
+// short soft synth chord stab where the clap used to hit
+const stab = note("~ [e4,b4]").s("triangle")
+  .decay(.15).sustain(0).lpf(2200).gain(.3)
+  .room(.4).delay(.3).delaytime(.1875).delayfeedback(.35)
+
+const doom = stack(
+  mellowFuzz(note("e1 ~ ~ e1 g1 ~ a1 ~ bb1 ~ a1 g1 ~ ~ e1 ~").slow(4)).gain(.6),
+  mellowFuzz(note("e2 ~ ~ e2 g2 ~ a2 ~ bb2 ~ a2 g2 ~ ~ e2 ~").slow(4)).gain(.25),
+  kick4.gain(.7),
+  offHat.gain(.3),
+  roll.gain(.35),
+  s("~ ~ ~ ~ sd ~ ~ ~").gain(.5).lpf(3500),
+  s("oh ~ ~ ~ ~ ~ ~ ~").gain(.25)
+)
+
+const thrash = stack(
+  note("[e3 e3 f3 e3 e3 g3 e3 e3 bb3 a3 g3 f3 e3 e3 f3 e3]").slow(2)
+    .s("gm_acoustic_guitar_nylon").gain(.7).lpf(2500).room(.4),
+  note("<[e2,b2] [e2,b2] [f2,c3] [e2,b2]>")
+    .s("gm_acoustic_guitar_nylon").gain(.3).room(.5),
+  kick4.gain(.6),
+  offHat.gain(.3),
+  roll.gain(.4),
+  s("~ sd").fast(2).gain(.3).lpf(3000)
+)
+
+const psy = stack(
+  kick4,
+  offHat,
+  roll,
+  lead.gain(.45),
+  stab
+)
+
+const mix = stack(
+  kick4,
+  offHat.gain(.35),
+  roll.gain(.7),
+  soft(note("[e2 e2 f2 e2 e2 g2 e2 e2 bb2 a2 g2 f2 e2 e2 f2 e2]").fast(2)).gain(.3).delay(.3),
+  lead.gain(.3),
+  stab
+)
+
+$: arrange(
+  [4, doom],
+  [4, thrash],
+  [8, psy],
+  [4, thrash],
+  [8, mix],
+  [4, doom]
+)`
+  },
+  {
+    id: 'black-neon',
+    label: 'Black Neon (drum and bass synthwave)',
+    code: `// Black Neon: a drum and bass, synthwave and darkwave mix in D minor at 174 BPM
+// Fifty-six bars: intro 8, drop 16, break 8, drop 16, outro 8. The two-step break and the rolling Reese bass are Subfocus style drum and bass; the gated snare, arpeggio and dotted lead are synthwave; the cold strings and choir are darkwave.
+// Instruments: drums RolandTR909, bass sawtooth and sine, arpeggio sawtooth, lead square, pad gm_string_ensemble_1, choir gm_choir_aahs
+setcpm(174/4)
+
+// one chord a bar, everything below derives from this
+const chords = "<Dm Bb Gm Am>"
+
+// two-step kicks, half-time snares, a tom fill closing the intro and the break
+const kickPlain = "x ~ ~ ~ ~ ~ ~ ~ ~ ~ x ~ ~ ~ ~ ~"
+const kickGhost = "x ~ ~ ~ ~ ~ ~ x ~ ~ x ~ ~ ~ ~ ~"
+const kickHalf = "x ~ ~ ~ ~ ~ ~ ~ x ~ ~ ~ ~ ~ ~ ~"
+const dropKicks = cat(kickPlain, kickPlain, kickGhost, kickPlain)
+const kicks = arrange([8, silence], [16, dropKicks], [8, kickHalf], [16, dropKicks], [8, silence])
+const snareDrop = "~ ~ ~ ~ x ~ ~ ~ ~ ~ ~ ~ x ~ ~ ~"
+const snareHalf = "~ ~ ~ ~ ~ ~ ~ ~ x ~ ~ ~ ~ ~ ~ ~"
+const snares = arrange([8, silence], [16, snareDrop], [8, snareHalf], [16, snareDrop], [8, silence])
+const fill = "x ~ x ~ x ~ x ~ x x x x x x x x"
+const fills = arrange([7, silence], [1, fill], [16, silence], [7, silence], [1, fill], [24, silence])
+
+// bass: syncopated rolling line in the drops, one held note a bar elsewhere
+const bassHeld = "x"
+const bassRolling = "x ~ ~ ~ ~ ~ x ~ x ~ ~ x ~ ~ ~ ~"
+const bassLine = arrange([4, silence], [4, bassHeld], [16, bassRolling], [8, bassHeld], [16, bassRolling], [8, bassHeld])
+
+// arpeggio from the chord tones: eighths, then sixteenths in the drops
+const arpEighths = "[0 1 2 3 2 1 2 1]"
+const arpSixteenths = "[0 1 2 3 2 1 2 1]*2"
+const arpLine = arrange([8, arpEighths], [16, arpSixteenths], [8, arpEighths], [16, arpSixteenths], [8, arpEighths])
+
+// lead: a dotted three, three, two motif that falls onto each chord's tones
+const motif = "<[4 ~ ~ 2 ~ ~ 0 ~] [7 ~ ~ 5 ~ ~ 2 ~] [7 ~ ~ 5 ~ ~ 3 ~] [8 ~ ~ 6 ~ ~ 4 ~]>"
+const leadLine = arrange([16, silence], [32, motif], [8, silence])
+
+$: s("rolandtr909_bd").struct(kicks).gain(.75).clip(1)
+$: s("rolandtr909_sd").struct(snares).gain(.6).clip(1).room(.3)
+$: s("rolandtr909_cp").struct(snares).gain(.4).clip(1).room(.6)
+$: s("rolandtr909_hh").struct("x*16").gain("[.5 .2 .35 .2]*4").clip(1).mask("<0!8 1!16 0!8 1!16 0!8>")
+$: s("rolandtr909_oh").struct("[~ x]*4").gain(.3).clip(1).mask("<0!24 1!8 0!24>")
+$: s("rolandtr909_mt").struct(fills).gain(.6).clip(1).room(.3)
+$: chords.rootNotes(2).struct(bassLine).note().s("sawtooth").lpf(sine.range(300,1800).slow(8)).gain(.4).clip(1)
+$: chords.rootNotes(1).struct(bassLine).note().s("sine").gain(.35).clip(1)
+$: n(arpLine).chord(chords).voicing().s("sawtooth").lpf(sine.range(900,3000).slow(8)).gain(.16).clip(1).delay(.3).delaytime(.26).delayfeedback(.4)
+$: n(leadLine).scale("D5:minor").s("square").lpf(2800).gain(.22).clip(1).room(.4).delay(.25).delaytime(.26).delayfeedback(.4)._spectrum()
+$: chord(chords).voicing().s("gm_string_ensemble_1").gain(.2).attack(.4).release(.8).room(.5).mask("<1!8 0!16 1!8 0!16 1!8>")
+$: chord(chords).voicing().s("gm_choir_aahs").gain(.15).attack(.6).release(1).room(.8).lpf(2500).mask("<0!24 1!8 1!16 0!8>")._pianoroll()`
   }
 ]
 

@@ -121,6 +121,8 @@ describe('StrudelTimeline', () => {
   it('leaves the scroll where it is while the playhead runs past the visible part', async () => {
     // Arrange
     const wrapper = mountTimeline({ playheadCycle: 0, timelineBars: 64 })
+    wrapper.getComponent(Select).vm.$emit('update:modelValue', 'static')
+    await nextTick()
     const scroller = wrapper.get('.strudel-timeline__scroller').element as HTMLElement
     Object.defineProperty(scroller, 'clientWidth', { value: 300 })
     Object.defineProperty(scroller, 'scrollWidth', { value: 64 * STRUDEL_TIMELINE_MIN_CYCLE_WIDTH })
@@ -272,6 +274,25 @@ describe('StrudelTimeline', () => {
 
     // Assert
     expect(wrapper.emitted('seek')?.at(-1)).toEqual([4])
+  })
+
+  it('centres the timeline by default, with the playhead a third of the way in', async () => {
+    // Arrange
+    const wrapper = mountTimeline({ playheadCycle: 0, timelineBars: 64 })
+    const scroller = wrapper.get('.strudel-timeline__scroller').element as HTMLElement
+    Object.defineProperty(scroller, 'clientWidth', { value: 300 })
+    ;(wrapper.get('.strudel-timeline__track').element as HTMLElement).getBoundingClientRect = () =>
+      new DOMRect(100 - scroller.scrollLeft, 0, 3072, 20)
+    Object.defineProperty(wrapper.get('.strudel-timeline__track').element, 'offsetWidth', {
+      value: 3072
+    })
+
+    // Act
+    await wrapper.setProps({ playheadCycle: 10 })
+
+    // Assert
+    expect(wrapper.getComponent(Select).props('modelValue')).toBe('centered')
+    expect(scroller.scrollLeft).toBe(100 + (10 / 64) * 3072 - 100)
   })
 
   it('starts reading the pattern when the lanes are turned on before it was read', async () => {

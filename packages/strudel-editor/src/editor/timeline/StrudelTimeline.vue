@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import {
   Disc3,
   Footprints,
@@ -22,6 +22,7 @@ import { Slider } from '../../components/ui/slider'
 import { Select } from '../../components/ui/select'
 import { Toggle } from '../../components/ui/toggle'
 import {
+  STRUDEL_TIMELINE_CENTRED_ANCHOR,
   STRUDEL_TIMELINE_DEFAULT_VOLUME,
   STRUDEL_TIMELINE_FOLLOW_MARGIN,
   STRUDEL_TIMELINE_LOW_VOLUME,
@@ -87,7 +88,7 @@ const onVolumeMoved = (values: number[] | undefined): void => {
 const onMutePressed = (): void => {
   emit('update:volume', isMuted.value ? lastAudibleVolume.value : 0)
 }
-const progression = ref<StrudelTimelineProgression>('static')
+const progression = ref<StrudelTimelineProgression>('centered')
 
 // Only a read pattern has lanes, so turning them on before that starts the read.
 watch(showLanes, (shown) => {
@@ -109,6 +110,7 @@ const onProgressionPicked = (value: string): void => {
 const scrollerElement = ref<HTMLElement | null>(null)
 const hiddenBefore = ref(false)
 const hiddenAfter = ref(false)
+const scrollerWidth = ref(0)
 let resizeObserver: ResizeObserver | null = null
 
 // The fades at either end are the clue that the song goes on past the edge.
@@ -117,6 +119,7 @@ const readHiddenEnds = (): void => {
   if (scroller === null) {
     return
   }
+  scrollerWidth.value = scroller.clientWidth
   hiddenBefore.value = scroller.scrollLeft > 0
   hiddenAfter.value = scroller.scrollLeft + scroller.clientWidth < scroller.scrollWidth - 1
 }
@@ -128,6 +131,8 @@ onMounted(() => {
   }
   resizeObserver = new ResizeObserver(readHiddenEnds)
   resizeObserver.observe(scroller)
+  readHiddenEnds()
+  void nextTick(moveTimelineWithPlayhead)
 })
 
 onBeforeUnmount(() => resizeObserver?.disconnect())
@@ -167,7 +172,7 @@ const moveTimelineWithPlayhead = (): void => {
     scrollToKeepPlayheadInView(scroller, playheadOffset)
     return
   }
-  scroller.scrollLeft = playheadOffset - scroller.clientWidth / 2
+  scroller.scrollLeft = playheadOffset - scroller.clientWidth * STRUDEL_TIMELINE_CENTRED_ANCHOR
   lastCentredScroll = scroller.scrollLeft
 }
 
@@ -185,7 +190,9 @@ const seekFromCentredScroll = (): void => {
   }
   lastCentredScroll = scroller.scrollLeft
   const centredOffset =
-    scroller.scrollLeft + scroller.clientWidth / 2 - readTrackInset(scroller, track)
+    scroller.scrollLeft +
+    scroller.clientWidth * STRUDEL_TIMELINE_CENTRED_ANCHOR -
+    readTrackInset(scroller, track)
   emit('seek', Math.min(Math.max(centredOffset / track.offsetWidth, 0), 1) * props.timelineBars)
 }
 
@@ -223,6 +230,18 @@ const touchSeek = useTouchSeek(
   trackElement,
   () => props.timelineBars,
   (cycle) => emit('seek', cycle)
+)
+
+// The padding that lets the first and last cycle reach the anchor. Percentages would resolve
+// against the body, lane names included, so it is worked out from the scroller itself.
+const scrollerStyle = computed(() =>
+  progression.value === 'centered'
+    ? {
+        paddingInline: `${scrollerWidth.value * STRUDEL_TIMELINE_CENTRED_ANCHOR}px ${
+          scrollerWidth.value * (1 - STRUDEL_TIMELINE_CENTRED_ANCHOR)
+        }px`
+      }
+    : undefined
 )
 
 // Centred mode pads the scroller by half its width on each side, so 100% of what is left is nothing.
@@ -354,10 +373,10 @@ const timeReadout = computed(() => `${(props.playheadCycle / props.cyclesPerSeco
         ref="scrollerElement"
         class="strudel-timeline__scroller"
         :class="{
-          'strudel-timeline__scroller--hidden-before': hiddenBefore,
-          'strudel-timeline__scroller--hidden-after': hiddenAfter,
-          'strudel-timeline__scroller--centered': progression === 'centered'
+          'strudel-timeline__scroller--hidden-before': hiddenBefore && progression !== 'centered',
+          'strudel-timeline__scroller--hidden-after': hiddenAfter && progression !== 'centered'
         }"
+        :style="scrollerStyle"
         @scroll.passive="onScrolled"
       >
         <!-- The track hosts the cycle and step marks: scoped styles never reach the slider's
@@ -667,10 +686,6 @@ const timeReadout = computed(() => `${(props.playheadCycle / props.cyclesPerSeco
 :global(.select__trigger.strudel-timeline__progression svg:last-child) {
   width: var(--font-size-xs);
   height: var(--font-size-xs);
-}
-
-.strudel-timeline__scroller--centered {
-  padding-inline: 50%;
 }
 
 /* A taller line on every cycle and a short tick on every step, from custom properties set on

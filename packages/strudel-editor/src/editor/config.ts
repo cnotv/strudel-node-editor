@@ -350,6 +350,8 @@ export const STRUDEL_TIMELINE_MIN_CYCLE_WIDTH = 48
 export const STRUDEL_TIMELINE_TAP_SLOP = 8
 /** How close the playhead may get to the edge, in pixels, before the following timeline scrolls it back to the middle. */
 export const STRUDEL_TIMELINE_FOLLOW_MARGIN = 24
+/** Where the playhead sits in the centred timeline, as a fraction of its width from the left. */
+export const STRUDEL_TIMELINE_CENTRED_ANCHOR = 1 / 3
 /** The three ways the timeline follows playback, in the order the switch shows them. */
 export const STRUDEL_TIMELINE_PROGRESSION_OPTIONS = [
   { value: 'static', label: 'Fixed' },

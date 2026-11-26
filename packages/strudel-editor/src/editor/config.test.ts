@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { INSTRUMENT_BUILT_IN_PRESETS } from './instruments/config'
 import {
-  ELECTRO_TUNES,
   STRUDEL_SAMPLE_BANKS,
   DEFAULT_STRUDEL_EXAMPLE_ID,
   STRUDEL_EXAMPLES,
@@ -9,6 +8,7 @@ import {
   STRUDEL_LICENSE,
   STRUDEL_MUSIC_STYLES
 } from './config'
+import { ELECTRO_TUNES } from './songs'
 
 describe('StrudelEditor config', () => {
   it('ships at least one example pattern', () => {

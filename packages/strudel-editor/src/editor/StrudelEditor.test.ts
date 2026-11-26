@@ -7,11 +7,11 @@ import StrudelEditor from './StrudelEditor.vue'
 import ExportTab from './tabs/ExportTab.vue'
 import PatternLibrary from './tabs/PatternLibrary.vue'
 import {
-  ELECTRO_TUNES,
   STRUDEL_EXAMPLES,
   STRUDEL_SAVED_CODE_STORAGE_KEY,
   STRUDEL_SAVED_PATTERNS_STORAGE_KEY
 } from './config'
+import { ELECTRO_TUNES } from './songs'
 import type { StrudelCodeMirrorOptions } from './types'
 
 const defaultSongCode = ELECTRO_TUNES.find(({ id }) => id === 'uptown-strut')?.code ?? ''
@@ -337,7 +337,10 @@ describe('StrudelEditor view', () => {
       'Uptown Strut (funk)',
       'Blue Hour (jazz)',
       'Acid Doom (psytrance doom)',
-      'Late Fusion (jazz funk)'
+      'Late Fusion (jazz funk)',
+      'Psy Funk Jazz (psytrance funk jazz)',
+      'Doom Thrash Psy (psytrance doom thrash)',
+      'Black Neon (drum and bass synthwave)'
     ])
   })
 

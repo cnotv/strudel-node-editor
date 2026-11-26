@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { ELECTRO_TUNES, STRUDEL_EXAMPLES, STRUDEL_MUSIC_STYLES } from '../config'
+import { STRUDEL_EXAMPLES, STRUDEL_MUSIC_STYLES } from '../config'
+import { ELECTRO_TUNES } from '../songs'
 import type { StrudelMusicStyleId } from '../types'
 import { detectMusicStyle } from './detectMusicStyle'
 import { readStrudelCodeFacts } from './readStrudelCodeFacts'

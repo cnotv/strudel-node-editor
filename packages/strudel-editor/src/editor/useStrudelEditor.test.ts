@@ -6,10 +6,10 @@ import {
   STRUDEL_EXPORT_MEASURE_DELAY_MS,
   STRUDEL_SAVED_CODE_STORAGE_KEY,
   STRUDEL_SAVED_PATTERNS_STORAGE_KEY,
-  ELECTRO_TUNES,
   STRUDEL_EXAMPLES,
   STRUDEL_TABS
 } from './config'
+import { ELECTRO_TUNES } from './songs'
 import type {
   StrudelEditorHandle,
   StrudelExample,

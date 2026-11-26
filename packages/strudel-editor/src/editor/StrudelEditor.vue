@@ -74,7 +74,7 @@ import ConsoleTab from './tabs/ConsoleTab.vue'
 import SettingsTab from './tabs/SettingsTab.vue'
 import StrudelTimeline from './timeline/StrudelTimeline.vue'
 import { pickDefinitionRange } from './timeline/pickDefinitionRange'
-import { findVariableDefinition } from './codeEditor/findVariableDefinition'
+import { findVariableLanes } from './timeline/findVariableLanes'
 
 // Vue Flow is a large canvas library and only loads when the player opens flow mode.
 const StrudelFlowEditor = defineAsyncComponent(() =>
@@ -475,12 +475,10 @@ const onShowNodeCode = async (nodeId: string): Promise<void> => {
   }
 }
 
-// Ctrl or Cmd plus click on a variable jumps to where it is declared, as in VS Code.
+// Ctrl or Cmd plus click on a variable marks the lanes it plays on the timeline.
+const highlightedLaneNames = ref<string[]>([])
 const onCodeModifierClick = (position: number): void => {
-  const definition = findVariableDefinition(patternCode.value, position)
-  if (definition !== null) {
-    codeEditor.value?.selectRange(definition.from, definition.to)
-  }
+  highlightedLaneNames.value = findVariableLanes(patternCode.value, position, lanes.value)
 }
 
 const showCodeEditor = async (): Promise<void> => {
@@ -602,6 +600,7 @@ onBeforeUnmount(() => {
         :playhead-cycle="playheadCycle"
         :timeline-bars="timelineBars"
         :lanes="lanes"
+        :highlighted-lanes="highlightedLaneNames"
         :lanes-measured="loopMeasured"
         :volume="volume"
         :cycles-per-second="cyclesPerSecond"

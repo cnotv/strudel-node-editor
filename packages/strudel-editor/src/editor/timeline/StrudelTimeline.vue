@@ -38,6 +38,8 @@ const props = defineProps<{
   timelineBars: number
   /** Each instrument's notes over the song, drawn above the playhead when the lanes are on. */
   lanes?: StrudelTimelineLane[]
+  /** Names of the lanes to mark, such as those of a variable picked in the code. */
+  highlightedLanes?: string[]
   /** False until a pattern has been read, so the lanes have nothing to draw yet. */
   lanesMeasured: boolean
   /** How loud the live output is, from 0 to 1. */
@@ -362,6 +364,7 @@ const timeReadout = computed(() => `${(props.playheadCycle / props.cyclesPerSeco
           :key="lane.name"
           type="button"
           class="strudel-timeline__lane-name"
+          :class="{ 'strudel-timeline__lane-name--marked': highlightedLanes?.includes(lane.name) }"
           :title="`Select the code of ${lane.name}`"
           :disabled="lane.sourceRanges.length === 0"
           @click="emit('selectLane', lane.sourceRanges, lane.sound)"
@@ -415,7 +418,12 @@ const timeReadout = computed(() => `${(props.playheadCycle / props.cyclesPerSeco
             Reading the pattern
           </p>
           <div v-if="showLanes" class="strudel-timeline__lanes">
-            <div v-for="lane in lanes" :key="lane.name" class="strudel-timeline__lane">
+            <div
+              v-for="lane in lanes"
+              :key="lane.name"
+              class="strudel-timeline__lane"
+              :class="{ 'strudel-timeline__lane--marked': highlightedLanes?.includes(lane.name) }"
+            >
               <button
                 v-for="(note, noteIndex) in lane.notes"
                 :key="noteIndex"
@@ -634,6 +642,15 @@ const timeReadout = computed(() => `${(props.playheadCycle / props.cyclesPerSeco
   text-overflow: ellipsis;
   white-space: nowrap;
   cursor: pointer;
+}
+
+.strudel-timeline__lane-name--marked {
+  color: var(--color-primary);
+  font-weight: bold;
+}
+
+.strudel-timeline__lane--marked {
+  background: var(--color-accent);
 }
 
 .strudel-timeline__lane-name:hover:not(:disabled) {

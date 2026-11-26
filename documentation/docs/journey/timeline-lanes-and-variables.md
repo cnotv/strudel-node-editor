@@ -17,14 +17,15 @@ lane can therefore only select the definition.
 
 ## Ctrl+click on a variable
 
-Ctrl or Cmd plus click on a variable jumps to the name in its `const`, `let` or `var`, as go to
-definition does in VS Code. It works on the text (`findVariableDefinition`), so it needs nothing
-from Strudel's runtime. A click on the declaration itself, or on a word that is not declared,
-does nothing.
+The reverse direction is cheap, because it starts from the code. Ctrl or Cmd plus click on a
+variable finds its `const` statement and every variable that statement uses, then marks the lanes
+whose spans fall inside them (`findVariableLanes`). It works on the text, so it needs nothing
+from Strudel's runtime.
 
 ## If this moves to VS Code
 
-VS Code already does this, and adds find references on top, so moving the editing there would
-retire `findVariableDefinition`. It would also give up the in-browser editor, the inline widgets
-and the playhead highlight, which is why the editor keeps its own lookup. If the project ever
-switches, that one function is the part to drop.
+The same job in VS Code is a go to definition and find references pair, and a variable's lanes
+would come from a language server or an extension that reads the same event spans. That trades the
+in-browser editor for a second product to maintain, so the editor keeps the text based lookup. If
+the project ever switches, `findVariableLanes` is the one function to replace, and the lane
+marking in `StrudelTimeline.vue` stays as it is.
